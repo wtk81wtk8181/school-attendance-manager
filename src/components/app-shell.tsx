@@ -93,8 +93,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     selectClass,
     markNotificationRead,
     markAllNotificationsRead,
+    refreshFromDatabase,
+    usingDatabase,
   } = useStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const nav = currentUser?.role === "office" ? officeNav : homeroomNav;
   const unread = state.notifications.filter((item) => !item.read);
@@ -155,6 +158,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 : "只可檢閱所選班別的出勤與缺席紀錄，不能編輯"}
             </p>
           </div>
+          {usingDatabase ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={syncing}
+              onClick={() => {
+                setSyncing(true);
+                void refreshFromDatabase().finally(() => setSyncing(false));
+              }}
+            >
+              <RefreshCw className={syncing ? "size-4 animate-spin" : "size-4"} />
+              同步資料
+            </Button>
+          ) : null}
           {currentUser?.role === "homeroom" && state.selectedClassName ? (
             <Button
               size="lg"

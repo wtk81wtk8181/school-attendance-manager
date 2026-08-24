@@ -33,14 +33,15 @@ import { documentLabels, reviewLabels, warningStatusLabels, warningTypeLabels } 
 import { buildDailyAbsenceRows } from "@/lib/daily-report";
 import { resolveDigestSchoolDay } from "@/lib/digest";
 import { buildMonthlyReport, currentYearMonth, monthRange } from "@/lib/monthly-report";
+import { EmailRecipientPicker } from "@/components/email-recipient-picker";
 import { downloadBase64Xlsx, requestDailyReport, requestMonthlyReport } from "@/lib/digest-client";
-import { parseEmailAddresses, toMailRecipients } from "@/lib/email-utils";
+import { resolveSendRecipients, persistRecipientEmails } from "@/lib/email-utils";
 import { useStore } from "@/lib/store";
 import type { FormLevel } from "@/lib/types";
 import { toast } from "sonner";
 
 export default function ReportsPage() {
-  const { state, visibleStudents, currentUser, updateAbsenceDetails } = useStore();
+  const { state, visibleStudents, currentUser, updateAbsenceDetails, upsertRecipient } = useStore();
   const canEditDaily = currentUser?.role === "office";
   const [form, setForm] = useState("all");
   const [klass, setKlass] = useState("all");
@@ -134,9 +135,10 @@ export default function ReportsPage() {
       return;
     }
 
-    const emails = parseEmailAddresses(dailyEmail);
-    if (emails.length === 0) {
-      toast.error("請輸入電郵地址。");
+    persistRecipientEmails(dailyEmail, state.digestRecipients, upsertRecipient);
+    const recipients = resolveSendRecipients(state.digestRecipients, dailyEmail);
+    if (recipients.length === 0) {
+      toast.error("請勾選或輸入至少一個電郵地址。");
       return;
     }
 
@@ -149,7 +151,7 @@ export default function ReportsPage() {
           rows: dailyRows,
         },
         sendEmail: true,
-        recipients: toMailRecipients(emails),
+        recipients,
       });
 
       toast.success(
@@ -168,9 +170,10 @@ export default function ReportsPage() {
       return;
     }
 
-    const emails = parseEmailAddresses(monthlyEmail);
-    if (sendEmail && emails.length === 0) {
-      toast.error("請輸入電郵地址。");
+    persistRecipientEmails(monthlyEmail, state.digestRecipients, upsertRecipient);
+    const recipients = resolveSendRecipients(state.digestRecipients, monthlyEmail);
+    if (sendEmail && recipients.length === 0) {
+      toast.error("請勾選或輸入至少一個電郵地址。");
       return;
     }
 
@@ -180,7 +183,7 @@ export default function ReportsPage() {
       const result = await requestMonthlyReport({
         payload,
         sendEmail,
-        recipients: sendEmail ? toMailRecipients(emails) : [],
+        recipients: sendEmail ? recipients : [],
       });
 
       if (sendEmail) {
@@ -350,16 +353,11 @@ export default function ReportsPage() {
               </Button>
             </div>
             {showMonthlyEmail ? (
-              <div className="grid gap-1.5">
-                <Label htmlFor="monthly-email">收件人電郵</Label>
-                <Input
-                  id="monthly-email"
-                  type="email"
-                  placeholder="example@school.edu.hk（多個請用逗號分隔）"
-                  value={monthlyEmail}
-                  onChange={(event) => setMonthlyEmail(event.target.value)}
-                />
-              </div>
+              <EmailRecipientPicker
+                idPrefix="monthly"
+                extraEmail={monthlyEmail}
+                onExtraEmailChange={setMonthlyEmail}
+              />
             ) : null}
           </CardContent>
         </Card>
@@ -395,16 +393,11 @@ export default function ReportsPage() {
               </Button>
             </div>
             {showDailyEmail ? (
-              <div className="grid gap-1.5">
-                <Label htmlFor="daily-email">收件人電郵</Label>
-                <Input
-                  id="daily-email"
-                  type="email"
-                  placeholder="example@school.edu.hk（多個請用逗號分隔）"
-                  value={dailyEmail}
-                  onChange={(event) => setDailyEmail(event.target.value)}
-                />
-              </div>
+              <EmailRecipientPicker
+                idPrefix="daily"
+                extraEmail={dailyEmail}
+                onExtraEmailChange={setDailyEmail}
+              />
             ) : null}
           </CardContent>
         </Card>

@@ -71,6 +71,8 @@ interface StoreValue {
   upsertRecipient: (recipient: DigestRecipient) => void;
   removeRecipient: (id: string) => void;
   recordDigestSend: (log: Omit<DigestLog, "id" | "createdAt">) => void;
+  refreshFromDatabase: () => Promise<void>;
+  usingDatabase: boolean;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -80,6 +82,8 @@ let memory: AppState = serverSnapshot;
 let hydrated = false;
 let useDatabase = false;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
+let refreshing = false;
+let lastLocalChangeAt = 0;
 
 function persistSession(state: AppState) {
   writeSession(state);
@@ -87,6 +91,31 @@ function persistSession(state: AppState) {
 
 function persistLocal(state: AppState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+async function flushPersist(): Promise<boolean> {
+  if (!useDatabase || !hydrated) return true;
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+  try {
+    const response = await fetch("/api/state", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state: sharedFromState(memory) }),
+    });
+    if (!response.ok) {
+      toast.error("無法同步至資料庫，請稍後再試。");
+      persistLocal(memory);
+      return false;
+    }
+    return true;
+  } catch {
+    toast.error("無法連接資料庫，資料暫存於本機。");
+    persistLocal(memory);
+    return false;
+  }
 }
 
 function persistShared(state: AppState) {
@@ -97,13 +126,8 @@ function persistShared(state: AppState) {
   }
   if (persistTimer) clearTimeout(persistTimer);
   persistTimer = setTimeout(() => {
-    void fetch("/api/state", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state: sharedFromState(state) }),
-    }).catch(() => {
-      persistLocal(state);
-    });
+    persistTimer = null;
+    void flushPersist();
   }, 400);
 }
 
@@ -170,12 +194,36 @@ function getReadyServerSnapshot() {
 
 function assign(next: AppState) {
   memory = next;
+  lastLocalChangeAt = Date.now();
   if (hydrated) persistShared(memory);
   emit();
 }
 
 function patch(updater: (prev: AppState) => AppState) {
   assign(updater(memory));
+}
+
+async function refreshFromDatabase(force = false) {
+  if (!useDatabase || !hydrated || refreshing) return;
+  if (!force && Date.now() - lastLocalChangeAt < 3000) return;
+
+  refreshing = true;
+  try {
+    const session = readSession();
+    const response = await fetch("/api/state", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = (await response.json()) as { state: AppState; database: boolean };
+    if (!data.database) return;
+
+    memory = {
+      ...mergeSharedState(data.state),
+      currentUserId: session.currentUserId ?? memory.currentUserId,
+      selectedClassName: session.selectedClassName ?? memory.selectedClassName,
+    };
+    emit();
+  } finally {
+    refreshing = false;
+  }
 }
 
 async function hydrateFromStorage() {
@@ -330,10 +378,54 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getReadySnapshot,
     getReadyServerSnapshot
   );
+  const usingDatabase = useSyncExternalStore(
+    subscribe,
+    () => useDatabase,
+    () => false
+  );
 
   useEffect(() => {
     void hydrateFromStorage();
   }, []);
+
+  useEffect(() => {
+    if (!ready || !useDatabase) return;
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshFromDatabase();
+      }
+    };
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshFromDatabase();
+      }
+    }, 15000);
+
+    const onBeforeUnload = () => {
+      if (persistTimer) {
+        clearTimeout(persistTimer);
+        persistTimer = null;
+      }
+      if (!useDatabase) return;
+      void fetch("/api/state", {
+        method: "PUT",
+        keepalive: true,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ state: sharedFromState(memory) }),
+      });
+    };
+
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("beforeunload", onBeforeUnload);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [ready]);
 
   const currentUser = useMemo(
     () => state.users.find((user) => user.id === state.currentUserId) ?? null,
@@ -606,6 +698,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const refreshFromDatabaseNow = useCallback(async () => {
+    await flushPersist();
+    await refreshFromDatabase(true);
+    toast.success("已從資料庫更新最新資料。");
+  }, []);
+
   const value = useMemo<StoreValue>(
     () => ({
       ready,
@@ -625,6 +723,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       upsertRecipient,
       removeRecipient,
       recordDigestSend,
+      refreshFromDatabase: refreshFromDatabaseNow,
+      usingDatabase,
     }),
     [
       ready,
@@ -644,6 +744,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       upsertRecipient,
       removeRecipient,
       recordDigestSend,
+      refreshFromDatabaseNow,
+      usingDatabase,
     ]
   );
 
