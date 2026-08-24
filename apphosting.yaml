@@ -1,0 +1,24 @@
+# Firebase App Hosting（Next.js）
+# 在 Firebase Console 建立 backend 並連接 GitHub 後，push 到 live branch 會自動部署。
+# 區域建議選 asia-east2（香港）或 asia-east1（台灣）。
+
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 1024
+
+# 真實 SMTP 可於 Firebase Console > App Hosting > Environment 設定，
+# 或使用 Cloud Secret Manager（取消下方註解並先執行 firebase apphosting:secrets:set）。
+# env:
+#   - variable: SMTP_HOST
+#     secret: SMTP_HOST
+#   - variable: SMTP_PORT
+#     value: "587"
+#   - variable: SMTP_USER
+#     secret: SMTP_USER
+#   - variable: SMTP_PASS
+#     secret: SMTP_PASS
+#   - variable: SMTP_FROM
+#     secret: SMTP_FROM
