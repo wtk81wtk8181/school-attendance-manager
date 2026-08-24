@@ -34,6 +34,7 @@ import { buildDailyAbsenceRows } from "@/lib/daily-report";
 import { resolveDigestSchoolDay } from "@/lib/digest";
 import { buildMonthlyReport, currentYearMonth, monthRange } from "@/lib/monthly-report";
 import { downloadBase64Xlsx, requestDailyReport, requestMonthlyReport } from "@/lib/digest-client";
+import { parseEmailAddresses, toMailRecipients } from "@/lib/email-utils";
 import { useStore } from "@/lib/store";
 import type { FormLevel } from "@/lib/types";
 import { toast } from "sonner";
@@ -51,6 +52,10 @@ export default function ReportsPage() {
   const [month, setMonth] = useState(currentYearMonth);
   const [monthlyBusy, setMonthlyBusy] = useState(false);
   const [dailyEmailBusy, setDailyEmailBusy] = useState(false);
+  const [monthlyEmail, setMonthlyEmail] = useState("");
+  const [dailyEmail, setDailyEmail] = useState("");
+  const [showMonthlyEmail, setShowMonthlyEmail] = useState(false);
+  const [showDailyEmail, setShowDailyEmail] = useState(false);
 
   const dailyScope =
     klass !== "all"
@@ -124,9 +129,14 @@ export default function ReportsPage() {
   }
 
   async function sendDailyReportEmail() {
-    const recipients = state.digestRecipients.filter((item) => item.enabled);
-    if (recipients.length === 0) {
-      toast.error("請先於「電郵名單」頁加入至少一位收件人。");
+    if (!showDailyEmail) {
+      setShowDailyEmail(true);
+      return;
+    }
+
+    const emails = parseEmailAddresses(dailyEmail);
+    if (emails.length === 0) {
+      toast.error("請輸入電郵地址。");
       return;
     }
 
@@ -139,16 +149,11 @@ export default function ReportsPage() {
           rows: dailyRows,
         },
         sendEmail: true,
-        recipients: recipients.map((item) => ({
-          name: item.name,
-          email: item.email,
-        })),
+        recipients: toMailRecipients(emails),
       });
 
       toast.success(
-        result.mode === "smtp"
-          ? `已將 ${formatShortDate(reportDay)} 每日缺席報告電郵予 ${result.recipientCount} 位收件人。`
-          : `未設定 SMTP，已模擬寄出 ${formatShortDate(reportDay)} 每日缺席報告。`
+        `已將 ${formatShortDate(reportDay)} 每日缺席報告電郵予 ${result.recipientCount} 位收件人。`
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法寄出每日缺席報告。");
@@ -158,9 +163,14 @@ export default function ReportsPage() {
   }
 
   async function runMonthlyReport(sendEmail: boolean) {
-    const recipients = state.digestRecipients.filter((item) => item.enabled);
-    if (sendEmail && recipients.length === 0) {
-      toast.error("請先於「電郵名單」頁加入至少一位收件人。");
+    if (sendEmail && !showMonthlyEmail) {
+      setShowMonthlyEmail(true);
+      return;
+    }
+
+    const emails = parseEmailAddresses(monthlyEmail);
+    if (sendEmail && emails.length === 0) {
+      toast.error("請輸入電郵地址。");
       return;
     }
 
@@ -170,22 +180,13 @@ export default function ReportsPage() {
       const result = await requestMonthlyReport({
         payload,
         sendEmail,
-        recipients: recipients.map((item) => ({
-          name: item.name,
-          email: item.email,
-        })),
+        recipients: sendEmail ? toMailRecipients(emails) : [],
       });
 
       if (sendEmail) {
-        toast.success(
-          result.mode === "smtp"
-            ? `已將 ${result.filename} 電郵予 ${result.recipientCount} 位收件人。`
-            : `未設定 SMTP，已模擬寄出 ${result.filename}；Excel 將下載到本機。`
-        );
+        toast.success(`已將 ${result.filename} 電郵予 ${result.recipientCount} 位收件人。`);
       } else {
         toast.success(`已產生 ${result.filename}`);
-      }
-      if (!sendEmail || result.mode === "mock") {
         downloadBase64Xlsx(result.filename, result.fileBase64);
       }
     } catch (error) {
@@ -345,9 +346,21 @@ export default function ReportsPage() {
                 onClick={() => void runMonthlyReport(true)}
               >
                 <Mail className="size-4" />
-                寄出 Email
+                {showMonthlyEmail ? "確認寄出" : "寄出 Email"}
               </Button>
             </div>
+            {showMonthlyEmail ? (
+              <div className="grid gap-1.5">
+                <Label htmlFor="monthly-email">收件人電郵</Label>
+                <Input
+                  id="monthly-email"
+                  type="email"
+                  placeholder="example@school.edu.hk（多個請用逗號分隔）"
+                  value={monthlyEmail}
+                  onChange={(event) => setMonthlyEmail(event.target.value)}
+                />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
         <Card className="shadow-none">
@@ -378,9 +391,21 @@ export default function ReportsPage() {
                 onClick={() => void sendDailyReportEmail()}
               >
                 <Mail className="size-4" />
-                寄出 Email
+                {showDailyEmail ? "確認寄出" : "寄出 Email"}
               </Button>
             </div>
+            {showDailyEmail ? (
+              <div className="grid gap-1.5">
+                <Label htmlFor="daily-email">收件人電郵</Label>
+                <Input
+                  id="daily-email"
+                  type="email"
+                  placeholder="example@school.edu.hk（多個請用逗號分隔）"
+                  value={dailyEmail}
+                  onChange={(event) => setDailyEmail(event.target.value)}
+                />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
         <Card className="shadow-none">

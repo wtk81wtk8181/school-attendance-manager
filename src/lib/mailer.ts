@@ -1,20 +1,13 @@
+import { parseEmailAddresses, toMailRecipients } from "@/lib/email-utils";
+
+export { parseEmailAddresses, toMailRecipients };
+
 export function hasSmtpConfig(): boolean {
   return Boolean(process.env.SMTP_HOST);
 }
 
 export function smtpRequiredMessage() {
   return "未設定 SMTP，無法寄出電郵。請在 Vercel 專案設定 SMTP_HOST、SMTP_USER、SMTP_PASS。";
-}
-
-export function parseEmailAddresses(input: string): string[] {
-  return [...new Set(input.split(/[,;\s]+/).map((item) => item.trim()).filter(Boolean))];
-}
-
-export function toMailRecipients(emails: string[]) {
-  return emails.map((email) => ({
-    name: email.split("@")[0] || email,
-    email,
-  }));
 }
 
 export async function sendMail(input: {
