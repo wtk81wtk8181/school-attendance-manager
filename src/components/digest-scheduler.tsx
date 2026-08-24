@@ -6,8 +6,6 @@ import { useAbsenceDigest } from "@/hooks/use-absence-digest";
 import { useStore } from "@/lib/store";
 
 let autoSentStamp = "";
-let lastHandledSyncId: string | null = null;
-let schedulerPrimed = false;
 
 export function DigestScheduler() {
   const { ready, currentUser, state } = useStore();
@@ -17,28 +15,6 @@ export function DigestScheduler() {
     if (!ready || currentUser?.role !== "office" || busy) return;
     if (!state.digestSettings.enabled) return;
     if (state.digestRecipients.filter((item) => item.enabled).length === 0) return;
-
-    const latestSync = state.syncLogs[0];
-    if (!schedulerPrimed) {
-      lastHandledSyncId = latestSync?.id ?? null;
-      schedulerPrimed = true;
-    } else if (
-      state.digestSettings.sendAfterSync &&
-      latestSync &&
-      lastHandledSyncId !== latestSync.id &&
-      state.digestSettings.lastSentSchoolDay !== latestSync.schoolDay
-    ) {
-      lastHandledSyncId = latestSync.id;
-      void run({
-        schoolDay: latestSync.schoolDay,
-        sendEmail: true,
-        trigger: "sync",
-        download: true,
-      });
-      return;
-    } else if (latestSync) {
-      lastHandledSyncId = latestSync.id;
-    }
 
     const today = hongKongToday();
     if (state.digestSettings.lastSentOn === today) return;
@@ -51,7 +27,6 @@ export function DigestScheduler() {
       schoolDay,
       sendEmail: true,
       trigger: "auto",
-      download: true,
     });
   }, [
     busy,
@@ -61,7 +36,6 @@ export function DigestScheduler() {
     state.absences,
     state.digestRecipients,
     state.digestSettings,
-    state.syncLogs,
   ]);
 
   return null;

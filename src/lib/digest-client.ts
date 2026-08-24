@@ -4,7 +4,7 @@ import type { MonthlyReportPayload } from "@/lib/monthly-report";
 
 export interface DigestSendResult {
   ok: boolean;
-  mode: "smtp" | "mock";
+  mode: "smtp" | "export";
   emailed: boolean;
   filename: string;
   fileBase64: string;

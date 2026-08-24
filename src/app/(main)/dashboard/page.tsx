@@ -216,7 +216,7 @@ export default function DashboardPage() {
                   <ClipboardList className="mt-0.5 size-4 text-[var(--school-navy)]" />
                   <div className="flex-1">
                     <p className="font-medium">待審核缺席 {pending.length} 筆</p>
-                    <p className="text-xs text-muted-foreground">核對醫生證明、家長信與 eClass 點名</p>
+                    <p className="text-xs text-muted-foreground">核對醫生證明、家長信與缺席原因</p>
                   </div>
                   <Button size="sm" variant="outline" render={<Link href="/reviews" />}>
                     審核
@@ -272,7 +272,7 @@ export default function DashboardPage() {
             出席率與缺席上限（備註）
           </CardTitle>
           <CardDescription className="text-[11px] leading-5">
-            老師在 eClass 點名後，數據會同步至此。獲批請假（醫生紙／家長信）不計入出席率，也不計入缺席上限。
+            校務處於本平台登記或審核缺席。獲批請假（醫生紙／家長信）不計入出席率，也不計入缺席上限。
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-2 px-4 pb-4 text-[11px] leading-5 text-muted-foreground md:grid-cols-2">

@@ -32,7 +32,7 @@ import {
 import { formatDate, formatDateTime, formatShortDate } from "@/lib/format";
 import { classLabel } from "@/lib/rules";
 import { useStore } from "@/lib/store";
-import type { DigestRecipient } from "@/lib/types";
+import { createRecipientFromEmail } from "@/lib/email-utils";
 import { toast } from "sonner";
 
 export default function DigestPage() {
@@ -69,14 +69,12 @@ export default function DigestPage() {
       toast.error("請輸入姓名及有效電郵。");
       return;
     }
-    const recipient: DigestRecipient = {
-      id: `rcpt-${Date.now()}`,
-      name: name.trim(),
-      email: email.trim(),
+    const recipient = createRecipientFromEmail(email.trim(), true);
+    upsertRecipient({
+      ...recipient,
+      name: name.trim() || recipient.name,
       title: title.trim() || "指定收件人",
-      enabled: true,
-    };
-    upsertRecipient(recipient);
+    });
     setName("");
     setEmail("");
     toast.success("已加入收件人。");
@@ -87,7 +85,7 @@ export default function DigestPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">每日全校缺席名單</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          eClass 點名同步後，系統按班整合缺席／請假，匯出 Excel，並電郵給指定對象。
+          校務處按班整合全校缺席／請假，匯出 Excel 並電郵給指定對象。
         </p>
       </div>
 
@@ -217,8 +215,7 @@ export default function DigestPage() {
             <CardHeader>
               <CardTitle>自動寄出設定</CardTitle>
               <CardDescription>
-                每日到達指定時間，或 eClass 同步完成後，自動整合全校各班缺席並電郵 Excel。
-                未設定 SMTP 時會模擬寄出並下載檔案。
+                每日到達指定時間，自動整合全校各班缺席並電郵 Excel（需設定 SMTP）。
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -230,15 +227,6 @@ export default function DigestPage() {
                   }
                 />
                 啟用每日自動整合及電郵
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={state.digestSettings.sendAfterSync}
-                  onCheckedChange={(checked) =>
-                    saveDigestSettings({ sendAfterSync: checked === true })
-                  }
-                />
-                eClass 同步完成後即時寄出該上課日名單
               </label>
               <div className="grid max-w-xs gap-1.5">
                 <Label htmlFor="send-time">每日寄出時間（香港時間）</Label>
@@ -347,12 +335,8 @@ export default function DigestPage() {
               </p>
               <p className="mt-1 text-muted-foreground">
                 {formatDateTime(log.createdAt)}　
-                {log.trigger === "auto"
-                  ? "每日自動"
-                  : log.trigger === "sync"
-                    ? "同步後自動"
-                    : "手動"}
-                　{log.mode === "smtp" ? "SMTP 寄出" : "模擬寄出"}　
+                {log.trigger === "auto" ? "每日自動" : "手動"}　
+                {log.mode === "smtp" ? "SMTP 寄出" : "僅匯出"}　
                 {log.rowCount} 筆　{log.recipientEmails.length} 位收件人
               </p>
               <p className="mt-1 text-xs text-muted-foreground">

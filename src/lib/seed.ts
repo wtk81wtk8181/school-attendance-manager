@@ -21,7 +21,6 @@ const academicYear: AcademicYear = {
 const digestSettings: DigestSettings = {
   enabled: false,
   sendTime: "08:30",
-  sendAfterSync: true,
   lastSentOn: "",
   lastSentSchoolDay: "",
 };
@@ -49,7 +48,6 @@ export function createSeed(): AppState {
     absences: [],
     warnings: [],
     notifications: [],
-    syncLogs: [],
     digestSettings,
     digestRecipients: [],
     digestLogs: [],

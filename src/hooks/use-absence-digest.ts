@@ -45,21 +45,14 @@ export function useAbsenceDigest() {
             classCount: payload.summaries.length,
             rowCount: payload.rows.length,
             mode: result.mode,
-            note:
-              result.mode === "smtp"
-                ? "已透過 SMTP 寄出 Excel 附件。"
-                : "示範環境未設定 SMTP，已模擬寄出並下載 Excel。",
+            note: "已透過 SMTP 寄出 Excel 附件。",
           });
-          toast.success(
-            result.mode === "smtp"
-              ? `已電郵 ${result.filename} 予 ${result.recipientCount} 人。`
-              : `已模擬寄出 ${result.filename}（未設定 SMTP）。Excel 將下載到本機。`
-          );
+          toast.success(`已電郵 ${result.filename} 予 ${result.recipientCount} 人。`);
         } else {
           toast.success(`已匯出 ${result.filename}`);
         }
 
-        if (options.download || result.mode === "mock") {
+        if (options.download || !options.sendEmail) {
           downloadBase64Xlsx(result.filename, result.fileBase64);
         }
         return result;

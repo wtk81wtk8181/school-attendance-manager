@@ -71,13 +71,13 @@ export interface NotificationItem {
   createdAt: string;
   title: string;
   body: string;
-  kind: "warning" | "review" | "sync" | "digest";
+  kind: "warning" | "review" | "digest";
   studentId?: string;
   warningId?: string;
   read: boolean;
 }
 
-export type DigestTrigger = "auto" | "manual" | "sync";
+export type DigestTrigger = "auto" | "manual";
 
 export interface DigestRecipient {
   id: string;
@@ -91,7 +91,6 @@ export interface DigestRecipient {
 export interface DigestSettings {
   enabled: boolean;
   sendTime: string;
-  sendAfterSync: boolean;
   lastSentOn: string;
   lastSentSchoolDay: string;
 }
@@ -105,17 +104,7 @@ export interface DigestLog {
   recipientEmails: string[];
   classCount: number;
   rowCount: number;
-  mode: "smtp" | "mock";
-  note: string;
-}
-
-export interface SyncLog {
-  id: string;
-  syncedAt: string;
-  schoolDay: string;
-  present: number;
-  absent: number;
-  leave: number;
+  mode: "smtp" | "export";
   note: string;
 }
 
@@ -135,7 +124,6 @@ export interface AppState {
   absences: AbsenceRecord[];
   warnings: WarningLetter[];
   notifications: NotificationItem[];
-  syncLogs: SyncLog[];
   digestSettings: DigestSettings;
   digestRecipients: DigestRecipient[];
   digestLogs: DigestLog[];

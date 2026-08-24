@@ -37,7 +37,7 @@ export default function ReviewsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">缺席文件審核</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          核對 eClass 同步的缺席原因與文件。批准後該日不計入出席率及缺席上限。
+          核對缺席原因與醫生紙／家長信。批准後該日不計入出席率及缺席上限。
         </p>
       </div>
 

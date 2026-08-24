@@ -40,7 +40,6 @@ const officeNav = [
   { href: "/warnings", label: "警告信", icon: FileWarning },
   { href: "/reports", label: "報表導出", icon: BarChart3 },
   { href: "/digest", label: "每日缺席電郵", icon: Mail },
-  { href: "/sync", label: "eClass 同步", icon: RefreshCw },
 ];
 
 const homeroomNav = [
@@ -105,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     currentUser?.role === "office"
       ? state.notifications
       : state.notifications.filter((item) => {
-          if (!item.studentId) return item.kind === "sync";
+          if (!item.studentId) return false;
           const student = state.students.find((row) => row.id === item.studentId);
           return student?.className === state.selectedClassName;
         });

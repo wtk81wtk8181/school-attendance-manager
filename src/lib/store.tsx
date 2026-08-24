@@ -15,6 +15,7 @@ import { hongKongToday } from "@/lib/digest";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
 import {
   mergeSharedState,
+  mergeDigestRecipient,
   needsOperationalDataReset,
   readSession,
   sharedFromState,
@@ -647,17 +648,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const upsertRecipient = useCallback((recipient: DigestRecipient) => {
-    patch((prev) => {
-      const exists = prev.digestRecipients.some((item) => item.id === recipient.id);
-      return {
-        ...prev,
-        digestRecipients: exists
-          ? prev.digestRecipients.map((item) =>
-              item.id === recipient.id ? recipient : item
-            )
-          : [...prev.digestRecipients, recipient],
-      };
-    });
+    patch((prev) => ({
+      ...prev,
+      digestRecipients: mergeDigestRecipient(prev.digestRecipients, recipient),
+    }));
   }, []);
 
   const removeRecipient = useCallback((id: string) => {

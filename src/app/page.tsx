@@ -49,7 +49,7 @@ export default function LoginPage() {
               <CardContent className="space-y-4">
                 <p className="text-sm leading-6 text-muted-foreground">
                   {user.role === "office"
-                    ? "全權管理缺席紀錄、文件審核、警告信跟進與 eClass 數據同步。"
+                    ? "全權管理缺席紀錄、文件審核、警告信跟進與報表電郵。"
                     : "登入後選擇班別，檢閱該班出勤率與缺席詳情，不能編輯。"}
                 </p>
                 <Button
@@ -67,9 +67,9 @@ export default function LoginPage() {
         </div>
 
         <p className="mt-8 text-center text-sm leading-6 text-white/65">
-          日常點名仍在 eClass 完成。老師進入本平台後，可自行選擇要查看的班別。
+          老師進入本平台後，可自行選擇要查看的班別。
           <br />
-          此為校園示範環境，數據儲存於本機瀏覽器。
+          出勤資料儲存於雲端資料庫，校務處與老師可檢視同一份最新紀錄。
         </p>
       </div>
     </div>

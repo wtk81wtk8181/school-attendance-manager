@@ -1,13 +1,17 @@
 import { createSeed, OPERATIONAL_DATA_VERSION } from "@/lib/seed";
-import type { AppState, Student } from "@/lib/types";
+import type { AppState, DigestRecipient, Student } from "@/lib/types";
 
 export const SESSION_KEY = "hongtao-attendance-session-v1";
 
 export function sharedFromState(
   state: AppState
 ): Omit<AppState, "currentUserId" | "selectedClassName" | "users"> {
-  const { currentUserId: _user, selectedClassName: _class, users: _users, ...shared } =
-    state;
+  const {
+    currentUserId: _user,
+    selectedClassName: _class,
+    users: _users,
+    ...shared
+  } = state;
   return shared;
 }
 
@@ -34,7 +38,6 @@ function emptyOperationalData(seed: AppState) {
     absences: seed.absences,
     warnings: seed.warnings,
     notifications: seed.notifications,
-    syncLogs: seed.syncLogs,
     digestLogs: seed.digestLogs,
     digestSettings: {
       ...seed.digestSettings,
@@ -47,14 +50,13 @@ function emptyOperationalData(seed: AppState) {
 export function mergeSharedState(shared: Partial<AppState>): AppState {
   const seed = createSeed();
   const replaceRoster = shouldReplaceRoster(shared, seed);
-  const resetOperational = shouldResetOperationalData(shared) || replaceRoster;
+  const resetOperational = shouldResetOperationalData(shared);
   const operational = resetOperational
     ? emptyOperationalData(seed)
     : {
         absences: shared.absences ?? seed.absences,
         warnings: shared.warnings ?? seed.warnings,
         notifications: shared.notifications ?? seed.notifications,
-        syncLogs: shared.syncLogs ?? seed.syncLogs,
         digestLogs: shared.digestLogs ?? seed.digestLogs,
         digestSettings: shared.digestSettings ?? seed.digestSettings,
       };
@@ -75,6 +77,32 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
 export function needsOperationalDataReset(shared: Partial<AppState>) {
   const seed = createSeed();
   return shouldResetOperationalData(shared) || shouldReplaceRoster(shared, seed);
+}
+
+export function normalizeDigestRecipient(recipient: DigestRecipient): DigestRecipient {
+  const email = recipient.email.trim();
+  const normalized = email.toLowerCase();
+  return {
+    ...recipient,
+    email,
+    name: recipient.name.trim() || email.split("@")[0] || email,
+    title: recipient.title.trim() || "收件人",
+    id: `rcpt-${normalized.replace(/[^a-z0-9]+/g, "-")}`,
+  };
+}
+
+export function mergeDigestRecipient(
+  recipients: DigestRecipient[],
+  incoming: DigestRecipient
+): DigestRecipient[] {
+  const next = normalizeDigestRecipient(incoming);
+  const index = recipients.findIndex(
+    (item) => item.email.toLowerCase() === next.email.toLowerCase()
+  );
+  if (index === -1) return [...recipients, next];
+  const merged = [...recipients];
+  merged[index] = { ...merged[index], ...next, id: next.id };
+  return merged;
 }
 
 export function readSession(): Pick<AppState, "currentUserId" | "selectedClassName"> {
