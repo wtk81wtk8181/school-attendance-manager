@@ -84,7 +84,33 @@ let hydrated = false;
 let useDatabase = false;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 let refreshing = false;
-let lastLocalChangeAt = 0;
+let remoteRevision = 0;
+let flushInFlight: Promise<boolean> | null = null;
+
+interface StateApiPayload {
+  state: AppState;
+  database: boolean;
+  revision?: number;
+  updatedAt?: string;
+}
+
+function applyServerState(serverState: AppState) {
+  const session = readSession();
+  memory = {
+    ...mergeSharedState(serverState),
+    currentUserId: session.currentUserId ?? memory.currentUserId,
+    selectedClassName: session.selectedClassName ?? memory.selectedClassName,
+  };
+  emit();
+}
+
+function clearStaleLocalCache() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 function persistSession(state: AppState) {
   writeSession(state);
@@ -96,27 +122,43 @@ function persistLocal(state: AppState) {
 
 async function flushPersist(): Promise<boolean> {
   if (!useDatabase || !hydrated) return true;
-  if (persistTimer) {
-    clearTimeout(persistTimer);
-    persistTimer = null;
-  }
-  try {
-    const response = await fetch("/api/state", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state: sharedFromState(memory) }),
-    });
-    if (!response.ok) {
-      toast.error("無法同步至資料庫，請稍後再試。");
+  if (flushInFlight) return flushInFlight;
+
+  flushInFlight = (async () => {
+    if (persistTimer) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+    try {
+      const response = await fetch("/api/state", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ state: sharedFromState(memory) }),
+      });
+      const data = (await response.json()) as StateApiPayload & { ok?: boolean };
+      if (!response.ok) {
+        toast.error("無法同步至資料庫，請稍後再試。");
+        persistLocal(memory);
+        return false;
+      }
+      if (typeof data.revision === "number") {
+        remoteRevision = data.revision;
+      }
+      if (data.state) {
+        applyServerState(data.state);
+      }
+      clearStaleLocalCache();
+      return true;
+    } catch {
+      toast.error("無法連接資料庫，資料暫存於本機。");
       persistLocal(memory);
       return false;
+    } finally {
+      flushInFlight = null;
     }
-    return true;
-  } catch {
-    toast.error("無法連接資料庫，資料暫存於本機。");
-    persistLocal(memory);
-    return false;
-  }
+  })();
+
+  return flushInFlight;
 }
 
 function persistShared(state: AppState) {
@@ -195,7 +237,6 @@ function getReadyServerSnapshot() {
 
 function assign(next: AppState) {
   memory = next;
-  lastLocalChangeAt = Date.now();
   if (hydrated) persistShared(memory);
   emit();
 }
@@ -206,22 +247,25 @@ function patch(updater: (prev: AppState) => AppState) {
 
 async function refreshFromDatabase(force = false) {
   if (!useDatabase || !hydrated || refreshing) return;
-  if (!force && Date.now() - lastLocalChangeAt < 3000) return;
+
+  await flushPersist();
 
   refreshing = true;
   try {
-    const session = readSession();
     const response = await fetch("/api/state", { cache: "no-store" });
-    if (!response.ok) return;
-    const data = (await response.json()) as { state: AppState; database: boolean };
+    if (!response.ok) {
+      if (force) toast.error("無法從資料庫讀取資料。");
+      return;
+    }
+    const data = (await response.json()) as StateApiPayload;
     if (!data.database) return;
 
-    memory = {
-      ...mergeSharedState(data.state),
-      currentUserId: session.currentUserId ?? memory.currentUserId,
-      selectedClassName: session.selectedClassName ?? memory.selectedClassName,
-    };
-    emit();
+    const serverRevision = data.revision ?? 0;
+    if (!force && serverRevision <= remoteRevision) return;
+
+    remoteRevision = serverRevision;
+    applyServerState(data.state);
+    clearStaleLocalCache();
   } finally {
     refreshing = false;
   }
@@ -232,14 +276,17 @@ async function hydrateFromStorage() {
   try {
     const response = await fetch("/api/state", { cache: "no-store" });
     if (response.ok) {
-      const data = (await response.json()) as { state: AppState; database: boolean };
+      const data = (await response.json()) as StateApiPayload;
       useDatabase = Boolean(data.database);
-      memory = {
-        ...mergeSharedState(data.state),
-        currentUserId: session.currentUserId,
-        selectedClassName: session.selectedClassName,
-      };
-      if (!useDatabase) {
+      if (useDatabase) {
+        remoteRevision = data.revision ?? 0;
+        memory = {
+          ...mergeSharedState(data.state),
+          currentUserId: session.currentUserId,
+          selectedClassName: session.selectedClassName,
+        };
+        clearStaleLocalCache();
+      } else {
         memory = loadLocalState();
       }
     } else {

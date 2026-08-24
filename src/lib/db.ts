@@ -1,9 +1,20 @@
 import { neon } from "@neondatabase/serverless";
 import { createSeed } from "@/lib/seed";
-import { mergeSharedState, sharedFromState, needsOperationalDataReset } from "@/lib/db-client";
+import {
+  mergeSharedState,
+  mergeSharedStates,
+  sharedFromState,
+  needsOperationalDataReset,
+} from "@/lib/db-client";
 import type { AppState } from "@/lib/types";
 
 const SNAPSHOT_ID = "default";
+
+export interface SharedSnapshot {
+  state: AppState;
+  revision: number;
+  updatedAt: string;
+}
 
 export function databaseUrl() {
   return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL;
@@ -19,7 +30,7 @@ function sql() {
   return neon(url);
 }
 
-export { mergeSharedState, sharedFromState };
+export { mergeSharedState, mergeSharedStates, sharedFromState };
 
 export async function ensureSchema() {
   const db = sql();
@@ -27,39 +38,110 @@ export async function ensureSchema() {
     CREATE TABLE IF NOT EXISTS app_snapshots (
       id TEXT PRIMARY KEY,
       payload JSONB NOT NULL,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      revision BIGINT NOT NULL DEFAULT 0
     )
   `;
+  await db`
+    ALTER TABLE app_snapshots
+    ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 0
+  `;
+}
+
+function formatUpdatedAt(value: unknown): string {
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string") return value;
+  return new Date().toISOString();
+}
+
+export async function loadSharedSnapshot(): Promise<SharedSnapshot> {
+  const seed = createSeed();
+  if (!hasDatabase()) {
+    return { state: seed, revision: 0, updatedAt: new Date().toISOString() };
+  }
+
+  await ensureSchema();
+  const db = sql();
+  const rows = await db`
+    SELECT payload, revision, updated_at
+    FROM app_snapshots
+    WHERE id = ${SNAPSHOT_ID}
+  `;
+
+  if (rows.length === 0) {
+    const saved = await saveSharedState(seed);
+    return saved;
+  }
+
+  const raw = rows[0].payload as Partial<AppState>;
+  const merged = mergeSharedState(raw);
+  const revision = Number(rows[0].revision ?? 0);
+  const updatedAt = formatUpdatedAt(rows[0].updated_at);
+
+  if (needsOperationalDataReset(raw)) {
+    return saveSharedState(merged);
+  }
+
+  return { state: merged, revision, updatedAt };
 }
 
 export async function loadSharedState(): Promise<AppState> {
-  const seed = createSeed();
-  if (!hasDatabase()) return seed;
-
-  await ensureSchema();
-  const db = sql();
-  const rows = await db`SELECT payload FROM app_snapshots WHERE id = ${SNAPSHOT_ID}`;
-  if (rows.length === 0) {
-    await saveSharedState(seed);
-    return seed;
-  }
-  const raw = rows[0].payload as Partial<AppState>;
-  const merged = mergeSharedState(raw);
-  if (needsOperationalDataReset(raw)) {
-    await saveSharedState(merged);
-  }
-  return merged;
+  const snapshot = await loadSharedSnapshot();
+  return snapshot.state;
 }
 
-export async function saveSharedState(state: AppState) {
-  if (!hasDatabase()) return;
+export async function saveSharedState(state: AppState): Promise<SharedSnapshot> {
+  if (!hasDatabase()) {
+    return { state, revision: 0, updatedAt: new Date().toISOString() };
+  }
+
   await ensureSchema();
   const db = sql();
   const payload = sharedFromState(state);
-  await db`
-    INSERT INTO app_snapshots (id, payload, updated_at)
-    VALUES (${SNAPSHOT_ID}, ${payload}, now())
+  const rows = await db`
+    INSERT INTO app_snapshots (id, payload, updated_at, revision)
+    VALUES (${SNAPSHOT_ID}, ${payload}, now(), 1)
     ON CONFLICT (id) DO UPDATE
-    SET payload = EXCLUDED.payload, updated_at = now()
+    SET payload = EXCLUDED.payload,
+        updated_at = now(),
+        revision = app_snapshots.revision + 1
+    RETURNING revision, updated_at
   `;
+
+  return {
+    state,
+    revision: Number(rows[0].revision ?? 1),
+    updatedAt: formatUpdatedAt(rows[0].updated_at),
+  };
+}
+
+/** 將 client 送出的資料與資料庫現有資料合併後再寫入。 */
+export async function saveMergedSharedState(
+  incoming: Partial<AppState>
+): Promise<SharedSnapshot> {
+  if (!hasDatabase()) {
+    throw new Error("Missing DATABASE_URL or POSTGRES_URL");
+  }
+
+  const current = await loadSharedSnapshot();
+  const merged = mergeSharedStates(current.state, incoming);
+
+  await ensureSchema();
+  const db = sql();
+  const payload = sharedFromState(merged);
+  const rows = await db`
+    INSERT INTO app_snapshots (id, payload, updated_at, revision)
+    VALUES (${SNAPSHOT_ID}, ${payload}, now(), ${current.revision + 1})
+    ON CONFLICT (id) DO UPDATE
+    SET payload = EXCLUDED.payload,
+        updated_at = now(),
+        revision = EXCLUDED.revision
+    RETURNING revision, updated_at
+  `;
+
+  return {
+    state: merged,
+    revision: Number(rows[0].revision ?? current.revision + 1),
+    updatedAt: formatUpdatedAt(rows[0].updated_at),
+  };
 }
