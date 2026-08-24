@@ -84,8 +84,7 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
 }
 
 export function needsOperationalDataReset(shared: Partial<AppState>) {
-  const seed = createSeed();
-  return shouldResetOperationalData(shared) || shouldReplaceRoster(shared, seed);
+  return shouldResetOperationalData(shared);
 }
 
 function activityTime(iso: string | undefined, fallback: string): number {

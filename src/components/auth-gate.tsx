@@ -1,19 +1,26 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { useStore } from "@/lib/store";
+import { useStore, rehydrateStore } from "@/lib/store";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const { ready, currentUser } = useStore();
+  const { ready, currentUser, usingDatabase } = useStore();
   const router = useRouter();
   const pathname = usePathname();
+  const retried = useRef(false);
 
   useEffect(() => {
     if (!ready) return;
     if (!currentUser) router.replace("/");
   }, [ready, currentUser, router]);
+
+  useEffect(() => {
+    if (!ready || usingDatabase || retried.current) return;
+    retried.current = true;
+    void rehydrateStore();
+  }, [ready, usingDatabase]);
 
   if (!ready) {
     return (

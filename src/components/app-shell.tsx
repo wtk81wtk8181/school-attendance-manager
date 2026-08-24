@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   Bell,
+  Check,
   ClipboardList,
   FileWarning,
   Home,
@@ -93,10 +94,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     markNotificationRead,
     markAllNotificationsRead,
     refreshFromDatabase,
+    saveToDatabase,
+    reconnectDatabase,
     usingDatabase,
+    pendingSave,
   } = useStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const nav = currentUser?.role === "office" ? officeNav : homeroomNav;
   const unread = state.notifications.filter((item) => !item.read);
@@ -152,25 +157,59 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 : ""}
             </p>
             <p className="text-[11px] text-muted-foreground">
-              {currentUser?.role === "office"
-                ? "可審核文件、更新缺席數據、每日寄出各班缺席 Excel"
-                : "只可檢閱所選班別的出勤與缺席紀錄，不能編輯"}
+              {usingDatabase
+                ? `雲端資料庫已連線・${state.students.length} 名學生・${state.absences.length} 筆缺席`
+                : "本機模式：另一部裝置看不到這裡的變更"}
             </p>
           </div>
           {usingDatabase ? (
+            <>
+              {currentUser?.role === "office" ? (
+                <Button
+                  size="sm"
+                  disabled={saving || (!pendingSave && !usingDatabase)}
+                  onClick={() => {
+                    setSaving(true);
+                    void saveToDatabase().finally(() => setSaving(false));
+                  }}
+                  className={
+                    pendingSave
+                      ? "bg-[var(--school-navy)] text-white hover:bg-[var(--school-navy)]/90"
+                      : undefined
+                  }
+                  variant={pendingSave ? "default" : "outline"}
+                >
+                  <Check className={saving ? "size-4 animate-pulse" : "size-4"} />
+                  {saving ? "儲存中……" : pendingSave ? "確定儲存" : "已儲存"}
+                </Button>
+              ) : null}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={syncing}
+                onClick={() => {
+                  setSyncing(true);
+                  void refreshFromDatabase().finally(() => setSyncing(false));
+                }}
+              >
+                <RefreshCw className={syncing ? "size-4 animate-spin" : "size-4"} />
+                同步資料
+              </Button>
+            </>
+          ) : (
             <Button
-              variant="outline"
               size="sm"
-              disabled={syncing}
+              variant="outline"
+              className="border-amber-600 text-amber-800"
               onClick={() => {
                 setSyncing(true);
-                void refreshFromDatabase().finally(() => setSyncing(false));
+                void reconnectDatabase().finally(() => setSyncing(false));
               }}
             >
               <RefreshCw className={syncing ? "size-4 animate-spin" : "size-4"} />
-              同步資料
+              連接資料庫
             </Button>
-          ) : null}
+          )}
           {currentUser?.role === "homeroom" && state.selectedClassName ? (
             <Button
               size="lg"

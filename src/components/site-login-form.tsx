@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
+import { rehydrateStore } from "@/lib/store";
 
 export function SiteLoginForm({ nextPath }: { nextPath: string }) {
   const router = useRouter();
@@ -33,6 +34,7 @@ export function SiteLoginForm({ nextPath }: { nextPath: string }) {
         return;
       }
 
+      await rehydrateStore();
       router.replace(nextPath);
       router.refresh();
     } catch {

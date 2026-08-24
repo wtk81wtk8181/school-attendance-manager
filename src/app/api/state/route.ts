@@ -8,49 +8,51 @@ import {
 import type { AppState } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function json(data: unknown, status = 200) {
+  return NextResponse.json(data, {
+    status,
+    headers: {
+      "Cache-Control": "private, no-store, no-cache, must-revalidate, max-age=0",
+      Pragma: "no-cache",
+    },
+  });
+}
 
 export async function GET() {
   try {
     const snapshot = await loadSharedSnapshot();
-    return NextResponse.json({
+    return json({
       state: snapshot.state,
       database: hasDatabase(),
       revision: snapshot.revision,
       updatedAt: snapshot.updatedAt,
     });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "讀取資料庫失敗。" },
-      { status: 500 }
-    );
+  } catch {
+    return json({ error: "讀取資料庫失敗。" }, 500);
   }
 }
 
 export async function PUT(request: Request) {
   if (!hasDatabase()) {
-    return NextResponse.json(
-      { error: "尚未設定 DATABASE_URL／POSTGRES_URL。" },
-      { status: 503 }
-    );
+    return json({ error: "尚未設定 DATABASE_URL／POSTGRES_URL。" }, 503);
   }
 
   try {
     const body = (await request.json()) as { state?: Partial<AppState> };
     if (!body?.state) {
-      return NextResponse.json({ error: "缺少 state。" }, { status: 400 });
+      return json({ error: "缺少 state。" }, 400);
     }
 
     const snapshot = await saveMergedSharedState(body.state);
-    return NextResponse.json({
+    return json({
       ok: true,
       revision: snapshot.revision,
       updatedAt: snapshot.updatedAt,
       state: sharedFromState(snapshot.state),
     });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "寫入資料庫失敗。" },
-      { status: 500 }
-    );
+  } catch {
+    return json({ error: "寫入資料庫失敗。" }, 500);
   }
 }

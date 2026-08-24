@@ -123,25 +123,31 @@ export async function saveMergedSharedState(
     throw new Error("Missing DATABASE_URL or POSTGRES_URL");
   }
 
-  const current = await loadSharedSnapshot();
-  const merged = mergeSharedStates(current.state, incoming);
-
   await ensureSchema();
   const db = sql();
-  const payload = sharedFromState(merged);
-  const rows = await db`
-    INSERT INTO app_snapshots (id, payload, updated_at, revision)
-    VALUES (${SNAPSHOT_ID}, ${payload}, now(), ${current.revision + 1})
-    ON CONFLICT (id) DO UPDATE
-    SET payload = EXCLUDED.payload,
-        updated_at = now(),
-        revision = EXCLUDED.revision
-    RETURNING revision, updated_at
-  `;
 
-  return {
-    state: merged,
-    revision: Number(rows[0].revision ?? current.revision + 1),
-    updatedAt: formatUpdatedAt(rows[0].updated_at),
-  };
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const current = await loadSharedSnapshot();
+    const merged = mergeSharedStates(current.state, incoming);
+    const payload = sharedFromState(merged);
+    const nextRevision = current.revision + 1;
+    const rows = await db`
+      UPDATE app_snapshots
+      SET payload = ${payload},
+          updated_at = now(),
+          revision = ${nextRevision}
+      WHERE id = ${SNAPSHOT_ID} AND revision = ${current.revision}
+      RETURNING revision, updated_at
+    `;
+
+    if (rows.length > 0) {
+      return {
+        state: merged,
+        revision: Number(rows[0].revision ?? nextRevision),
+        updatedAt: formatUpdatedAt(rows[0].updated_at),
+      };
+    }
+  }
+
+  throw new Error("資料庫同步衝突，請再試一次。");
 }

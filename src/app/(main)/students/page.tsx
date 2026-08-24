@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Search, Users } from "lucide-react";
+import { Search, Users, Check } from "lucide-react";
 import { AttendanceMark } from "@/components/attendance-mark";
 import { EmptyState } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
 import { LevelBadge } from "@/components/status-badges";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,13 +40,15 @@ import type { FormLevel, StudentStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export default function StudentsPage() {
-  const { state, visibleStudents, currentUser, setDayAttendance } = useStore();
+  const { state, visibleStudents, currentUser, setDayAttendance, saveToDatabase, pendingSave, usingDatabase } =
+    useStore();
   const isOffice = currentUser?.role === "office";
   const [query, setQuery] = useState("");
   const [form, setForm] = useState<string>("all");
   const [klass, setKlass] = useState<string>(isOffice ? "1A" : "all");
   const [level, setLevel] = useState<string>("all");
   const [schoolDay, setSchoolDay] = useState(hongKongToday);
+  const [saving, setSaving] = useState(false);
 
   const classes = useMemo(
     () => [...new Set(visibleStudents.map((item) => item.className))].sort(),
@@ -106,10 +109,41 @@ export default function StudentsPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {isOffice
-            ? "請先選班，再為該班每位學生標記當日出席、缺席、遲到或事假。點選姓名可查看缺席日期與文件。"
+            ? "請先選班，再為該班每位學生標記當日出席、缺席、遲到或事假。標記後請按「確定儲存」，另一部裝置才會看到。"
             : "點選學生可查看缺席日期、文件與審核狀態。老師帳號為唯讀，可更換班別。"}
         </p>
       </div>
+
+      {isOffice ? (
+        <div
+          className={cn(
+            "flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3",
+            pendingSave
+              ? "border-amber-300 bg-amber-50"
+              : usingDatabase
+                ? "border-emerald-200 bg-emerald-50"
+                : "border-rose-200 bg-rose-50"
+          )}
+        >
+          <p className="text-sm">
+            {usingDatabase
+              ? pendingSave
+                ? "已在本機標記出勤，尚未寫入雲端資料庫。"
+                : `已與資料庫同步（${state.absences.length} 筆缺席紀錄）。`
+              : "此裝置未連接資料庫，另一部電腦看不到這裡的變更。"}
+          </p>
+          <Button
+            disabled={saving || !usingDatabase}
+            onClick={() => {
+              setSaving(true);
+              void saveToDatabase().finally(() => setSaving(false));
+            }}
+          >
+            <Check className="size-4" />
+            {saving ? "儲存中……" : "確定儲存"}
+          </Button>
+        </div>
+      ) : null}
 
       {isOffice ? (
         <section className="space-y-3 rounded-xl border bg-white p-4">

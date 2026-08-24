@@ -73,7 +73,10 @@ interface StoreValue {
   removeRecipient: (id: string) => void;
   recordDigestSend: (log: Omit<DigestLog, "id" | "createdAt">) => void;
   refreshFromDatabase: () => Promise<void>;
+  saveToDatabase: () => Promise<boolean>;
+  reconnectDatabase: () => Promise<void>;
   usingDatabase: boolean;
+  pendingSave: boolean;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -86,12 +89,42 @@ let persistTimer: ReturnType<typeof setTimeout> | null = null;
 let refreshing = false;
 let remoteRevision = 0;
 let flushInFlight: Promise<boolean> | null = null;
+let dirty = false;
+let saveGeneration = 0;
 
 interface StateApiPayload {
   state: AppState;
   database: boolean;
   revision?: number;
   updatedAt?: string;
+  error?: string;
+}
+
+function isJsonResponse(response: Response) {
+  return (response.headers.get("content-type") ?? "").includes("application/json");
+}
+
+async function fetchStatePayload(
+  init: RequestInit = {}
+): Promise<StateApiPayload> {
+  const { headers: initHeaders, ...rest } = init;
+  const response = await fetch("/api/state", {
+    cache: "no-store",
+    credentials: "same-origin",
+    ...rest,
+    headers: {
+      Accept: "application/json",
+      ...(initHeaders ?? {}),
+    },
+  });
+  if (!isJsonResponse(response)) {
+    throw new Error("auth");
+  }
+  const data = (await response.json()) as StateApiPayload;
+  if (!response.ok) {
+    throw new Error(data.error || "http");
+  }
+  return data;
 }
 
 function applyServerState(serverState: AppState) {
@@ -121,36 +154,40 @@ function persistLocal(state: AppState) {
 }
 
 async function flushPersist(): Promise<boolean> {
-  if (!useDatabase || !hydrated) return true;
+  if (!useDatabase || !hydrated) return !dirty;
+  if (!dirty) return true;
   if (flushInFlight) return flushInFlight;
 
+  const generation = saveGeneration;
   flushInFlight = (async () => {
     if (persistTimer) {
       clearTimeout(persistTimer);
       persistTimer = null;
     }
     try {
-      const response = await fetch("/api/state", {
+      const data = await fetchStatePayload({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state: sharedFromState(memory) }),
+        body: JSON.stringify({
+          state: sharedFromState(memory),
+          baseRevision: remoteRevision,
+        }),
       });
-      const data = (await response.json()) as StateApiPayload & { ok?: boolean };
-      if (!response.ok) {
-        toast.error("無法同步至資料庫，請稍後再試。");
-        persistLocal(memory);
-        return false;
-      }
       if (typeof data.revision === "number") {
         remoteRevision = data.revision;
       }
       if (data.state) {
         applyServerState(data.state);
       }
+      if (saveGeneration === generation) {
+        dirty = false;
+        emit();
+      }
       clearStaleLocalCache();
       return true;
-    } catch {
-      toast.error("無法連接資料庫，資料暫存於本機。");
+    } catch (error) {
+      const auth = error instanceof Error && error.message === "auth";
+      toast.error(auth ? "尚未通過網站密碼，無法寫入資料庫。" : "無法同步至資料庫，資料暫存於本機。");
       persistLocal(memory);
       return false;
     } finally {
@@ -235,37 +272,58 @@ function getReadyServerSnapshot() {
   return false;
 }
 
-function assign(next: AppState) {
+function getDirtySnapshot() {
+  return dirty;
+}
+
+function getDirtyServerSnapshot() {
+  return false;
+}
+
+function assign(next: AppState, mode: "shared" | "session" = "shared") {
   memory = next;
+  if (mode === "session") {
+    persistSession(memory);
+    emit();
+    return;
+  }
+  dirty = true;
+  saveGeneration += 1;
   if (hydrated) persistShared(memory);
   emit();
 }
 
-function patch(updater: (prev: AppState) => AppState) {
-  assign(updater(memory));
+function patch(updater: (prev: AppState) => AppState, mode: "shared" | "session" = "shared") {
+  assign(updater(memory), mode);
 }
 
 async function refreshFromDatabase(force = false) {
-  if (!useDatabase || !hydrated || refreshing) return;
-
-  await flushPersist();
+  if (!hydrated || refreshing) return;
+  if (dirty) {
+    await flushPersist();
+  }
+  if (!useDatabase) return;
 
   refreshing = true;
   try {
-    const response = await fetch("/api/state", { cache: "no-store" });
-    if (!response.ok) {
-      if (force) toast.error("無法從資料庫讀取資料。");
-      return;
-    }
-    const data = (await response.json()) as StateApiPayload;
-    if (!data.database) return;
+    const data = await fetchStatePayload({ method: "GET" });
+    useDatabase = Boolean(data.database);
+    if (!useDatabase) return;
 
     const serverRevision = data.revision ?? 0;
-    if (!force && serverRevision <= remoteRevision) return;
+    if (!force && !dirty && serverRevision <= remoteRevision) return;
 
     remoteRevision = serverRevision;
     applyServerState(data.state);
     clearStaleLocalCache();
+  } catch (error) {
+    if (force) {
+      toast.error(
+        error instanceof Error && error.message === "auth"
+          ? "尚未通過網站密碼，無法讀取資料庫。"
+          : "無法從資料庫讀取資料。"
+      );
+    }
   } finally {
     refreshing = false;
   }
@@ -274,29 +332,30 @@ async function refreshFromDatabase(force = false) {
 async function hydrateFromStorage() {
   const session = readSession();
   try {
-    const response = await fetch("/api/state", { cache: "no-store" });
-    if (response.ok) {
-      const data = (await response.json()) as StateApiPayload;
-      useDatabase = Boolean(data.database);
-      if (useDatabase) {
-        remoteRevision = data.revision ?? 0;
-        memory = {
-          ...mergeSharedState(data.state),
-          currentUserId: session.currentUserId,
-          selectedClassName: session.selectedClassName,
-        };
-        clearStaleLocalCache();
-      } else {
-        memory = loadLocalState();
-      }
+    const data = await fetchStatePayload({ method: "GET" });
+    useDatabase = Boolean(data.database);
+    if (useDatabase) {
+      remoteRevision = data.revision ?? 0;
+      dirty = false;
+      memory = {
+        ...mergeSharedState(data.state),
+        currentUserId: session.currentUserId,
+        selectedClassName: session.selectedClassName,
+      };
+      clearStaleLocalCache();
     } else {
       memory = loadLocalState();
     }
   } catch {
+    useDatabase = false;
     memory = loadLocalState();
   }
   hydrated = true;
   emit();
+}
+
+export async function rehydrateStore() {
+  await hydrateFromStorage();
 }
 
 function nowIso() {
@@ -431,6 +490,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     () => useDatabase,
     () => false
   );
+  const pendingSave = useSyncExternalStore(
+    subscribe,
+    getDirtySnapshot,
+    getDirtyServerSnapshot
+  );
 
   useEffect(() => {
     void hydrateFromStorage();
@@ -452,16 +516,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }, 15000);
 
     const onBeforeUnload = () => {
+      if (!useDatabase || !dirty) return;
       if (persistTimer) {
         clearTimeout(persistTimer);
         persistTimer = null;
       }
-      if (!useDatabase) return;
       void fetch("/api/state", {
         method: "PUT",
         keepalive: true,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state: sharedFromState(memory) }),
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          state: sharedFromState(memory),
+          baseRevision: remoteRevision,
+        }),
       });
     };
 
@@ -473,7 +541,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
-  }, [ready]);
+  }, [ready, usingDatabase]);
 
   const currentUser = useMemo(
     () => state.users.find((user) => user.id === state.currentUserId) ?? null,
@@ -493,15 +561,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ...prev,
       currentUserId: userId,
       selectedClassName: userId === "u-office" ? null : prev.selectedClassName,
-    }));
+    }), "session");
   }, []);
 
   const logout = useCallback(() => {
-    patch((prev) => ({ ...prev, currentUserId: null, selectedClassName: null }));
+    patch((prev) => ({ ...prev, currentUserId: null, selectedClassName: null }), "session");
   }, []);
 
   const selectClass = useCallback((className: string | null) => {
-    patch((prev) => ({ ...prev, selectedClassName: className }));
+    patch((prev) => ({ ...prev, selectedClassName: className }), "session");
   }, []);
 
   const setDayAttendance = useCallback(
@@ -579,7 +647,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         late: "遲到",
         leave: "事假",
       };
-      toast.success(`已將當日狀態改為${labels[status]}。`);
+        toast.success(`已標記為${labels[status]}。請按「確定儲存」寫入資料庫。`);
     },
     [currentUser]
   );
@@ -742,7 +810,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const refreshFromDatabaseNow = useCallback(async () => {
     await flushPersist();
     await refreshFromDatabase(true);
-    toast.success("已從資料庫更新最新資料。");
+    toast.success(
+      `已從資料庫更新：${memory.students.length} 名學生、${memory.absences.length} 筆缺席紀錄。`
+    );
+  }, []);
+
+  const saveToDatabase = useCallback(async () => {
+    if (!useDatabase) {
+      await hydrateFromStorage();
+      if (!useDatabase) {
+        toast.error("尚未連接資料庫。請重新輸入網站密碼後再試。");
+        return false;
+      }
+    }
+    const ok = dirty ? await flushPersist() : true;
+    if (!ok) return false;
+    await refreshFromDatabase(true);
+    toast.success(
+      `已確定寫入資料庫：${memory.students.length} 名學生、${memory.absences.length} 筆缺席紀錄。`
+    );
+    return true;
+  }, []);
+
+  const reconnectDatabase = useCallback(async () => {
+    await hydrateFromStorage();
+    if (useDatabase) {
+      toast.success(
+        `已連接資料庫：${memory.students.length} 名學生、${memory.absences.length} 筆缺席紀錄。`
+      );
+    } else {
+      toast.error("仍未能連接資料庫，此裝置的變更不會出現在其他電腦。");
+    }
   }, []);
 
   const value = useMemo<StoreValue>(
@@ -765,7 +863,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeRecipient,
       recordDigestSend,
       refreshFromDatabase: refreshFromDatabaseNow,
+      saveToDatabase,
+      reconnectDatabase,
       usingDatabase,
+      pendingSave,
     }),
     [
       ready,
@@ -786,7 +887,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeRecipient,
       recordDigestSend,
       refreshFromDatabaseNow,
+      saveToDatabase,
+      reconnectDatabase,
       usingDatabase,
+      pendingSave,
     ]
   );
 
