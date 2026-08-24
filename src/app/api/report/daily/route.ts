@@ -1,21 +1,25 @@
 import { NextResponse } from "next/server";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatPercentExact } from "@/lib/format";
 import { sendMail } from "@/lib/mailer";
-import type { DailyReportPayload } from "@/lib/daily-report";
+import { buildDailySchoolWorkbook } from "@/lib/excel-daily";
+import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
+import type { DailySchoolReportPayload } from "@/lib/daily-report";
 import { SCHOOL_NAME } from "@/lib/seed";
 
 interface SendBody {
-  payload: DailyReportPayload;
+  payload: DailySchoolReportPayload;
   recipients: Array<{ name: string; email: string }>;
   sendEmail: boolean;
 }
 
 export async function POST(request: Request) {
   const body = (await request.json()) as SendBody;
-  if (!body?.payload?.schoolDay) {
-    return NextResponse.json({ error: "缺少上課日資料。" }, { status: 400 });
+  if (!body?.payload?.schoolDay || !Array.isArray(body.payload.classes)) {
+    return NextResponse.json({ error: "缺少每日缺席報告資料。" }, { status: 400 });
   }
 
+  const filename = `每日缺席報告-${body.payload.schoolDay}.xlsx`;
+  const buffer = await buildDailySchoolWorkbook(body.payload);
   const enabledRecipients = (body.recipients ?? []).filter((item) => item.email);
 
   if (body.sendEmail) {
@@ -25,6 +29,14 @@ export async function POST(request: Request) {
         subject: `【${SCHOOL_NAME}】${body.payload.schoolDay} 每日缺席報告`,
         html: dailyEmailHtml(body.payload, enabledRecipients),
         recipients: enabledRecipients,
+        attachments: [
+          {
+            filename,
+            content: buffer,
+            contentType:
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          },
+        ],
       });
     } catch (error) {
       return NextResponse.json(
@@ -38,16 +50,23 @@ export async function POST(request: Request) {
     ok: true,
     mode: body.sendEmail ? "smtp" : "export",
     emailed: Boolean(body.sendEmail && enabledRecipients.length > 0),
+    filename,
+    fileBase64: buffer.toString("base64"),
     recipientCount: enabledRecipients.length,
   });
 }
 
 function dailyEmailHtml(
-  payload: DailyReportPayload,
+  payload: DailySchoolReportPayload,
   recipients: Array<{ name: string; email: string }>
 ) {
-  const absentCount = payload.rows.filter((item) => item.status === "缺席").length;
-  const leaveCount = payload.rows.filter((item) => item.status === "請假").length;
+  const formCells = payload.formStats
+    .map((item) => `<td>${item.label}<br/>${formatPercentExact(item.attendanceRate)}</td>`)
+    .join("");
+  const staffHtml = STAFF_ABSENCE_ROWS.map((row) => {
+    const names = payload.staff[row.kind];
+    return `<p><strong>${row.label}：</strong>${names.length > 0 ? names.join("、") : "—"}</p>`;
+  }).join("");
 
   const table =
     payload.rows.length === 0
@@ -65,6 +84,7 @@ function dailyEmailHtml(
       </thead>
       <tbody>
         ${payload.rows
+          .filter((row) => row.statusKey !== "late")
           .map(
             (row) =>
               `<tr>
@@ -82,9 +102,14 @@ function dailyEmailHtml(
 
   return `
     <p>各位同事：</p>
-    <p>以下為 <strong>${SCHOOL_NAME}</strong> ${formatDate(payload.schoolDay)}（${payload.scope}）之<strong>每日缺席報告</strong>，包括請假原因、致電到校人士及致電時間。</p>
+    <p>附件為 <strong>${SCHOOL_NAME}</strong> ${formatDate(payload.schoolDay)} 之<strong>學生缺席每日報告表</strong>（Excel，含各班出席、缺席名單、年級百分比及守時百分比）。</p>
+    <p>全校出席 ${payload.totalPresent}／${payload.totalRegistered}（${formatPercentExact(payload.totalAttendanceRate)}）；缺席或請假 ${payload.totalAbsent} 人；遲到 ${payload.totalLate} 人；守時百分比 ${formatPercentExact(payload.schoolPunctualityRate)}。</p>
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;margin:12px 0">
+      <tr><th>級別出席率</th>${formCells}<td>總數<br/>${formatPercentExact(payload.totalAttendanceRate)}</td></tr>
+    </table>
+    <p><strong>教職員缺席情況</strong></p>
+    ${staffHtml}
     ${table}
-    <p style="margin-top:12px">缺席 ${absentCount} 人、請假 ${leaveCount} 人，合計 ${payload.rows.length} 人。</p>
     <p>此郵件已發送至：${recipients.map((item) => `${item.name} &lt;${item.email}&gt;`).join("、")}。</p>
     <p>${SCHOOL_NAME}校務處</p>
   `;

@@ -1,78 +1,210 @@
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
-import { formatDate } from "@/lib/format";
-import type { DailyAbsenceRow } from "@/lib/daily-report";
+import { formatPercentExact } from "@/lib/format";
+import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
+import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
 
 export function DailyAbsenceReport({
-  schoolDay,
-  rows,
-  scope,
+  payload,
 }: {
-  schoolDay: string;
-  rows: DailyAbsenceRow[];
-  scope: string;
+  payload: DailySchoolReportPayload;
 }) {
+  const left = payload.classes.slice(0, 15);
+  const right = payload.classes.slice(15, 30);
+
   return (
-    <article className="letter-sheet mx-auto bg-white text-zinc-900">
-      <header className="border-b-2 border-[var(--school-navy)] pb-4 text-center">
-        <p className="text-xs tracking-[0.3em] text-[var(--school-gold)]">
+    <article className="daily-school-sheet mx-auto bg-white text-zinc-900">
+      <header className="border-b-2 border-[var(--school-navy)] pb-2 text-center">
+        <p className="text-[10px] tracking-[0.28em] text-[var(--school-gold)]">
           {SCHOOL_NAME_EN}
         </p>
-        <h1 className="mt-1 font-serif text-3xl tracking-widest text-[var(--school-navy)]">
+        <h1 className="mt-0.5 font-serif text-xl tracking-widest text-[var(--school-navy)] sm:text-2xl">
           {SCHOOL_NAME}
         </h1>
-        <p className="mt-2 text-sm text-zinc-600">校務處　學生出勤事務</p>
-        <h2 className="mt-4 text-xl font-semibold tracking-wide">每日缺席報告</h2>
-        <p className="mt-2 text-sm">上課日：{formatDate(schoolDay)}</p>
-        <p className="text-xs text-zinc-500">範圍：{scope}</p>
+        <h2 className="mt-1 text-base font-semibold">學生缺席每日報告表</h2>
+        <p className="mt-0.5 text-sm">{payload.dateLabel}</p>
       </header>
 
-      <p className="mt-6 text-sm leading-7">
-        下列為該上課日缺席或請假學生名單，包括請假原因、致電到校人士及致電時間，供校務處存檔及跟進。
-      </p>
+      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+        <ClassColumn title="中一至中三" blocks={left} />
+        <ClassColumn title="中四至中六" blocks={right} />
+      </div>
 
-      {rows.length === 0 ? (
-        <p className="mt-8 text-center text-sm text-zinc-500">該日沒有缺席或請假紀錄。</p>
-      ) : (
-        <table className="mt-6 w-full border-collapse text-sm">
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <section className="rounded border border-zinc-300 p-2">
+          <h3 className="text-sm font-semibold">教職員缺席情況</h3>
+          <div className="mt-2 space-y-1.5 text-xs">
+            {STAFF_ABSENCE_ROWS.map((row) => (
+              <p key={row.kind}>
+                <span className="font-medium">{row.label}：</span>
+                {payload.staff[row.kind].length > 0
+                  ? payload.staff[row.kind].join("、")
+                  : "—"}
+              </p>
+            ))}
+          </div>
+        </section>
+
+        <section className="overflow-x-auto rounded border border-zinc-300">
+          <table className="w-full border-collapse text-center text-[11px]">
+            <thead>
+              <tr className="bg-slate-100">
+                <th className="border border-zinc-300 px-1 py-1 text-left">級別</th>
+                {payload.formStats.map((item) => (
+                  <th key={item.form} className="border border-zinc-300 px-1 py-1">
+                    {item.label}
+                  </th>
+                ))}
+                <th className="border border-zinc-300 px-1 py-1">總數</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-zinc-300 px-1 py-1 text-left">學生出席人數</td>
+                {payload.formStats.map((item) => (
+                  <td key={item.form} className="border border-zinc-300 px-1 py-1">
+                    {item.present}
+                  </td>
+                ))}
+                <td className="border border-zinc-300 px-1 py-1 font-medium">
+                  {payload.totalPresent}
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-zinc-300 px-1 py-1 text-left">學生註冊人數</td>
+                {payload.formStats.map((item) => (
+                  <td key={item.form} className="border border-zinc-300 px-1 py-1">
+                    {item.registered}
+                  </td>
+                ))}
+                <td className="border border-zinc-300 px-1 py-1 font-medium">
+                  {payload.totalRegistered}
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-zinc-300 px-1 py-1 text-left">
+                  學生出席百分比
+                </td>
+                {payload.formStats.map((item) => (
+                  <td key={item.form} className="border border-zinc-300 px-1 py-1">
+                    {formatPercentExact(item.attendanceRate)}
+                  </td>
+                ))}
+                <td className="border border-zinc-300 px-1 py-1 font-medium">
+                  {formatPercentExact(payload.totalAttendanceRate)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <section className="mt-3 overflow-x-auto rounded border border-zinc-300">
+        <table className="w-full min-w-[720px] border-collapse text-center text-[10px]">
           <thead>
-            <tr className="border-b-2 border-[var(--school-navy)] text-left">
-              <th className="py-2 pr-2 font-semibold">班別</th>
-              <th className="py-2 pr-2 font-semibold">學生姓名</th>
-              <th className="py-2 pr-2 font-semibold">請假／缺席原因</th>
-              <th className="py-2 pr-2 font-semibold">致電到校人士</th>
-              <th className="py-2 font-semibold">致電時間</th>
+            <tr className="bg-slate-100">
+              <th className="border border-zinc-300 px-1 py-1 text-left">班別</th>
+              {payload.classes.map((item) => (
+                <th key={item.className} className="border border-zinc-300 px-0.5 py-1">
+                  {item.className}
+                </th>
+              ))}
+              <th className="border border-zinc-300 px-1 py-1">TOTAL</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-b border-zinc-200 align-top">
-                <td className="py-2.5 pr-2">{row.classLabel}</td>
-                <td className="py-2.5 pr-2">
-                  <p className="font-medium">{row.name}</p>
-                  <p className="text-xs text-zinc-500">
-                    {row.studentNo}　{row.status}
-                    {row.days === 0.5 ? "（半日）" : ""}
-                  </p>
+            <tr>
+              <td className="border border-zinc-300 px-1 py-1 text-left">缺席人數</td>
+              {payload.classes.map((item) => (
+                <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+                  {item.absentCount || ""}
                 </td>
-                <td className="py-2.5 pr-2">{row.reason}</td>
-                <td className="py-2.5 pr-2">{row.calledBy}</td>
-                <td className="py-2.5 whitespace-nowrap">{row.calledAt}</td>
-              </tr>
-            ))}
+              ))}
+              <td className="border border-zinc-300 px-1 py-1">{payload.totalAbsent}</td>
+            </tr>
+            <tr>
+              <td className="border border-zinc-300 px-1 py-1 text-left">出席百分比</td>
+              {payload.classes.map((item) => (
+                <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+                  {formatPercentExact(item.attendanceRate)}
+                </td>
+              ))}
+              <td className="border border-zinc-300 px-1 py-1">
+                {formatPercentExact(payload.totalAttendanceRate)}
+              </td>
+            </tr>
+            <tr>
+              <td className="border border-zinc-300 px-1 py-1 text-left">學生遲到人數</td>
+              {payload.classes.map((item) => (
+                <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+                  {item.lateCount}
+                </td>
+              ))}
+              <td className="border border-zinc-300 px-1 py-1">{payload.totalLate}</td>
+            </tr>
+            <tr>
+              <td className="border border-zinc-300 px-1 py-1 text-left">守時百分比</td>
+              {payload.classes.map((item) => (
+                <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+                  {formatPercentExact(item.punctualityRate)}
+                </td>
+              ))}
+              <td className="border border-zinc-300 px-1 py-1">
+                {formatPercentExact(payload.schoolPunctualityRate)}
+              </td>
+            </tr>
           </tbody>
         </table>
-      )}
-
-      <div className="mt-8 grid grid-cols-3 gap-4 text-sm">
-        <p>缺席 {rows.filter((item) => item.status === "缺席").length} 人</p>
-        <p>請假 {rows.filter((item) => item.status === "請假").length} 人</p>
-        <p>合計 {rows.length} 人</p>
-      </div>
-
-      <div className="mt-12 grid grid-cols-2 gap-10 text-sm">
-        <p>校務處核對：____________________</p>
-        <p>日期：____________________</p>
-      </div>
+      </section>
     </article>
+  );
+}
+
+function ClassColumn({
+  title,
+  blocks,
+}: {
+  title: string;
+  blocks: DailyClassBlock[];
+}) {
+  return (
+    <section>
+      <h3 className="mb-1 text-center text-sm font-semibold">{title}</h3>
+      <table className="w-full border-collapse text-[11px]">
+        <thead>
+          <tr className="bg-slate-100 text-center">
+            <th className="border border-zinc-300 px-1 py-1">班別代碼</th>
+            <th className="border border-zinc-300 px-1 py-1">課室容額</th>
+            <th className="border border-zinc-300 px-1 py-1">出席</th>
+            <th className="border border-zinc-300 px-1 py-1">早退</th>
+            <th className="border border-zinc-300 px-1 py-1 text-left">缺席名單及原因</th>
+          </tr>
+        </thead>
+        <tbody>
+          {blocks.map((block) => (
+            <tr key={block.className} className="align-top">
+              <td className="border border-zinc-300 px-1 py-1 text-center font-medium">
+                {block.className}
+              </td>
+              <td className="border border-zinc-300 px-1 py-1 text-center">
+                {block.registered || ""}
+              </td>
+              <td className="border border-zinc-300 px-1 py-1 text-center">{block.present}</td>
+              <td className="border border-zinc-300 px-1 py-1 text-center">
+                {block.earlyLeave || ""}
+              </td>
+              <td className="border border-zinc-300 px-1 py-1">
+                {block.absenceLines.length > 0 ? (
+                  block.absenceLines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))
+                ) : (
+                  <span className="text-zinc-400">—</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }

@@ -47,7 +47,7 @@ export default function StudentsPage() {
   const [form, setForm] = useState<string>("all");
   const [klass, setKlass] = useState<string>(isOffice ? "1A" : "all");
   const [level, setLevel] = useState<string>("all");
-  const [schoolDay, setSchoolDay] = useState(hongKongToday);
+  const [schoolDay, setSchoolDay] = useState(() => hongKongToday());
   const [saving, setSaving] = useState(false);
 
   const classes = useMemo(

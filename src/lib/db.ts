@@ -48,6 +48,11 @@ export async function ensureSchema() {
   `;
 }
 
+function asRevision(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function formatUpdatedAt(value: unknown): string {
   if (value instanceof Date) return value.toISOString();
   if (typeof value === "string") return value;
@@ -75,7 +80,7 @@ export async function loadSharedSnapshot(): Promise<SharedSnapshot> {
 
   const raw = rows[0].payload as Partial<AppState>;
   const merged = mergeSharedState(raw);
-  const revision = Number(rows[0].revision ?? 0);
+  const revision = asRevision(rows[0].revision);
   const updatedAt = formatUpdatedAt(rows[0].updated_at);
 
   if (needsOperationalDataReset(raw)) {
@@ -110,7 +115,7 @@ export async function saveSharedState(state: AppState): Promise<SharedSnapshot> 
 
   return {
     state,
-    revision: Number(rows[0].revision ?? 1),
+    revision: asRevision(rows[0].revision ?? 1),
     updatedAt: formatUpdatedAt(rows[0].updated_at),
   };
 }
@@ -128,22 +133,23 @@ export async function saveMergedSharedState(
 
   for (let attempt = 0; attempt < 4; attempt++) {
     const current = await loadSharedSnapshot();
+    const currentRevision = asRevision(current.revision);
     const merged = mergeSharedStates(current.state, incoming);
     const payload = sharedFromState(merged);
-    const nextRevision = current.revision + 1;
+    const nextRevision = currentRevision + 1;
     const rows = await db`
       UPDATE app_snapshots
       SET payload = ${payload},
           updated_at = now(),
           revision = ${nextRevision}
-      WHERE id = ${SNAPSHOT_ID} AND revision = ${current.revision}
+      WHERE id = ${SNAPSHOT_ID} AND revision = ${currentRevision}
       RETURNING revision, updated_at
     `;
 
     if (rows.length > 0) {
       return {
         state: merged,
-        revision: Number(rows[0].revision ?? nextRevision),
+        revision: asRevision(rows[0].revision ?? nextRevision),
         updatedAt: formatUpdatedAt(rows[0].updated_at),
       };
     }

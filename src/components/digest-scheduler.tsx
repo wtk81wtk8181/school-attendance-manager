@@ -27,6 +27,8 @@ export function DigestScheduler() {
       schoolDay,
       sendEmail: true,
       trigger: "auto",
+    }).then((result) => {
+      if (!result) autoSentStamp = "";
     });
   }, [
     busy,

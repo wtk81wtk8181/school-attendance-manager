@@ -13,8 +13,8 @@ export const OPERATIONAL_DATA_VERSION = 3;
 
 const academicYear: AcademicYear = {
   label: "2026-2027",
-  start: "2025-09-01",
-  end: "2026-07-10",
+  start: "2026-09-01",
+  end: "2027-07-10",
   schoolDays: 118,
 };
 
@@ -51,6 +51,11 @@ export function createSeed(): AppState {
     digestSettings,
     digestRecipients: [],
     digestLogs: [],
+    clearedAttendance: [],
+    removedRecipients: [],
+    staffMembers: [],
+    staffRemovals: [],
+    staffDailyAbsences: [],
     dataVersion: OPERATIONAL_DATA_VERSION,
   };
 }

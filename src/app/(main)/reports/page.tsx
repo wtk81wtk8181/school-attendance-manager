@@ -22,16 +22,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { downloadCsv, formatPercent, formatShortDate } from "@/lib/format";
+import { downloadCsv, formatPercent, formatPercentExact, formatShortDate } from "@/lib/format";
 import {
   buildStudentStats,
   classLabel,
   formLabel,
 } from "@/lib/rules";
 import { AbsenceDetailFields } from "@/components/absence-detail-fields";
+import { DailyAbsenceReport } from "@/components/daily-absence-report";
+import { DailyStaffSection } from "@/components/daily-staff-section";
 import { documentLabels, reviewLabels, warningStatusLabels, warningTypeLabels } from "@/components/status-badges";
-import { buildDailyAbsenceRows } from "@/lib/daily-report";
-import { resolveDigestSchoolDay } from "@/lib/digest";
+import { buildDailyAbsenceRows, buildDailySchoolReport } from "@/lib/daily-report";
+import { hongKongToday, resolveDigestSchoolDay } from "@/lib/digest";
 import { buildMonthlyReport, currentYearMonth, monthRange } from "@/lib/monthly-report";
 import { EmailRecipientPicker } from "@/components/email-recipient-picker";
 import { downloadBase64Xlsx, requestDailyReport, requestMonthlyReport } from "@/lib/digest-client";
@@ -41,18 +43,29 @@ import type { FormLevel } from "@/lib/types";
 import { toast } from "sonner";
 
 export default function ReportsPage() {
-  const { state, visibleStudents, currentUser, updateAbsenceDetails, upsertRecipient } = useStore();
+  const {
+    state,
+    visibleStudents,
+    currentUser,
+    updateAbsenceDetails,
+    upsertRecipient,
+  } = useStore();
   const canEditDaily = currentUser?.role === "office";
+  const today = hongKongToday();
   const [form, setForm] = useState("all");
   const [klass, setKlass] = useState("all");
-  const [from, setFrom] = useState(state.academicYear.start);
-  const [to, setTo] = useState(state.academicYear.end);
+  const [from, setFrom] = useState(
+    state.academicYear.start <= today ? state.academicYear.start : today
+  );
+  const [to, setTo] = useState(
+    state.academicYear.end >= today ? state.academicYear.end : today
+  );
   const [reportDay, setReportDay] = useState(
     resolveDigestSchoolDay(state.absences)
   );
   const [month, setMonth] = useState(currentYearMonth);
   const [monthlyBusy, setMonthlyBusy] = useState(false);
-  const [dailyEmailBusy, setDailyEmailBusy] = useState(false);
+  const [dailyBusy, setDailyBusy] = useState(false);
   const [monthlyEmail, setMonthlyEmail] = useState("");
   const [dailyEmail, setDailyEmail] = useState("");
   const [showMonthlyEmail, setShowMonthlyEmail] = useState(false);
@@ -117,6 +130,15 @@ export default function ReportsPage() {
     reportDay
   );
 
+  const dailySchoolReport = buildDailySchoolReport(
+    visibleStudents,
+    state.absences,
+    reportDay,
+    state.staffMembers,
+    state.staffDailyAbsences,
+    dailyScope
+  );
+
   const monthlyReport = buildMonthlyReport(visibleStudents, state.absences, month);
 
   function exportDailyPdf() {
@@ -129,38 +151,39 @@ export default function ReportsPage() {
     toast.success("已開啟每日缺席報告，請在列印視窗選擇「儲存為 PDF」。");
   }
 
-  async function sendDailyReportEmail() {
-    if (!showDailyEmail) {
+  async function runDailyReport(sendEmail: boolean) {
+    if (sendEmail && !showDailyEmail) {
       setShowDailyEmail(true);
       return;
     }
 
     persistRecipientEmails(dailyEmail, state.digestRecipients, upsertRecipient);
     const recipients = resolveSendRecipients(state.digestRecipients, dailyEmail);
-    if (recipients.length === 0) {
+    if (sendEmail && recipients.length === 0) {
       toast.error("請勾選或輸入至少一個電郵地址。");
       return;
     }
 
-    setDailyEmailBusy(true);
+    setDailyBusy(true);
     try {
       const result = await requestDailyReport({
-        payload: {
-          schoolDay: reportDay,
-          scope: dailyScope,
-          rows: dailyRows,
-        },
-        sendEmail: true,
-        recipients,
+        payload: dailySchoolReport,
+        sendEmail,
+        recipients: sendEmail ? recipients : [],
       });
 
-      toast.success(
-        `已將 ${formatShortDate(reportDay)} 每日缺席報告電郵予 ${result.recipientCount} 位收件人。`
-      );
+      if (sendEmail) {
+        toast.success(
+          `已將 ${formatShortDate(reportDay)} 每日缺席報告電郵予 ${result.recipientCount} 位收件人。`
+        );
+      } else {
+        toast.success(`已產生 ${result.filename}`);
+        downloadBase64Xlsx(result.filename, result.fileBase64);
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "無法寄出每日缺席報告。");
+      toast.error(error instanceof Error ? error.message : "無法產生每日缺席報告。");
     } finally {
-      setDailyEmailBusy(false);
+      setDailyBusy(false);
     }
   }
 
@@ -213,7 +236,7 @@ export default function ReportsPage() {
 
   function exportAbsences() {
     downloadCsv(`缺席記錄統計-${from}-${to}.csv`, [
-      ["日期", "班別", "學號", "姓名", "eClass", "日數", "原因", "致電人士", "致電時間", "文件", "是否提交", "審核", "計入缺席"],
+      ["日期", "班別", "學號", "姓名", "狀態", "日數", "原因", "致電人士", "致電時間", "文件", "是否提交", "審核", "計入缺席"],
       ...absences.map((item) => {
         const student = state.students.find((row) => row.id === item.studentId);
         return [
@@ -266,7 +289,7 @@ export default function ReportsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">數據導出與報表</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          可按年級、班別與日期篩選，匯出每日缺席 PDF、出席率總表、缺席統計，以及警告信存檔清單。
+          可按年級、班別與日期篩選，匯出學校格式每日缺席 Excel／PDF、出席率總表、缺席統計，以及警告信存檔清單。
         </p>
       </div>
 
@@ -365,7 +388,8 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle className="text-base">每日缺席報告</CardTitle>
             <CardDescription>
-              {formatShortDate(reportDay)}　{dailyRows.length} 名學生缺席或請假
+              {formatShortDate(reportDay)}　全校出席 {formatPercentExact(dailySchoolReport.totalAttendanceRate)}
+              ，{dailySchoolReport.totalAbsent} 人缺席或請假
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -379,14 +403,18 @@ export default function ReportsPage() {
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button onClick={exportDailyPdf}>
+              <Button disabled={dailyBusy} onClick={() => void runDailyReport(false)}>
+                <Download className="size-4" />
+                生成 Excel
+              </Button>
+              <Button variant="outline" onClick={exportDailyPdf}>
                 <FileText className="size-4" />
                 匯出 PDF
               </Button>
               <Button
                 variant="outline"
-                disabled={dailyEmailBusy}
-                onClick={() => void sendDailyReportEmail()}
+                disabled={dailyBusy}
+                onClick={() => void runDailyReport(true)}
               >
                 <Mail className="size-4" />
                 {showDailyEmail ? "確認寄出" : "寄出 Email"}
@@ -443,6 +471,26 @@ export default function ReportsPage() {
             </Button>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="rounded-xl border bg-white p-4">
+        <DailyStaffSection date={reportDay} />
+      </div>
+
+      <div className="overflow-auto rounded-xl border bg-white p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <p className="font-medium">學校格式預覽</p>
+            <p className="text-xs text-muted-foreground">
+              含各班出席、缺席名單、年級百分比、守時百分比及教職員缺席情況
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={exportDailyPdf}>
+            <FileText className="size-4" />
+            匯出 PDF
+          </Button>
+        </div>
+        <DailyAbsenceReport payload={dailySchoolReport} />
       </div>
 
       <div className="rounded-xl border bg-white">

@@ -12,7 +12,7 @@ const DETAIL_HEADERS = [
   "姓名",
   "英文名",
   "班主任",
-  "eClass",
+  "狀態",
   "日數",
   "原因",
   "文件類型",
@@ -51,7 +51,7 @@ function addSummarySheet(workbook: ExcelJS.Workbook, payload: DigestPayload) {
 
   sheet.mergeCells("A3:I3");
   sheet.getCell("A3").value =
-    "資料來源：eClass 點名同步。獲批請假不計入出席率及缺席上限。";
+    "資料來源：校務處於本平台登記。獲批請假不計入出席率及缺席上限。";
   sheet.getCell("A3").font = { size: 10, italic: true, color: { argb: "FF5C6570" } };
 
   const headers = [

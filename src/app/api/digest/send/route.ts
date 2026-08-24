@@ -102,7 +102,7 @@ function emailHtml(
 ) {
   return `
     <p>各位同事：</p>
-    <p>附件為 <strong>${SCHOOL_NAME}</strong> ${payload.schoolDay} 上課日之<strong>全校各班缺席名單</strong>（Excel）。資料已由 eClass 點名自動整合。</p>
+    <p>附件為 <strong>${SCHOOL_NAME}</strong> ${payload.schoolDay} 上課日之<strong>全校各班缺席名單</strong>（Excel）。資料由校務處於本平台登記。</p>
     ${classSummaryTable(payload)}
     <p style="margin-top:16px"></p>
     ${studentDetailTable(payload)}

@@ -52,7 +52,7 @@ export default function ReviewsPage() {
             records={byStatus("pending")}
             showStudent
             emptyTitle="沒有待審核紀錄"
-            emptyDescription="所有同步缺席均已完成審核。新的 eClass 點名匯入後會出現在這裡。"
+            emptyDescription="所有缺席紀錄均已完成審核。校務處新增的缺席會出現在這裡。"
           />
         </TabsContent>
         <TabsContent value="approved" className="mt-4 rounded-xl border bg-white">

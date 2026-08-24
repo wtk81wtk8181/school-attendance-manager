@@ -55,19 +55,8 @@ export async function requestDailyReport(input: {
   payload: DailyReportPayload;
   recipients: Array<{ name: string; email: string }>;
   sendEmail: boolean;
-}): Promise<Omit<DigestSendResult, "filename" | "fileBase64">> {
-  const response = await fetch("/api/report/daily", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-  const data = (await response.json()) as Omit<DigestSendResult, "filename" | "fileBase64"> & {
-    error?: string;
-  };
-  if (!response.ok) {
-    throw new Error(data.error || "無法寄出每日缺席報告。");
-  }
-  return data;
+}): Promise<DigestSendResult> {
+  return postReport("/api/report/daily", input, "無法產生每日缺席報告。");
 }
 
 export function downloadBase64Xlsx(filename: string, base64: string) {

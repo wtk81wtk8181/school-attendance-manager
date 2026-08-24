@@ -105,6 +105,13 @@
   box-sizing: border-box;
 }
 
+.daily-school-sheet {
+  width: 297mm;
+  max-width: 100%;
+  padding: 8mm 10mm 10mm;
+  box-sizing: border-box;
+}
+
 @media print {
   @page {
     size: A4;
@@ -125,5 +132,10 @@
     min-height: auto;
     padding: 0;
     box-shadow: none !important;
+  }
+
+  .daily-school-sheet {
+    width: auto;
+    padding: 0;
   }
 }

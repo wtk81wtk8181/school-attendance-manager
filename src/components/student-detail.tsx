@@ -124,7 +124,7 @@ export function StudentDetail({ id }: { id: string }) {
       <Card className="shadow-none">
         <CardHeader>
           <CardTitle>缺席與請假紀錄</CardTitle>
-          <CardDescription>來自 eClass 點名。校務處負責核對文件與批准。</CardDescription>
+          <CardDescription>由校務處登記。請核對文件與批准狀態。</CardDescription>
         </CardHeader>
         <CardContent className="px-0">
           <AbsenceTable

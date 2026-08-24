@@ -186,7 +186,7 @@ export default function DigestPage() {
               <TableRow>
                 <TableHead>班別</TableHead>
                 <TableHead>學生</TableHead>
-                <TableHead>eClass</TableHead>
+                <TableHead>狀態</TableHead>
                 <TableHead>原因</TableHead>
                 <TableHead>審核</TableHead>
               </TableRow>

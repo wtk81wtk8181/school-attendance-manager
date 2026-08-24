@@ -53,6 +53,7 @@ export function createRecipientFromEmail(email: string, enabled = true): DigestR
     email: trimmed,
     title: "收件人",
     enabled,
+    updatedAt: new Date().toISOString(),
   };
 }
 

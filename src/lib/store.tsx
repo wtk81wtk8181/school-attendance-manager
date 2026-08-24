@@ -15,12 +15,14 @@ import { hongKongToday } from "@/lib/digest";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
 import {
   mergeSharedState,
+  mergeSharedStates,
   mergeDigestRecipient,
   needsOperationalDataReset,
   readSession,
   sharedFromState,
   writeSession,
 } from "@/lib/db-client";
+import { emptyStaffDaily, staffDailyFor, withToggledStaff } from "@/lib/staff";
 import type {
   AbsenceRecord,
   AppState,
@@ -30,6 +32,7 @@ import type {
   DigestSettings,
   DocumentType,
   ReviewStatus,
+  StaffAbsenceKind,
   Student,
   User,
   WarningLetter,
@@ -71,6 +74,14 @@ interface StoreValue {
   saveDigestSettings: (settings: Partial<DigestSettings>) => void;
   upsertRecipient: (recipient: DigestRecipient) => void;
   removeRecipient: (id: string) => void;
+  addStaffMember: (name: string) => boolean;
+  removeStaffMember: (id: string) => void;
+  toggleStaffAbsence: (
+    date: string,
+    kind: StaffAbsenceKind,
+    staffId: string,
+    selected: boolean
+  ) => void;
   recordDigestSend: (log: Omit<DigestLog, "id" | "createdAt">) => void;
   refreshFromDatabase: () => Promise<void>;
   saveToDatabase: () => Promise<boolean>;
@@ -127,10 +138,14 @@ async function fetchStatePayload(
   return data;
 }
 
-function applyServerState(serverState: AppState) {
+function applyServerState(serverState: AppState, localOverlay?: AppState) {
   const session = readSession();
+  let next = mergeSharedState(serverState);
+  if (localOverlay) {
+    next = mergeSharedStates(next, localOverlay);
+  }
   memory = {
-    ...mergeSharedState(serverState),
+    ...next,
     currentUserId: session.currentUserId ?? memory.currentUserId,
     selectedClassName: session.selectedClassName ?? memory.selectedClassName,
   };
@@ -159,6 +174,7 @@ async function flushPersist(): Promise<boolean> {
   if (flushInFlight) return flushInFlight;
 
   const generation = saveGeneration;
+  const payload = sharedFromState(memory);
   flushInFlight = (async () => {
     if (persistTimer) {
       clearTimeout(persistTimer);
@@ -169,17 +185,22 @@ async function flushPersist(): Promise<boolean> {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          state: sharedFromState(memory),
+          state: payload,
           baseRevision: remoteRevision,
         }),
       });
-      if (typeof data.revision === "number") {
-        remoteRevision = data.revision;
+      if (typeof data.revision === "number" || typeof data.revision === "string") {
+        remoteRevision = Number(data.revision);
       }
       if (data.state) {
-        applyServerState(data.state);
-      }
-      if (saveGeneration === generation) {
+        if (saveGeneration === generation) {
+          applyServerState(data.state);
+          dirty = false;
+          emit();
+        } else {
+          applyServerState(data.state, memory);
+        }
+      } else if (saveGeneration === generation) {
         dirty = false;
         emit();
       }
@@ -297,25 +318,31 @@ function patch(updater: (prev: AppState) => AppState, mode: "shared" | "session"
   assign(updater(memory), mode);
 }
 
-async function refreshFromDatabase(force = false) {
-  if (!hydrated || refreshing) return;
+async function refreshFromDatabase(force = false): Promise<boolean> {
+  if (!hydrated || refreshing) return false;
   if (dirty) {
-    await flushPersist();
+    const saved = await flushPersist();
+    if (!saved) return false;
   }
-  if (!useDatabase) return;
+  if (!useDatabase) return false;
 
   refreshing = true;
   try {
     const data = await fetchStatePayload({ method: "GET" });
     useDatabase = Boolean(data.database);
-    if (!useDatabase) return;
+    if (!useDatabase) return false;
 
-    const serverRevision = data.revision ?? 0;
-    if (!force && !dirty && serverRevision <= remoteRevision) return;
+    const serverRevision = Number(data.revision ?? 0);
+    if (!force && !dirty && serverRevision <= remoteRevision) return true;
 
     remoteRevision = serverRevision;
-    applyServerState(data.state);
+    if (dirty) {
+      applyServerState(data.state, memory);
+    } else {
+      applyServerState(data.state);
+    }
     clearStaleLocalCache();
+    return true;
   } catch (error) {
     if (force) {
       toast.error(
@@ -324,6 +351,7 @@ async function refreshFromDatabase(force = false) {
           : "無法從資料庫讀取資料。"
       );
     }
+    return false;
   } finally {
     refreshing = false;
   }
@@ -331,24 +359,41 @@ async function refreshFromDatabase(force = false) {
 
 async function hydrateFromStorage() {
   const session = readSession();
+  const hadDirty = dirty;
+  const local = memory;
   try {
     const data = await fetchStatePayload({ method: "GET" });
     useDatabase = Boolean(data.database);
     if (useDatabase) {
-      remoteRevision = data.revision ?? 0;
-      dirty = false;
-      memory = {
-        ...mergeSharedState(data.state),
-        currentUserId: session.currentUserId,
-        selectedClassName: session.selectedClassName,
-      };
+      remoteRevision = Number(data.revision ?? 0);
+      if (hadDirty) {
+        memory = {
+          ...mergeSharedStates(mergeSharedState(data.state), local),
+          currentUserId: session.currentUserId ?? local.currentUserId,
+          selectedClassName: session.selectedClassName ?? local.selectedClassName,
+        };
+        dirty = true;
+      } else {
+        dirty = false;
+        memory = {
+          ...mergeSharedState(data.state),
+          currentUserId: session.currentUserId,
+          selectedClassName: session.selectedClassName,
+        };
+      }
       clearStaleLocalCache();
     } else {
       memory = loadLocalState();
     }
   } catch {
     useDatabase = false;
-    memory = loadLocalState();
+    memory = hadDirty
+      ? {
+          ...local,
+          currentUserId: session.currentUserId ?? local.currentUserId,
+          selectedClassName: session.selectedClassName ?? local.selectedClassName,
+        }
+      : loadLocalState();
   }
   hydrated = true;
   emit();
@@ -599,6 +644,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           nextAbsences = prev.absences.filter(
             (item) => !(item.studentId === studentId && item.date === date)
           );
+          const clear = {
+            studentId,
+            date,
+            clearedAt: nowIso(),
+          };
+          const clearedAttendance = [
+            clear,
+            ...(prev.clearedAttendance ?? []).filter(
+              (item) => !(item.studentId === studentId && item.date === date)
+            ),
+          ];
+          return applyWarnings(
+            { ...prev, absences: nextAbsences, clearedAttendance },
+            student,
+            "校務處"
+          );
         } else {
           const defaultReason =
             status === "absent" ? "缺席" : status === "late" ? "遲到" : "事假";
@@ -638,7 +699,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             : [nextRecord, ...prev.absences];
         }
 
-        return applyWarnings({ ...prev, absences: nextAbsences }, student, "校務處");
+        return applyWarnings(
+          {
+            ...prev,
+            absences: nextAbsences,
+            clearedAttendance: (prev.clearedAttendance ?? []).filter(
+              (item) => !(item.studentId === studentId && item.date === date)
+            ),
+          },
+          student,
+          "校務處"
+        );
       });
 
       const labels = {
@@ -647,7 +718,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         late: "遲到",
         leave: "事假",
       };
-        toast.success(`已標記為${labels[status]}。請按「確定儲存」寫入資料庫。`);
+      toast.success(`已標記為${labels[status]}。請按「確定儲存」寫入資料庫。`);
     },
     [currentUser]
   );
@@ -763,18 +834,110 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const upsertRecipient = useCallback((recipient: DigestRecipient) => {
-    patch((prev) => ({
-      ...prev,
-      digestRecipients: mergeDigestRecipient(prev.digestRecipients, recipient),
-    }));
+    patch((prev) => {
+      const next = { ...recipient, updatedAt: nowIso() };
+      return {
+        ...prev,
+        digestRecipients: mergeDigestRecipient(prev.digestRecipients, next),
+        removedRecipients: (prev.removedRecipients ?? []).filter(
+          (item) => item.email.toLowerCase() !== next.email.trim().toLowerCase()
+        ),
+      };
+    });
   }, []);
 
   const removeRecipient = useCallback((id: string) => {
-    patch((prev) => ({
-      ...prev,
-      digestRecipients: prev.digestRecipients.filter((item) => item.id !== id),
-    }));
+    patch((prev) => {
+      const current = prev.digestRecipients.find((item) => item.id === id);
+      return {
+        ...prev,
+        digestRecipients: prev.digestRecipients.filter((item) => item.id !== id),
+        removedRecipients: current
+          ? [
+              {
+                id: current.id,
+                email: current.email,
+                removedAt: nowIso(),
+              },
+              ...(prev.removedRecipients ?? []).filter(
+                (item) =>
+                  item.id !== current.id &&
+                  item.email.toLowerCase() !== current.email.toLowerCase()
+              ),
+            ]
+          : prev.removedRecipients ?? [],
+      };
+    });
   }, []);
+
+  const addStaffMember = useCallback((name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return false;
+    let added = false;
+    patch((prev) => {
+      const members = prev.staffMembers ?? [];
+      if (members.some((item) => item.name === trimmed)) return prev;
+      added = true;
+      return {
+        ...prev,
+        staffMembers: [
+          ...members,
+          {
+            id: `staff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            name: trimmed,
+            updatedAt: nowIso(),
+          },
+        ],
+      };
+    });
+    return added;
+  }, []);
+
+  const removeStaffMember = useCallback((id: string) => {
+    patch((prev) => {
+      const current = (prev.staffMembers ?? []).find((item) => item.id === id);
+      if (!current) return prev;
+      const strip = (ids: string[]) => ids.filter((item) => item !== id);
+      return {
+        ...prev,
+        staffMembers: (prev.staffMembers ?? []).filter((item) => item.id !== id),
+        staffRemovals: [
+          { id, removedAt: nowIso() },
+          ...(prev.staffRemovals ?? []).filter((item) => item.id !== id),
+        ],
+        staffDailyAbsences: (prev.staffDailyAbsences ?? []).map((item) => ({
+          ...item,
+          sickIds: strip(item.sickIds),
+          personalIds: strip(item.personalIds),
+          officialIds: strip(item.officialIds),
+          earlyIds: strip(item.earlyIds),
+        })),
+      };
+    });
+  }, []);
+
+  const toggleStaffAbsence = useCallback(
+    (date: string, kind: StaffAbsenceKind, staffId: string, selected: boolean) => {
+      patch((prev) => {
+        const current = staffDailyFor(prev.staffDailyAbsences, date);
+        const next = withToggledStaff(
+          current.updatedAt ? current : emptyStaffDaily(date),
+          kind,
+          staffId,
+          selected,
+          nowIso()
+        );
+        return {
+          ...prev,
+          staffDailyAbsences: [
+            next,
+            ...(prev.staffDailyAbsences ?? []).filter((item) => item.date !== date),
+          ],
+        };
+      });
+    },
+    []
+  );
 
   const recordDigestSend = useCallback((log: Omit<DigestLog, "id" | "createdAt">) => {
     const createdAt = nowIso();
@@ -808,8 +971,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshFromDatabaseNow = useCallback(async () => {
-    await flushPersist();
-    await refreshFromDatabase(true);
+    const flushed = await flushPersist();
+    if (!flushed) return;
+    const ok = await refreshFromDatabase(true);
+    if (!ok) return;
     toast.success(
       `已從資料庫更新：${memory.students.length} 名學生、${memory.absences.length} 筆缺席紀錄。`
     );
@@ -825,7 +990,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
     const ok = dirty ? await flushPersist() : true;
     if (!ok) return false;
-    await refreshFromDatabase(true);
+    const refreshed = await refreshFromDatabase(true);
+    if (!refreshed) return false;
     toast.success(
       `已確定寫入資料庫：${memory.students.length} 名學生、${memory.absences.length} 筆缺席紀錄。`
     );
@@ -861,6 +1027,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       saveDigestSettings,
       upsertRecipient,
       removeRecipient,
+      addStaffMember,
+      removeStaffMember,
+      toggleStaffAbsence,
       recordDigestSend,
       refreshFromDatabase: refreshFromDatabaseNow,
       saveToDatabase,
@@ -885,6 +1054,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       saveDigestSettings,
       upsertRecipient,
       removeRecipient,
+      addStaffMember,
+      removeStaffMember,
+      toggleStaffAbsence,
       recordDigestSend,
       refreshFromDatabaseNow,
       saveToDatabase,

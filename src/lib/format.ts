@@ -36,6 +36,16 @@ export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
+export function formatPercentExact(value: number, digits = 2): string {
+  return `${(value * 100).toFixed(digits)}%`;
+}
+
+export function formatSchoolReportDate(iso: string): string {
+  const date = parseIsoDate(iso);
+  const weekday = new Intl.DateTimeFormat("zh-HK", { weekday: "long" }).format(date);
+  return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()} ${weekday}`;
+}
+
 function parseIsoDate(iso: string): Date {
   if (iso.includes("T")) return new Date(iso);
   const [year, month, day] = iso.split("-").map(Number);

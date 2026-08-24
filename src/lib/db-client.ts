@@ -2,10 +2,15 @@ import { createSeed, OPERATIONAL_DATA_VERSION } from "@/lib/seed";
 import type {
   AbsenceRecord,
   AppState,
+  AttendanceClear,
   DigestLog,
   DigestRecipient,
   DigestSettings,
   NotificationItem,
+  RecipientRemoval,
+  StaffDailyAbsence,
+  StaffMember,
+  StaffRemoval,
   Student,
   WarningLetter,
 } from "@/lib/types";
@@ -48,6 +53,8 @@ function emptyOperationalData(seed: AppState) {
     warnings: seed.warnings,
     notifications: seed.notifications,
     digestLogs: seed.digestLogs,
+    clearedAttendance: seed.clearedAttendance,
+    removedRecipients: seed.removedRecipients,
     digestSettings: {
       ...seed.digestSettings,
       lastSentOn: "",
@@ -68,17 +75,23 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
         notifications: shared.notifications ?? seed.notifications,
         digestLogs: shared.digestLogs ?? seed.digestLogs,
         digestSettings: shared.digestSettings ?? seed.digestSettings,
+        clearedAttendance: shared.clearedAttendance ?? seed.clearedAttendance,
+        removedRecipients: shared.removedRecipients ?? seed.removedRecipients,
       };
 
   return {
     ...seed,
     ...shared,
     ...operational,
+    academicYear: seed.academicYear,
     users: seed.users,
     currentUserId: null,
     selectedClassName: null,
     students: replaceRoster ? seed.students : (shared.students ?? seed.students),
     digestRecipients: shared.digestRecipients ?? seed.digestRecipients,
+    staffMembers: shared.staffMembers ?? seed.staffMembers,
+    staffRemovals: shared.staffRemovals ?? seed.staffRemovals,
+    staffDailyAbsences: shared.staffDailyAbsences ?? seed.staffDailyAbsences,
     dataVersion: OPERATIONAL_DATA_VERSION,
   };
 }
@@ -130,7 +143,41 @@ function pickStudents(current: Student[], incoming: Student[], seed: Student[]):
   return incoming.length >= current.length ? incoming : current;
 }
 
-function mergeAbsences(current: AbsenceRecord[], incoming: AbsenceRecord[]): AbsenceRecord[] {
+function mergeClears(
+  current: AttendanceClear[] | undefined,
+  incoming: AttendanceClear[] | undefined
+): AttendanceClear[] {
+  const map = new Map<string, AttendanceClear>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const key = `${item.studentId}:${item.date}`;
+    const existing = map.get(key);
+    if (!existing || item.clearedAt >= existing.clearedAt) {
+      map.set(key, item);
+    }
+  }
+  return [...map.values()];
+}
+
+function mergeRemovals(
+  current: RecipientRemoval[] | undefined,
+  incoming: RecipientRemoval[] | undefined
+): RecipientRemoval[] {
+  const map = new Map<string, RecipientRemoval>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const key = item.email.trim().toLowerCase() || item.id;
+    const existing = map.get(key);
+    if (!existing || item.removedAt >= existing.removedAt) {
+      map.set(key, item);
+    }
+  }
+  return [...map.values()];
+}
+
+function mergeAbsences(
+  current: AbsenceRecord[],
+  incoming: AbsenceRecord[],
+  clears: AttendanceClear[]
+): AbsenceRecord[] {
   const map = new Map<string, AbsenceRecord>();
   for (const record of current) map.set(absenceKey(record), record);
   for (const record of incoming) {
@@ -140,9 +187,16 @@ function mergeAbsences(current: AbsenceRecord[], incoming: AbsenceRecord[]): Abs
       map.set(key, record);
     }
   }
-  return [...map.values()].sort(
-    (a, b) => b.date.localeCompare(a.date) || a.studentId.localeCompare(b.studentId)
+  const clearAt = new Map(
+    clears.map((item) => [`${item.studentId}:${item.date}`, Date.parse(item.clearedAt)])
   );
+  return [...map.values()]
+    .filter((record) => {
+      const cleared = clearAt.get(absenceKey(record));
+      if (cleared === undefined || Number.isNaN(cleared)) return true;
+      return absenceActivity(record) > cleared;
+    })
+    .sort((a, b) => b.date.localeCompare(a.date) || a.studentId.localeCompare(b.studentId));
 }
 
 function mergeWarnings(current: WarningLetter[], incoming: WarningLetter[]): WarningLetter[] {
@@ -188,13 +242,25 @@ function mergeDigestLogs(current: DigestLog[], incoming: DigestLog[]): DigestLog
 
 function mergeAllDigestRecipients(
   current: DigestRecipient[],
-  incoming: DigestRecipient[]
+  incoming: DigestRecipient[],
+  removals: RecipientRemoval[]
 ): DigestRecipient[] {
   let merged = current;
   for (const recipient of incoming) {
     merged = mergeDigestRecipient(merged, recipient);
   }
-  return merged;
+  return merged.filter((recipient) => {
+    const removal = removals.find(
+      (item) =>
+        item.id === recipient.id ||
+        item.email.toLowerCase() === recipient.email.toLowerCase()
+    );
+    if (!removal) return true;
+    const updated = Date.parse(recipient.updatedAt ?? "");
+    const removed = Date.parse(removal.removedAt);
+    if (Number.isNaN(updated) || Number.isNaN(removed)) return false;
+    return updated > removed;
+  });
 }
 
 function mergeDigestSettings(current: DigestSettings, incoming: DigestSettings): DigestSettings {
@@ -206,6 +272,58 @@ function mergeDigestSettings(current: DigestSettings, incoming: DigestSettings):
   };
 }
 
+function mergeStaffRemovals(
+  current: StaffRemoval[] | undefined,
+  incoming: StaffRemoval[] | undefined
+): StaffRemoval[] {
+  const map = new Map<string, StaffRemoval>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.id);
+    if (!existing || item.removedAt >= existing.removedAt) {
+      map.set(item.id, item);
+    }
+  }
+  return [...map.values()];
+}
+
+function mergeStaffMembers(
+  current: StaffMember[] | undefined,
+  incoming: StaffMember[] | undefined,
+  removals: StaffRemoval[]
+): StaffMember[] {
+  const map = new Map<string, StaffMember>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.id);
+    if (!existing || item.updatedAt >= existing.updatedAt) {
+      map.set(item.id, item);
+    }
+  }
+  return [...map.values()]
+    .filter((item) => {
+      const removal = removals.find((row) => row.id === item.id);
+      if (!removal) return true;
+      const updated = Date.parse(item.updatedAt);
+      const removed = Date.parse(removal.removedAt);
+      if (Number.isNaN(updated) || Number.isNaN(removed)) return false;
+      return updated > removed;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "zh-HK"));
+}
+
+function mergeStaffDailyAbsences(
+  current: StaffDailyAbsence[] | undefined,
+  incoming: StaffDailyAbsence[] | undefined
+): StaffDailyAbsence[] {
+  const map = new Map<string, StaffDailyAbsence>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.date);
+    if (!existing || item.updatedAt >= existing.updatedAt) {
+      map.set(item.date, item);
+    }
+  }
+  return [...map.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+
 /** 合併兩份雲端資料，避免多裝置後寫覆蓋先寫的紀錄。 */
 export function mergeSharedStates(
   current: AppState,
@@ -214,17 +332,32 @@ export function mergeSharedStates(
   const seed = createSeed();
   const base = mergeSharedState(current);
   const next = mergeSharedState(incoming);
+  const clearedAttendance = mergeClears(base.clearedAttendance, next.clearedAttendance);
+  const removedRecipients = mergeRemovals(base.removedRecipients, next.removedRecipients);
+  const staffRemovals = mergeStaffRemovals(base.staffRemovals, next.staffRemovals);
 
   return {
     ...base,
-    academicYear: next.academicYear,
+    academicYear: seed.academicYear,
     students: pickStudents(base.students, next.students, seed.students),
-    absences: mergeAbsences(base.absences, next.absences),
+    absences: mergeAbsences(base.absences, next.absences, clearedAttendance),
     warnings: mergeWarnings(base.warnings, next.warnings),
     notifications: mergeNotifications(base.notifications, next.notifications),
     digestLogs: mergeDigestLogs(base.digestLogs, next.digestLogs),
-    digestRecipients: mergeAllDigestRecipients(base.digestRecipients, next.digestRecipients),
+    digestRecipients: mergeAllDigestRecipients(
+      base.digestRecipients,
+      next.digestRecipients,
+      removedRecipients
+    ),
     digestSettings: mergeDigestSettings(base.digestSettings, next.digestSettings),
+    clearedAttendance,
+    removedRecipients,
+    staffMembers: mergeStaffMembers(base.staffMembers, next.staffMembers, staffRemovals),
+    staffRemovals,
+    staffDailyAbsences: mergeStaffDailyAbsences(
+      base.staffDailyAbsences,
+      next.staffDailyAbsences
+    ),
     dataVersion: OPERATIONAL_DATA_VERSION,
     users: seed.users,
     currentUserId: null,

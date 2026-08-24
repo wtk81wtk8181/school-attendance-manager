@@ -60,7 +60,7 @@ export function AbsenceTable({
           <TableRow>
             <TableHead>日期</TableHead>
             {showStudent ? <TableHead>學生</TableHead> : null}
-            <TableHead>eClass</TableHead>
+            <TableHead>狀態</TableHead>
             <TableHead>日數</TableHead>
             <TableHead>原因</TableHead>
             <TableHead>致電人士</TableHead>

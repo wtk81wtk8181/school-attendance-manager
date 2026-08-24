@@ -1,5 +1,15 @@
-import { classLabel, attendanceStatusLabel } from "@/lib/rules";
-import type { AbsenceRecord, Student } from "@/lib/types";
+import { attendanceStatusLabel, classLabel, formLabel } from "@/lib/rules";
+import { formatSchoolReportDate } from "@/lib/format";
+import { allClassNames } from "@/lib/roster";
+import { staffNamesForKind, staffDailyFor } from "@/lib/staff";
+import type {
+  AbsenceRecord,
+  FormLevel,
+  StaffAbsenceKind,
+  StaffDailyAbsence,
+  StaffMember,
+  Student,
+} from "@/lib/types";
 
 export interface DailyAbsenceRow {
   id: string;
@@ -11,17 +21,53 @@ export interface DailyAbsenceRow {
   nameEn: string;
   teacher: string;
   status: string;
+  statusKey: "absent" | "late" | "leave";
   days: number;
   reason: string;
   calledBy: string;
   calledAt: string;
 }
 
-export interface DailyReportPayload {
+export interface DailyClassBlock {
+  className: string;
+  classLabel: string;
+  form: FormLevel;
+  registered: number;
+  present: number;
+  earlyLeave: number;
+  lateCount: number;
+  absentCount: number;
+  attendanceRate: number;
+  punctualityRate: number;
+  absenceLines: string[];
+}
+
+export interface DailyFormStat {
+  form: FormLevel;
+  label: string;
+  present: number;
+  registered: number;
+  attendanceRate: number;
+}
+
+export interface DailySchoolReportPayload {
   schoolDay: string;
   scope: string;
+  dateLabel: string;
   rows: DailyAbsenceRow[];
+  classes: DailyClassBlock[];
+  formStats: DailyFormStat[];
+  totalPresent: number;
+  totalRegistered: number;
+  totalAttendanceRate: number;
+  totalAbsent: number;
+  totalLate: number;
+  schoolPunctualityRate: number;
+  staff: Record<StaffAbsenceKind, string[]>;
 }
+
+/** @deprecated 使用 DailySchoolReportPayload */
+export type DailyReportPayload = DailySchoolReportPayload;
 
 export function buildDailyAbsenceRows(
   students: Student[],
@@ -42,6 +88,7 @@ export function buildDailyAbsenceRows(
         nameEn: student?.nameEn ?? "",
         teacher: student?.homeroomTeacherName ?? "",
         status: attendanceStatusLabel(item.eclassStatus),
+        statusKey: item.eclassStatus,
         days: item.days,
         reason: item.reason,
         calledBy: item.calledBy?.trim() || "尚未致電",
@@ -52,4 +99,98 @@ export function buildDailyAbsenceRows(
       (a, b) =>
         a.className.localeCompare(b.className) || a.studentNo.localeCompare(b.studentNo)
     );
+}
+
+export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
+  const reason = row.reason.trim() || row.status;
+  const half = row.days === 0.5 ? "（半日）" : "";
+  const caller =
+    row.calledBy && row.calledBy !== "尚未致電" ? row.calledBy : "";
+  const time = row.calledAt && row.calledAt !== "—" ? row.calledAt : "";
+  const suffix = caller ? `(${caller})` : "";
+  return `${row.name}：${reason}${half}${suffix}${time}`;
+}
+
+function rate(numerator: number, denominator: number): number {
+  if (denominator <= 0) return 1;
+  return numerator / denominator;
+}
+
+export function buildDailySchoolReport(
+  students: Student[],
+  absences: AbsenceRecord[],
+  schoolDay: string,
+  staffMembers: StaffMember[] = [],
+  staffDailyAbsences: StaffDailyAbsence[] = [],
+  scope = "全校"
+): DailySchoolReportPayload {
+  const rows = buildDailyAbsenceRows(students, absences, schoolDay);
+  const classNames = allClassNames();
+  const classes: DailyClassBlock[] = classNames.map((className) => {
+    const classStudents = students.filter((item) => item.className === className);
+    const classRows = rows.filter((item) => item.className === className);
+    const notPresent = classRows.filter(
+      (item) => item.statusKey === "absent" || item.statusKey === "leave"
+    );
+    const lateCount = classRows.filter((item) => item.statusKey === "late").length;
+    const registered = classStudents.length;
+    const present = Math.max(0, registered - notPresent.length);
+    const form = Number(className[0]) as FormLevel;
+    return {
+      className,
+      classLabel: classLabel(className),
+      form,
+      registered,
+      present,
+      earlyLeave: 0,
+      lateCount,
+      absentCount: notPresent.length,
+      attendanceRate: rate(present, registered),
+      punctualityRate: rate(present - lateCount, present),
+      absenceLines: notPresent.map(formatDailyAbsenceLine),
+    };
+  });
+
+  const formStats: DailyFormStat[] = ([1, 2, 3, 4, 5, 6] as FormLevel[]).map((form) => {
+    const items = classes.filter((item) => item.form === form);
+    const present = items.reduce((sum, item) => sum + item.present, 0);
+    const registered = items.reduce((sum, item) => sum + item.registered, 0);
+    return {
+      form,
+      label: formLabel(form),
+      present,
+      registered,
+      attendanceRate: rate(present, registered),
+    };
+  });
+
+  const totalPresent = formStats.reduce((sum, item) => sum + item.present, 0);
+  const totalRegistered = formStats.reduce((sum, item) => sum + item.registered, 0);
+  const totalLate = classes.reduce((sum, item) => sum + item.lateCount, 0);
+  const totalAbsent = classes.reduce((sum, item) => sum + item.absentCount, 0);
+  const staffRecord = staffDailyFor(staffDailyAbsences, schoolDay);
+
+  return {
+    schoolDay,
+    scope,
+    dateLabel: formatSchoolReportDate(schoolDay),
+    rows,
+    classes,
+    formStats,
+    totalPresent,
+    totalRegistered,
+    totalAttendanceRate: rate(totalPresent, totalRegistered),
+    totalAbsent,
+    totalLate,
+    schoolPunctualityRate:
+      classes.length === 0
+        ? 1
+        : classes.reduce((sum, item) => sum + item.punctualityRate, 0) / classes.length,
+    staff: {
+      sick: staffNamesForKind(staffMembers, staffRecord, "sick"),
+      personal: staffNamesForKind(staffMembers, staffRecord, "personal"),
+      official: staffNamesForKind(staffMembers, staffRecord, "official"),
+      early: staffNamesForKind(staffMembers, staffRecord, "early"),
+    },
+  };
 }

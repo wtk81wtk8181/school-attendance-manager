@@ -86,6 +86,41 @@ export interface DigestRecipient {
   title: string;
   className?: string;
   enabled: boolean;
+  updatedAt?: string;
+}
+
+export interface AttendanceClear {
+  studentId: string;
+  date: string;
+  clearedAt: string;
+}
+
+export interface RecipientRemoval {
+  id: string;
+  email: string;
+  removedAt: string;
+}
+
+export type StaffAbsenceKind = "sick" | "personal" | "official" | "early";
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  updatedAt: string;
+}
+
+export interface StaffRemoval {
+  id: string;
+  removedAt: string;
+}
+
+export interface StaffDailyAbsence {
+  date: string;
+  sickIds: string[];
+  personalIds: string[];
+  officialIds: string[];
+  earlyIds: string[];
+  updatedAt: string;
 }
 
 export interface DigestSettings {
@@ -127,6 +162,11 @@ export interface AppState {
   digestSettings: DigestSettings;
   digestRecipients: DigestRecipient[];
   digestLogs: DigestLog[];
+  clearedAttendance: AttendanceClear[];
+  removedRecipients: RecipientRemoval[];
+  staffMembers: StaffMember[];
+  staffRemovals: StaffRemoval[];
+  staffDailyAbsences: StaffDailyAbsence[];
   dataVersion: number;
 }
 
