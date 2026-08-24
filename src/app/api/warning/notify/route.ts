@@ -40,17 +40,25 @@ export async function POST(request: Request) {
   }
 
   const recipients = (body.recipients ?? []).filter((item) => item.email);
-  const mode = await sendMail({
-    fromName: `${SCHOOL_NAME}校務處`,
-    subject: `【${SCHOOL_NAME}】出席警告通知：${body.student.name}（${body.student.className}）`,
-    html: warningEmailHtml(body),
-    recipients,
-  });
+
+  try {
+    await sendMail({
+      fromName: `${SCHOOL_NAME}校務處`,
+      subject: `【${SCHOOL_NAME}】出席警告通知：${body.student.name}（${body.student.className}）`,
+      html: warningEmailHtml(body),
+      recipients,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "無法寄出電郵。" },
+      { status: 503 }
+    );
+  }
 
   return NextResponse.json({
     ok: true,
-    mode,
-    emailed: mode === "smtp",
+    mode: "smtp",
+    emailed: true,
     recipientCount: recipients.length,
   });
 }

@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { createSeed } from "@/lib/seed";
-import { mergeSharedState, sharedFromState } from "@/lib/db-client";
+import { mergeSharedState, sharedFromState, needsOperationalDataReset } from "@/lib/db-client";
 import type { AppState } from "@/lib/types";
 
 const SNAPSHOT_ID = "default";
@@ -43,7 +43,12 @@ export async function loadSharedState(): Promise<AppState> {
     await saveSharedState(seed);
     return seed;
   }
-  return mergeSharedState(rows[0].payload as Partial<AppState>);
+  const raw = rows[0].payload as Partial<AppState>;
+  const merged = mergeSharedState(raw);
+  if (needsOperationalDataReset(raw)) {
+    await saveSharedState(merged);
+  }
+  return merged;
 }
 
 export async function saveSharedState(state: AppState) {

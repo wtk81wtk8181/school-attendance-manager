@@ -1,5 +1,5 @@
-import { createSeed } from "@/lib/seed";
-import type { AppState } from "@/lib/types";
+import { createSeed, OPERATIONAL_DATA_VERSION } from "@/lib/seed";
+import type { AppState, Student } from "@/lib/types";
 
 export const SESSION_KEY = "hongtao-attendance-session-v1";
 
@@ -11,30 +11,70 @@ export function sharedFromState(
   return shared;
 }
 
+function isLegacyMockRoster(students: Student[]) {
+  if (students.length < 500) return true;
+  return students.some((student) => /^s[1-6][a-e]\d{2}$/i.test(student.id));
+}
+
+function shouldReplaceRoster(shared: Partial<AppState>, seed: AppState) {
+  const students = shared.students ?? [];
+  if (students.length === 0) return true;
+  if ((shared.dataVersion ?? 1) < OPERATIONAL_DATA_VERSION) return true;
+  if (isLegacyMockRoster(students)) return true;
+  if (students.length < seed.students.length) return true;
+  return false;
+}
+
+function shouldResetOperationalData(shared: Partial<AppState>) {
+  return (shared.dataVersion ?? 1) < OPERATIONAL_DATA_VERSION;
+}
+
+function emptyOperationalData(seed: AppState) {
+  return {
+    absences: seed.absences,
+    warnings: seed.warnings,
+    notifications: seed.notifications,
+    syncLogs: seed.syncLogs,
+    digestLogs: seed.digestLogs,
+    digestSettings: {
+      ...seed.digestSettings,
+      lastSentOn: "",
+      lastSentSchoolDay: "",
+    },
+  };
+}
+
 export function mergeSharedState(shared: Partial<AppState>): AppState {
   const seed = createSeed();
-  const office = seed.users.find((user) => user.id === "u-office");
-  const digestRecipients = (shared.digestRecipients ?? seed.digestRecipients).map(
-    (item) =>
-      item.id === "rcpt-office" && office
-        ? { ...item, name: office.name, title: office.title }
-        : item
-  );
+  const replaceRoster = shouldReplaceRoster(shared, seed);
+  const resetOperational = shouldResetOperationalData(shared) || replaceRoster;
+  const operational = resetOperational
+    ? emptyOperationalData(seed)
+    : {
+        absences: shared.absences ?? seed.absences,
+        warnings: shared.warnings ?? seed.warnings,
+        notifications: shared.notifications ?? seed.notifications,
+        syncLogs: shared.syncLogs ?? seed.syncLogs,
+        digestLogs: shared.digestLogs ?? seed.digestLogs,
+        digestSettings: shared.digestSettings ?? seed.digestSettings,
+      };
+
   return {
     ...seed,
     ...shared,
+    ...operational,
     users: seed.users,
     currentUserId: null,
     selectedClassName: null,
-    students: shared.students ?? seed.students,
-    absences: shared.absences ?? seed.absences,
-    warnings: shared.warnings ?? seed.warnings,
-    notifications: shared.notifications ?? seed.notifications,
-    syncLogs: shared.syncLogs ?? seed.syncLogs,
-    digestSettings: shared.digestSettings ?? seed.digestSettings,
-    digestRecipients,
-    digestLogs: shared.digestLogs ?? seed.digestLogs,
+    students: replaceRoster ? seed.students : (shared.students ?? seed.students),
+    digestRecipients: shared.digestRecipients ?? seed.digestRecipients,
+    dataVersion: OPERATIONAL_DATA_VERSION,
   };
+}
+
+export function needsOperationalDataReset(shared: Partial<AppState>) {
+  const seed = createSeed();
+  return shouldResetOperationalData(shared) || shouldReplaceRoster(shared, seed);
 }
 
 export function readSession(): Pick<AppState, "currentUserId" | "selectedClassName"> {

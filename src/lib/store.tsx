@@ -15,6 +15,7 @@ import { hongKongToday } from "@/lib/digest";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
 import {
   mergeSharedState,
+  needsOperationalDataReset,
   readSession,
   sharedFromState,
   writeSession,
@@ -66,8 +67,6 @@ interface StoreValue {
   followUpWarning: (id: string, input: FollowUpInput) => void;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
-  simulateSync: () => void;
-  resetDemo: () => void;
   saveDigestSettings: (settings: Partial<DigestSettings>) => void;
   upsertRecipient: (recipient: DigestRecipient) => void;
   removeRecipient: (id: string) => void;
@@ -117,10 +116,6 @@ function loadLocalState(): AppState {
       return { ...seed, ...session };
     }
     const parsed = JSON.parse(raw) as Partial<AppState>;
-    if (!parsed.students || !parsed.absences) {
-      const seed = createSeed();
-      return { ...seed, ...session };
-    }
     const merged = mergeSharedState(parsed);
     const legacyTeacher =
       parsed.currentUserId === "u-1a"
@@ -133,12 +128,16 @@ function loadLocalState(): AppState {
       (parsed.currentUserId === "u-1a" || parsed.currentUserId === "u-6a"
         ? "u-teacher"
         : (parsed.currentUserId ?? null));
-    return {
+    const result = {
       ...merged,
       currentUserId,
       selectedClassName:
         session.selectedClassName ?? parsed.selectedClassName ?? legacyTeacher,
     };
+    if (needsOperationalDataReset(parsed)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+    }
+    return result;
   } catch {
     return createSeed();
   }
@@ -285,7 +284,7 @@ function applyWarnings(
   };
 }
 
-/** 觸發警告時同步寄出 Email 通知指定收件人（未設定 SMTP 時為模擬寄出） */
+/** 觸發警告時同步寄出 Email 通知指定收件人 */
 async function notifyWarningsByEmail(
   state: AppState,
   student: Student,
@@ -548,83 +547,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const simulateSync = useCallback(() => {
-    if (!currentUser || currentUser.role !== "office") {
-      toast.error("只有校務處職員可以執行 eClass 同步。");
-      return;
-    }
-
-    if (memory.syncLogs.some((item) => item.schoolDay === "2026-06-16")) {
-      toast.message("2026-06-16 的點名已同步，沒有新紀錄。");
-      return;
-    }
-
-    const newAbsences: AbsenceRecord[] = [
-      {
-        id: `ab-sync-${Date.now()}-1`,
-        studentId: "s1a01",
-        date: "2026-06-16",
-        days: 1,
-        eclassStatus: "absent",
-        reason: "無故缺席（eClass 點名）",
-        documentType: "none",
-        documentSubmitted: false,
-        reviewStatus: "pending",
-        source: "eclass",
-      },
-      {
-        id: `ab-sync-${Date.now()}-2`,
-        studentId: "s5a01",
-        date: "2026-06-16",
-        days: 1,
-        eclassStatus: "leave",
-        reason: "請假（eClass 點名）",
-        documentType: "none",
-        documentSubmitted: false,
-        reviewStatus: "pending",
-        source: "eclass",
-      },
-    ];
-
-    patch((prev) => {
-      let next: AppState = {
-        ...prev,
-        absences: [...newAbsences, ...prev.absences],
-        syncLogs: [
-          {
-            id: `sync-${Date.now()}`,
-            syncedAt: nowIso(),
-            schoolDay: "2026-06-16",
-            present: 25,
-            absent: 1,
-            leave: 1,
-            note: "模擬補課日點名。老師已於 eClass 完成點名，系統自動匯入待審核紀錄。",
-          },
-          ...prev.syncLogs,
-        ],
-        notifications: [
-          {
-            id: `nt-sync-${Date.now()}`,
-            createdAt: nowIso(),
-            title: "eClass 點名已同步",
-            body: "已匯入 2026-06-16 上課日點名：出席 25、缺席 1、請假 1。請校務處核對文件。",
-            kind: "sync",
-            read: false,
-          },
-          ...prev.notifications,
-        ],
-      };
-
-      for (const record of newAbsences) {
-        const student = next.students.find((item) => item.id === record.studentId);
-        if (student) next = applyWarnings(next, student, "校務處");
-      }
-      return next;
-    });
-
-    toast.success("已從 eClass 同步 2026-06-16 點名。");
-  }, [currentUser]);
-
   const saveDigestSettings = useCallback((settings: Partial<DigestSettings>) => {
     patch((prev) => ({
       ...prev,
@@ -684,14 +606,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const resetDemo = useCallback(() => {
-    const seed = createSeed();
-    seed.currentUserId = memory.currentUserId;
-    seed.selectedClassName = memory.selectedClassName;
-    assign(seed);
-    toast.success("已還原示範數據。");
-  }, []);
-
   const value = useMemo<StoreValue>(
     () => ({
       ready,
@@ -707,8 +621,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       followUpWarning,
       markNotificationRead,
       markAllNotificationsRead,
-      simulateSync,
-      resetDemo,
       saveDigestSettings,
       upsertRecipient,
       removeRecipient,
@@ -728,8 +640,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       followUpWarning,
       markNotificationRead,
       markAllNotificationsRead,
-      simulateSync,
-      resetDemo,
       saveDigestSettings,
       upsertRecipient,
       removeRecipient,

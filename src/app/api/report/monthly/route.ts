@@ -20,28 +20,34 @@ export async function POST(request: Request) {
   const buffer = await buildMonthlyWorkbook(body.payload);
 
   const enabledRecipients = (body.recipients ?? []).filter((item) => item.email);
-  let mode: "smtp" | "mock" = "mock";
 
-  if (body.sendEmail && enabledRecipients.length > 0) {
-    mode = await sendMail({
-      fromName: `${SCHOOL_NAME}校務處`,
-      subject: `【${SCHOOL_NAME}】${body.payload.monthLabel} 每月各班缺席率報告`,
-      html: monthlyEmailHtml(body.payload, enabledRecipients),
-      recipients: enabledRecipients,
-      attachments: [
-        {
-          filename,
-          content: buffer,
-          contentType:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        },
-      ],
-    });
+  if (body.sendEmail) {
+    try {
+      await sendMail({
+        fromName: `${SCHOOL_NAME}校務處`,
+        subject: `【${SCHOOL_NAME}】${body.payload.monthLabel} 每月各班缺席率報告`,
+        html: monthlyEmailHtml(body.payload, enabledRecipients),
+        recipients: enabledRecipients,
+        attachments: [
+          {
+            filename,
+            content: buffer,
+            contentType:
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          },
+        ],
+      });
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "無法寄出電郵。" },
+        { status: 503 }
+      );
+    }
   }
 
   return NextResponse.json({
     ok: true,
-    mode: body.sendEmail ? mode : "mock",
+    mode: body.sendEmail ? "smtp" : "export",
     emailed: Boolean(body.sendEmail && enabledRecipients.length > 0),
     filename,
     fileBase64: buffer.toString("base64"),

@@ -17,20 +17,26 @@ export async function POST(request: Request) {
   }
 
   const enabledRecipients = (body.recipients ?? []).filter((item) => item.email);
-  let mode: "smtp" | "mock" = "mock";
 
-  if (body.sendEmail && enabledRecipients.length > 0) {
-    mode = await sendMail({
-      fromName: `${SCHOOL_NAME}校務處`,
-      subject: `【${SCHOOL_NAME}】${body.payload.schoolDay} 每日缺席報告`,
-      html: dailyEmailHtml(body.payload, enabledRecipients),
-      recipients: enabledRecipients,
-    });
+  if (body.sendEmail) {
+    try {
+      await sendMail({
+        fromName: `${SCHOOL_NAME}校務處`,
+        subject: `【${SCHOOL_NAME}】${body.payload.schoolDay} 每日缺席報告`,
+        html: dailyEmailHtml(body.payload, enabledRecipients),
+        recipients: enabledRecipients,
+      });
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "無法寄出電郵。" },
+        { status: 503 }
+      );
+    }
   }
 
   return NextResponse.json({
     ok: true,
-    mode: body.sendEmail ? mode : "mock",
+    mode: body.sendEmail ? "smtp" : "export",
     emailed: Boolean(body.sendEmail && enabledRecipients.length > 0),
     recipientCount: enabledRecipients.length,
   });

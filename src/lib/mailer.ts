@@ -1,13 +1,20 @@
-import nodemailer from "nodemailer";
-
-export interface MailAttachment {
-  filename: string;
-  content: Buffer;
-  contentType: string;
-}
-
 export function hasSmtpConfig(): boolean {
   return Boolean(process.env.SMTP_HOST);
+}
+
+export function smtpRequiredMessage() {
+  return "未設定 SMTP，無法寄出電郵。請在 Vercel 專案設定 SMTP_HOST、SMTP_USER、SMTP_PASS。";
+}
+
+export function parseEmailAddresses(input: string): string[] {
+  return [...new Set(input.split(/[,;\s]+/).map((item) => item.trim()).filter(Boolean))];
+}
+
+export function toMailRecipients(emails: string[]) {
+  return emails.map((email) => ({
+    name: email.split("@")[0] || email,
+    email,
+  }));
 }
 
 export async function sendMail(input: {
@@ -15,10 +22,20 @@ export async function sendMail(input: {
   html: string;
   fromName: string;
   recipients: Array<{ name: string; email: string }>;
-  attachments?: MailAttachment[];
-}): Promise<"smtp" | "mock"> {
-  if (!hasSmtpConfig() || input.recipients.length === 0) return "mock";
+  attachments?: Array<{
+    filename: string;
+    content: Buffer;
+    contentType: string;
+  }>;
+}): Promise<void> {
+  if (!hasSmtpConfig()) {
+    throw new Error(smtpRequiredMessage());
+  }
+  if (input.recipients.length === 0) {
+    throw new Error("請輸入至少一個電郵地址。");
+  }
 
+  const nodemailer = await import("nodemailer");
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT || 587),
@@ -40,5 +57,4 @@ export async function sendMail(input: {
     html: input.html,
     attachments: input.attachments,
   });
-  return "smtp";
 }

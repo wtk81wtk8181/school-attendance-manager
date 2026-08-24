@@ -1,14 +1,13 @@
 "use client";
 
 import { Lock, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
 export default function SyncPage() {
-  const { currentUser, state, simulateSync, resetDemo } = useStore();
+  const { currentUser, state } = useStore();
 
   if (currentUser?.role !== "office") {
     return (
@@ -37,17 +36,11 @@ export default function SyncPage() {
           <CardDescription>
             {latest
               ? `最近一次同步：${formatDateTime(latest.syncedAt)}（上課日 ${formatDate(latest.schoolDay)}）`
-              : "尚未同步"}
+              : "尚未有 eClass 同步紀錄"}
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button onClick={simulateSync}>
-            <RefreshCw className="size-4" />
-            模擬同步補課日點名
-          </Button>
-          <Button variant="outline" onClick={resetDemo}>
-            還原示範數據
-          </Button>
+        <CardContent className="text-sm text-muted-foreground">
+          連接 eClass 後，點名資料會自動匯入。目前沒有待審核的舊示範紀錄。
         </CardContent>
       </Card>
 
@@ -70,15 +63,24 @@ export default function SyncPage() {
 
       <div className="space-y-3">
         <h2 className="text-base font-medium">同步紀錄</h2>
-        {state.syncLogs.map((log) => (
-          <div key={log.id} className="rounded-xl border bg-white p-4">
-            <p className="font-medium">{formatDate(log.schoolDay)} 上課日</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              同步時間 {formatDateTime(log.syncedAt)}　出席 {log.present}　缺席 {log.absent}　請假 {log.leave}
-            </p>
-            <p className="mt-2 text-sm">{log.note}</p>
-          </div>
-        ))}
+        {state.syncLogs.length === 0 ? (
+          <EmptyState
+            icon={RefreshCw}
+            title="尚無同步紀錄"
+            description="eClass 點名同步後，紀錄會顯示於此。"
+          />
+        ) : (
+          state.syncLogs.map((log) => (
+            <div key={log.id} className="rounded-xl border bg-white p-4">
+              <p className="font-medium">{formatDate(log.schoolDay)} 上課日</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                同步時間 {formatDateTime(log.syncedAt)}　出席 {log.present}　缺席 {log.absent}　請假{" "}
+                {log.leave}
+              </p>
+              <p className="mt-2 text-sm">{log.note}</p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

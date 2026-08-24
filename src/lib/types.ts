@@ -139,6 +139,7 @@ export interface AppState {
   digestSettings: DigestSettings;
   digestRecipients: DigestRecipient[];
   digestLogs: DigestLog[];
+  dataVersion: number;
 }
 
 export interface StudentStats {
