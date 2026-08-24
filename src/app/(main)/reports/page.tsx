@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Download, FileText, FileWarning } from "lucide-react";
+import { Download, FileText, FileWarning, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,8 @@ import { AbsenceDetailFields } from "@/components/absence-detail-fields";
 import { documentLabels, reviewLabels, warningStatusLabels, warningTypeLabels } from "@/components/status-badges";
 import { buildDailyAbsenceRows } from "@/lib/daily-report";
 import { resolveDigestSchoolDay } from "@/lib/digest";
+import { buildMonthlyReport, currentYearMonth, monthRange } from "@/lib/monthly-report";
+import { downloadBase64Xlsx, requestDailyReport, requestMonthlyReport } from "@/lib/digest-client";
 import { useStore } from "@/lib/store";
 import type { FormLevel } from "@/lib/types";
 import { toast } from "sonner";
@@ -46,6 +48,16 @@ export default function ReportsPage() {
   const [reportDay, setReportDay] = useState(
     resolveDigestSchoolDay(state.absences)
   );
+  const [month, setMonth] = useState(currentYearMonth);
+  const [monthlyBusy, setMonthlyBusy] = useState(false);
+  const [dailyEmailBusy, setDailyEmailBusy] = useState(false);
+
+  const dailyScope =
+    klass !== "all"
+      ? classLabel(klass)
+      : form !== "all"
+        ? formLabel(Number(form) as FormLevel)
+        : "全校";
 
   const classes = useMemo(
     () => [...new Set(visibleStudents.map((item) => item.className))].sort(),
@@ -62,7 +74,7 @@ export default function ReportsPage() {
     buildStudentStats(student, state.absences, state.academicYear.schoolDays)
   );
 
-  const classSummaries = useMemo(() => {
+  const classSummaries = (() => {
     const groups = new Map<string, typeof stats>();
     for (const item of stats) {
       const list = groups.get(item.student.className) ?? [];
@@ -82,7 +94,7 @@ export default function ReportsPage() {
           attendanceRate,
         };
       });
-  }, [stats]);
+  })();
 
   const absences = state.absences.filter((item) => {
     const studentOk = filteredStudents.some((student) => student.id === item.studentId);
@@ -99,6 +111,8 @@ export default function ReportsPage() {
     reportDay
   );
 
+  const monthlyReport = buildMonthlyReport(visibleStudents, state.absences, month);
+
   function exportDailyPdf() {
     const params = new URLSearchParams({
       date: reportDay,
@@ -107,6 +121,78 @@ export default function ReportsPage() {
     });
     window.open(`/reports/daily/print?${params.toString()}`, "_blank", "noopener,noreferrer");
     toast.success("已開啟每日缺席報告，請在列印視窗選擇「儲存為 PDF」。");
+  }
+
+  async function sendDailyReportEmail() {
+    const recipients = state.digestRecipients.filter((item) => item.enabled);
+    if (recipients.length === 0) {
+      toast.error("請先於「電郵名單」頁加入至少一位收件人。");
+      return;
+    }
+
+    setDailyEmailBusy(true);
+    try {
+      const result = await requestDailyReport({
+        payload: {
+          schoolDay: reportDay,
+          scope: dailyScope,
+          rows: dailyRows,
+        },
+        sendEmail: true,
+        recipients: recipients.map((item) => ({
+          name: item.name,
+          email: item.email,
+        })),
+      });
+
+      toast.success(
+        result.mode === "smtp"
+          ? `已將 ${formatShortDate(reportDay)} 每日缺席報告電郵予 ${result.recipientCount} 位收件人。`
+          : `未設定 SMTP，已模擬寄出 ${formatShortDate(reportDay)} 每日缺席報告。`
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法寄出每日缺席報告。");
+    } finally {
+      setDailyEmailBusy(false);
+    }
+  }
+
+  async function runMonthlyReport(sendEmail: boolean) {
+    const recipients = state.digestRecipients.filter((item) => item.enabled);
+    if (sendEmail && recipients.length === 0) {
+      toast.error("請先於「電郵名單」頁加入至少一位收件人。");
+      return;
+    }
+
+    setMonthlyBusy(true);
+    try {
+      const payload = buildMonthlyReport(state.students, state.absences, month);
+      const result = await requestMonthlyReport({
+        payload,
+        sendEmail,
+        recipients: recipients.map((item) => ({
+          name: item.name,
+          email: item.email,
+        })),
+      });
+
+      if (sendEmail) {
+        toast.success(
+          result.mode === "smtp"
+            ? `已將 ${result.filename} 電郵予 ${result.recipientCount} 位收件人。`
+            : `未設定 SMTP，已模擬寄出 ${result.filename}；Excel 將下載到本機。`
+        );
+      } else {
+        toast.success(`已產生 ${result.filename}`);
+      }
+      if (!sendEmail || result.mode === "mock") {
+        downloadBase64Xlsx(result.filename, result.fileBase64);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法產生每月報告。");
+    } finally {
+      setMonthlyBusy(false);
+    }
   }
 
   function exportAttendance() {
@@ -131,7 +217,11 @@ export default function ReportsPage() {
           student ? classLabel(student.className) : "",
           student?.studentNo ?? "",
           student?.name ?? "",
-          item.eclassStatus === "absent" ? "缺席" : "請假",
+          item.eclassStatus === "absent"
+            ? "缺席"
+            : item.eclassStatus === "late"
+              ? "遲到"
+              : "請假",
           item.days,
           item.reason,
           item.calledBy ?? "",
@@ -228,6 +318,40 @@ export default function ReportsPage() {
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Card className="shadow-none">
           <CardHeader>
+            <CardTitle className="text-base">每月各班缺席率報告</CardTitle>
+            <CardDescription>
+              {monthlyReport.monthLabel}　共 {monthlyReport.classes.length} 班、
+              {monthlyReport.rows.length} 筆紀錄
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="report-month">月份</Label>
+              <Input
+                id="report-month"
+                type="month"
+                value={month}
+                onChange={(event) => setMonth(event.target.value || currentYearMonth())}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={monthlyBusy} onClick={() => void runMonthlyReport(false)}>
+                <Download className="size-4" />
+                生成 Excel
+              </Button>
+              <Button
+                variant="outline"
+                disabled={monthlyBusy}
+                onClick={() => void runMonthlyReport(true)}
+              >
+                <Mail className="size-4" />
+                寄出 Email
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="shadow-none">
+          <CardHeader>
             <CardTitle className="text-base">每日缺席報告</CardTitle>
             <CardDescription>
               {formatShortDate(reportDay)}　{dailyRows.length} 名學生缺席或請假
@@ -243,10 +367,20 @@ export default function ReportsPage() {
                 onChange={(event) => setReportDay(event.target.value)}
               />
             </div>
-            <Button onClick={exportDailyPdf}>
-              <FileText className="size-4" />
-              匯出 PDF
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={exportDailyPdf}>
+                <FileText className="size-4" />
+                匯出 PDF
+              </Button>
+              <Button
+                variant="outline"
+                disabled={dailyEmailBusy}
+                onClick={() => void sendDailyReportEmail()}
+              >
+                <Mail className="size-4" />
+                寄出 Email
+              </Button>
+            </div>
           </CardContent>
         </Card>
         <Card className="shadow-none">
@@ -375,6 +509,43 @@ export default function ReportsPage() {
               <TableRow key={item.className}>
                 <TableCell>{classLabel(item.className)}</TableCell>
                 <TableCell>{item.studentCount} 人</TableCell>
+                <TableCell>{formatPercent(item.attendanceRate)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="rounded-xl border bg-white">
+        <div className="border-b px-4 py-3">
+          <p className="font-medium">每月各班缺席率（{monthlyReport.monthLabel}）</p>
+          <p className="text-xs text-muted-foreground">
+            {formatShortDate(monthRange(month).start)} 至{" "}
+            {formatShortDate(monthRange(month).end)}　獲批請假不計入；遲到另行統計次數
+          </p>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>班別</TableHead>
+              <TableHead>班主任</TableHead>
+              <TableHead>人數</TableHead>
+              <TableHead>缺席次數</TableHead>
+              <TableHead>遲到次數</TableHead>
+              <TableHead>請假人次</TableHead>
+              <TableHead>計入缺席（天）</TableHead>
+              <TableHead>平均出席率</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {monthlyReport.classes.map((item) => (
+              <TableRow key={item.className}>
+                <TableCell>{item.classLabel}</TableCell>
+                <TableCell>{item.teacher}</TableCell>
+                <TableCell>{item.studentCount} 人</TableCell>
+                <TableCell>{item.absentCount}</TableCell>
+                <TableCell>{item.lateCount}</TableCell>
+                <TableCell>{item.leaveCount}</TableCell>
+                <TableCell>{item.countedAbsenceDays}</TableCell>
                 <TableCell>{formatPercent(item.attendanceRate)}</TableCell>
               </TableRow>
             ))}

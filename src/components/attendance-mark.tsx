@@ -15,6 +15,11 @@ const OPTIONS: { value: DayAttendance; label: string; active: string }[] = [
     active: "bg-rose-600 text-white hover:bg-rose-600",
   },
   {
+    value: "late",
+    label: "遲到",
+    active: "bg-sky-600 text-white hover:bg-sky-600",
+  },
+  {
     value: "leave",
     label: "事假",
     active: "bg-amber-600 text-white hover:bg-amber-600",

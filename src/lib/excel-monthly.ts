@@ -1,9 +1,24 @@
 import ExcelJS from "exceljs";
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
-import type { DigestPayload } from "@/lib/digest";
+import type { MonthlyReportPayload } from "@/lib/monthly-report";
 
 const NAVY = "1B365D";
 const GOLD = "C4A35A";
+
+const SUMMARY_HEADERS = [
+  "班別",
+  "班主任",
+  "班人數",
+  "上課日數（推算）",
+  "缺席次數",
+  "遲到次數",
+  "請假人次",
+  "計入缺席日數",
+  "獲批請假日數",
+  "待審核日數",
+  "涉及缺席學生",
+  "全班平均出席率",
+];
 
 const DETAIL_HEADERS = [
   "日期",
@@ -12,7 +27,7 @@ const DETAIL_HEADERS = [
   "姓名",
   "英文名",
   "班主任",
-  "eClass",
+  "狀態",
   "日數",
   "原因",
   "文件類型",
@@ -21,104 +36,92 @@ const DETAIL_HEADERS = [
   "計入缺席",
 ];
 
-export async function buildAbsenceWorkbook(payload: DigestPayload): Promise<Buffer> {
+export async function buildMonthlyWorkbook(
+  payload: MonthlyReportPayload
+): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = SCHOOL_NAME;
   workbook.created = new Date();
 
   addSummarySheet(workbook, payload);
-  addDetailSheet(workbook, "全校缺席名單", payload.rows);
-  for (const summary of payload.summaries) {
-    const rows = payload.rows.filter((row) => row.className === summary.className);
-    addDetailSheet(workbook, summary.classLabel, rows, summary);
-  }
+  addDetailSheet(workbook, payload);
 
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
 
-function addSummarySheet(workbook: ExcelJS.Workbook, payload: DigestPayload) {
-  const sheet = workbook.addWorksheet("各班總覽", {
+function addSummarySheet(workbook: ExcelJS.Workbook, payload: MonthlyReportPayload) {
+  const sheet = workbook.addWorksheet("各班缺席率", {
     views: [{ state: "frozen", ySplit: 4 }],
   });
-  sheet.mergeCells("A1:I1");
+  sheet.mergeCells("A1:L1");
   sheet.getCell("A1").value = `${SCHOOL_NAME}　${SCHOOL_NAME_EN}`;
   sheet.getCell("A1").font = { bold: true, size: 16, color: { argb: `FF${NAVY}` } };
 
-  sheet.mergeCells("A2:I2");
-  sheet.getCell("A2").value = `每日全校缺席名單　上課日 ${payload.schoolDay}`;
+  sheet.mergeCells("A2:L2");
+  sheet.getCell("A2").value = `每月各班缺席率報告　${payload.monthLabel}`;
   sheet.getCell("A2").font = { size: 12, color: { argb: `FF${NAVY}` } };
 
-  sheet.mergeCells("A3:I3");
+  sheet.mergeCells("A3:L3");
   sheet.getCell("A3").value =
-    "資料來源：eClass 點名同步。獲批請假不計入出席率及缺席上限。";
+    "出席率＝（當月上課日−計入缺席日）÷ 當月上課日。獲批請假（醫生證明／家長信）不計入；遲到另行統計次數。";
   sheet.getCell("A3").font = { size: 10, italic: true, color: { argb: "FF5C6570" } };
 
-  const headers = [
-    "班別",
-    "班主任",
-    "班人數",
-    "當日出席（推算）",
-    "缺席人數",
-    "遲到人數",
-    "請假人數",
-    "待審核",
-    "計入缺席",
-  ];
-  const headerRow = sheet.addRow(headers);
+  const headerRow = sheet.addRow(SUMMARY_HEADERS);
   styleHeader(headerRow);
 
-  for (const summary of payload.summaries) {
+  for (const item of payload.classes) {
     sheet.addRow([
-      summary.classLabel,
-      summary.teacher,
-      summary.studentCount,
-      summary.presentImplied,
-      summary.absent,
-      summary.late,
-      summary.leave,
-      summary.pending,
-      summary.counted,
+      item.classLabel,
+      item.teacher,
+      item.studentCount,
+      item.schoolDaysInMonth,
+      item.absentCount,
+      item.lateCount,
+      item.leaveCount,
+      item.countedAbsenceDays,
+      item.approvedLeaveDays,
+      item.pendingDays,
+      item.studentsWithAbsence,
+      Number(item.attendanceRate.toFixed(1)) + "%",
     ]);
   }
 
   sheet.columns = [
     { width: 12 },
     { width: 14 },
-    { width: 12 },
+    { width: 10 },
     { width: 16 },
+    { width: 11 },
+    { width: 11 },
+    { width: 11 },
+    { width: 13 },
+    { width: 13 },
     { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
-    { width: 12 },
+    { width: 13 },
+    { width: 15 },
   ];
-  sheet.autoFilter = {
-    from: { row: 4, column: 1 },
-    to: { row: 4 + payload.summaries.length, column: headers.length },
-  };
+  if (payload.classes.length > 0) {
+    sheet.autoFilter = {
+      from: { row: 4, column: 1 },
+      to: { row: 4 + payload.classes.length, column: SUMMARY_HEADERS.length },
+    };
+  }
 }
 
-function addDetailSheet(
-  workbook: ExcelJS.Workbook,
-  name: string,
-  rows: DigestPayload["rows"],
-  summary?: DigestPayload["summaries"][number]
-) {
-  const sheet = workbook.addWorksheet(safeSheetName(name), {
+function addDetailSheet(workbook: ExcelJS.Workbook, payload: MonthlyReportPayload) {
+  const sheet = workbook.addWorksheet("缺席請假明細", {
     views: [{ state: "frozen", ySplit: 1 }],
   });
   const headerRow = sheet.addRow(DETAIL_HEADERS);
   styleHeader(headerRow);
 
-  if (rows.length === 0) {
-    const empty = sheet.addRow([
-      summary ? `${summary.classLabel}當日全班出席，沒有缺席或請假。` : "當日沒有缺席或請假紀錄。",
-    ]);
+  if (payload.rows.length === 0) {
+    const empty = sheet.addRow([`${payload.monthLabel}沒有缺席、遲到或請假紀錄。`]);
     sheet.mergeCells(`A2:M2`);
     empty.font = { italic: true, color: { argb: "FF5C6570" } };
   } else {
-    for (const row of rows) {
+    for (const row of payload.rows) {
       sheet.addRow([
         row.date,
         row.classLabel,
@@ -126,7 +129,7 @@ function addDetailSheet(
         row.name,
         row.nameEn,
         row.teacher,
-        row.eclassStatus,
+        row.status,
         row.days,
         row.reason,
         row.documentType,
@@ -152,10 +155,10 @@ function addDetailSheet(
     { width: 12 },
     { width: 12 },
   ];
-  if (rows.length > 0) {
+  if (payload.rows.length > 0) {
     sheet.autoFilter = {
       from: { row: 1, column: 1 },
-      to: { row: 1 + rows.length, column: DETAIL_HEADERS.length },
+      to: { row: 1 + payload.rows.length, column: DETAIL_HEADERS.length },
     };
   }
 }
@@ -174,8 +177,4 @@ function styleHeader(row: ExcelJS.Row) {
     };
   });
   row.height = 22;
-}
-
-function safeSheetName(name: string) {
-  return name.replace(/[\\/?*[\]:]/g, " ").slice(0, 31);
 }

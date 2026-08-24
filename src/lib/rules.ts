@@ -18,8 +18,22 @@ export function getWarningThreshold(form: FormLevel): number {
   return form === 6 ? 2 : 4;
 }
 
+/** 缺席／遲到合計超過 3 次即觸發預警警告信 */
+export const FREQUENT_LIMIT = 3;
+
 export function formLabel(form: FormLevel): string {
   return ["", "中一", "中二", "中三", "中四", "中五", "中六"][form] ?? `中${form}`;
+}
+
+const statusLabels = {
+  present: "出席",
+  absent: "缺席",
+  late: "遲到",
+  leave: "請假",
+} as const;
+
+export function attendanceStatusLabel(status: DayAttendance): string {
+  return statusLabels[status];
 }
 
 export function classLabel(className: string): string {
@@ -37,19 +51,28 @@ export { allClassNames, CLASS_STREAMS, FORMS } from "@/lib/roster";
 
 export function countedAbsenceDays(records: AbsenceRecord[]): number {
   return records
-    .filter((record) => record.reviewStatus !== "approved")
+    .filter(
+      (record) =>
+        record.reviewStatus !== "approved" && record.eclassStatus !== "late"
+    )
     .reduce((sum, record) => sum + record.days, 0);
 }
 
 export function approvedLeaveDays(records: AbsenceRecord[]): number {
   return records
-    .filter((record) => record.reviewStatus === "approved")
+    .filter(
+      (record) =>
+        record.reviewStatus === "approved" && record.eclassStatus === "leave"
+    )
     .reduce((sum, record) => sum + record.days, 0);
 }
 
 export function pendingDays(records: AbsenceRecord[]): number {
   return records
-    .filter((record) => record.reviewStatus === "pending")
+    .filter(
+      (record) =>
+        record.reviewStatus === "pending" && record.eclassStatus !== "late"
+    )
     .reduce((sum, record) => sum + record.days, 0);
 }
 
@@ -74,12 +97,27 @@ export function alertLevel(
 
 export function neededWarningTypes(
   counted: number,
-  form: FormLevel
+  form: FormLevel,
+  frequentCount = 0
 ): WarningType[] {
   const types: WarningType[] = [];
   if (counted >= getWarningThreshold(form)) types.push("half_limit");
   if (counted >= getAbsenceLimit(form)) types.push("over_limit");
+  if (frequentCount > FREQUENT_LIMIT) types.push("frequent");
   return types;
+}
+
+/** 缺陷次數：未獲批的缺席與遲到紀錄各計 1 次（獲批請假不計） */
+export function frequentOccurrences(records: AbsenceRecord[]): number {
+  return records.filter(
+    (record) =>
+      record.reviewStatus !== "approved" &&
+      (record.eclassStatus === "absent" || record.eclassStatus === "late")
+  ).length;
+}
+
+export function lateOccurrences(records: AbsenceRecord[]): number {
+  return records.filter((record) => record.eclassStatus === "late").length;
 }
 
 export function buildStudentStats(
@@ -95,6 +133,8 @@ export function buildStudentStats(
     countedDays: counted,
     approvedLeaveDays: approvedLeaveDays(records),
     pendingDays: pendingDays(records),
+    lateCount: lateOccurrences(records),
+    frequentCount: frequentOccurrences(records),
     attendanceRate: attendanceRate(schoolDays, counted),
     limit: getAbsenceLimit(student.form),
     warningThreshold: getWarningThreshold(student.form),

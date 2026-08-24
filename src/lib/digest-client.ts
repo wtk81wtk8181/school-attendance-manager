@@ -1,4 +1,6 @@
 import type { DigestPayload } from "@/lib/digest";
+import type { DailyReportPayload } from "@/lib/daily-report";
+import type { MonthlyReportPayload } from "@/lib/monthly-report";
 
 export interface DigestSendResult {
   ok: boolean;
@@ -10,19 +12,60 @@ export interface DigestSendResult {
   error?: string;
 }
 
-export async function requestDigestSend(input: {
-  payload: DigestPayload;
+interface SendInput<P> {
+  payload: P;
   recipients: Array<{ name: string; email: string }>;
   sendEmail: boolean;
-}): Promise<DigestSendResult> {
-  const response = await fetch("/api/digest/send", {
+}
+
+async function postReport<P>(
+  endpoint: string,
+  input: SendInput<P>,
+  fallbackError: string
+): Promise<DigestSendResult> {
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
   const data = (await response.json()) as DigestSendResult;
   if (!response.ok) {
-    throw new Error(data.error || "無法產生缺席名單。");
+    throw new Error(data.error || fallbackError);
+  }
+  return data;
+}
+
+export async function requestDigestSend(input: {
+  payload: DigestPayload;
+  recipients: Array<{ name: string; email: string }>;
+  sendEmail: boolean;
+}): Promise<DigestSendResult> {
+  return postReport("/api/digest/send", input, "無法產生缺席名單。");
+}
+
+export async function requestMonthlyReport(input: {
+  payload: MonthlyReportPayload;
+  recipients: Array<{ name: string; email: string }>;
+  sendEmail: boolean;
+}): Promise<DigestSendResult> {
+  return postReport("/api/report/monthly", input, "無法產生每月缺席率報告。");
+}
+
+export async function requestDailyReport(input: {
+  payload: DailyReportPayload;
+  recipients: Array<{ name: string; email: string }>;
+  sendEmail: boolean;
+}): Promise<Omit<DigestSendResult, "filename" | "fileBase64">> {
+  const response = await fetch("/api/report/daily", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const data = (await response.json()) as Omit<DigestSendResult, "filename" | "fileBase64"> & {
+    error?: string;
+  };
+  if (!response.ok) {
+    throw new Error(data.error || "無法寄出每日缺席報告。");
   }
   return data;
 }

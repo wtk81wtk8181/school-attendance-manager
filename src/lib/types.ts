@@ -2,7 +2,7 @@ export type Role = "office" | "homeroom";
 
 export type FormLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
-export type EclassStatus = "present" | "absent" | "leave";
+export type EclassStatus = "present" | "absent" | "late" | "leave";
 
 export type DayAttendance = Exclude<EclassStatus, never>;
 
@@ -12,7 +12,7 @@ export type DocumentType = "doctor" | "parent" | "none";
 
 export type ReviewStatus = "pending" | "approved" | "rejected";
 
-export type WarningType = "half_limit" | "over_limit";
+export type WarningType = "half_limit" | "over_limit" | "frequent";
 
 export type WarningStatus = "issued" | "followed_up" | "archived";
 
@@ -147,6 +147,8 @@ export interface StudentStats {
   countedDays: number;
   approvedLeaveDays: number;
   pendingDays: number;
+  lateCount: number;
+  frequentCount: number;
   attendanceRate: number;
   limit: number;
   warningThreshold: number;

@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { classLabel, countedAbsenceDays, neededWarningTypes } from "@/lib/rules";
+import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, frequentOccurrences, neededWarningTypes } from "@/lib/rules";
 import { hongKongToday } from "@/lib/digest";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
 import {
@@ -215,7 +215,12 @@ function applyWarnings(
 ): AppState {
   const records = state.absences.filter((item) => item.studentId === student.id);
   const counted = countedAbsenceDays(records);
-  const needed = neededWarningTypes(counted, student.form);
+  const frequent = frequentOccurrences(records);
+  const lateCount = records.filter(
+    (item) => item.eclassStatus === "late" && item.reviewStatus !== "approved"
+  ).length;
+  const absentCount = frequent - lateCount;
+  const needed = neededWarningTypes(counted, student.form, frequent);
   const existing = new Set(
     state.warnings
       .filter((item) => item.studentId === student.id)
@@ -233,25 +238,41 @@ function applyWarnings(
       studentId: student.id,
       type,
       issuedAt: nowIso(),
-      triggerDays: counted,
-      limitDays: student.form === 6 ? 4.5 : 9,
+      triggerDays: type === "frequent" ? frequent : counted,
+      limitDays: type === "frequent" ? FREQUENT_LIMIT : student.form === 6 ? 4.5 : 9,
       status: "issued",
     };
     fresh.push(letter);
-    const isOver = type === "over_limit";
+    const title =
+      type === "over_limit"
+        ? `缺席已達／超過上限：${student.name}（${classLabel(student.className)}）`
+        : type === "frequent"
+          ? `缺席／遲到超過 ${FREQUENT_LIMIT} 次：${student.name}（${classLabel(student.className)}）`
+          : `缺席預警：${student.name}（${classLabel(student.className)}）`;
+    const body =
+      type === "over_limit"
+        ? `計入缺席 ${counted} 天，已自動發出警告信，請${actorName}跟進。`
+        : type === "frequent"
+          ? `本學年缺席 ${absentCount} 次、遲到 ${lateCount} 次，合計 ${frequent} 次（超過 ${FREQUENT_LIMIT} 次上限），已自動發出警告信並電郵通知指定收件人。`
+          : `計入缺席已達 ${counted} 天（上限一半），已發出警告信。`;
     notes.unshift({
       id: `nt-${id}`,
       createdAt: nowIso(),
-      title: isOver
-        ? `缺席已達／超過上限：${student.name}（${classLabel(student.className)}）`
-        : `缺席預警：${student.name}（${classLabel(student.className)}）`,
-      body: isOver
-        ? `計入缺席 ${counted} 天，已自動發出警告信，請${actorName}跟進。`
-        : `計入缺席已達 ${counted} 天（上限一半），已發出警告信。`,
+      title,
+      body,
       kind: "warning",
       studentId: student.id,
       warningId: id,
       read: false,
+    });
+  }
+
+  if (fresh.length > 0) {
+    void notifyWarningsByEmail(state, student, fresh, {
+      counted,
+      frequent,
+      absentCount,
+      lateCount,
     });
   }
 
@@ -262,6 +283,45 @@ function applyWarnings(
     warnings: [...fresh, ...state.warnings],
     notifications: notes,
   };
+}
+
+/** 觸發警告時同步寄出 Email 通知指定收件人（未設定 SMTP 時為模擬寄出） */
+async function notifyWarningsByEmail(
+  state: AppState,
+  student: Student,
+  letters: WarningLetter[],
+  stats: { counted: number; frequent: number; absentCount: number; lateCount: number }
+) {
+  const recipients = state.digestRecipients
+    .filter((item) => item.enabled)
+    .map((item) => ({ name: item.name, email: item.email }));
+  if (recipients.length === 0) return;
+  try {
+    await fetch("/api/warning/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        warnings: letters.map((letter) => ({
+          type: letter.type,
+          triggerDays: letter.triggerDays,
+          limitDays: letter.limitDays,
+        })),
+        student: {
+          name: student.name,
+          nameEn: student.nameEn,
+          className: classLabel(student.className),
+          teacher: student.homeroomTeacherName,
+          countedAbsenceDays: stats.counted,
+          absentCount: stats.absentCount,
+          lateCount: stats.lateCount,
+          frequentCount: stats.frequent,
+        },
+        recipients,
+      }),
+    });
+  } catch {
+    // 寄信失敗不阻礙警告信流程
+  }
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -333,11 +393,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             (item) => !(item.studentId === studentId && item.date === date)
           );
         } else {
+          const defaultReason =
+            status === "absent" ? "缺席" : status === "late" ? "遲到" : "事假";
           const nextRecord: AbsenceRecord = existing
             ? {
                 ...existing,
                 eclassStatus: status,
-                reason: status === "absent" ? "缺席" : "事假",
+                reason: defaultReason,
                 reviewStatus: "pending",
                 documentType: "none",
                 documentSubmitted: false,
@@ -352,7 +414,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 date,
                 days: 1,
                 eclassStatus: status,
-                reason: status === "absent" ? "缺席" : "事假",
+                reason: defaultReason,
                 documentType: "none",
                 documentSubmitted: false,
                 reviewStatus: "pending",
@@ -372,7 +434,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return applyWarnings({ ...prev, absences: nextAbsences }, student, "校務處");
       });
 
-      const labels = { present: "出席", absent: "缺席", leave: "事假" };
+      const labels = {
+        present: "出席",
+        absent: "缺席",
+        late: "遲到",
+        leave: "事假",
+      };
       toast.success(`已將當日狀態改為${labels[status]}。`);
     },
     [currentUser]

@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatShortDate } from "@/lib/format";
-import { classLabel, formatDays } from "@/lib/rules";
+import { attendanceStatusLabel, classLabel, formatDays } from "@/lib/rules";
 import { useStore } from "@/lib/store";
 import type { AbsenceRecord, Student } from "@/lib/types";
 import { EmptyState } from "@/components/empty-state";
@@ -94,9 +94,7 @@ export function AbsenceTable({
                     )}
                   </TableCell>
                 ) : null}
-                <TableCell>
-                  {record.eclassStatus === "absent" ? "缺席" : "請假"}
-                </TableCell>
+                <TableCell>{attendanceStatusLabel(record.eclassStatus)}</TableCell>
                 <TableCell>{formatDays(record.days)}</TableCell>
                 <TableCell className="max-w-[180px] truncate">{record.reason}</TableCell>
                 <TableCell>{record.calledBy ?? "尚未致電"}</TableCell>

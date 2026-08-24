@@ -15,7 +15,7 @@ import type {
 
 export const SCHOOL_NAME = "萬鈞伯裘書院";
 export const SCHOOL_NAME_EN = "Man Kwan Pak Kau College";
-export const STORAGE_KEY = "hongtao-attendance-v4";
+export const STORAGE_KEY = "hongtao-attendance-v5";
 
 const academicYear: AcademicYear = {
   label: "2026-2027",
@@ -71,6 +71,12 @@ const students: Student[] = [
 ];
 
 const absences: AbsenceRecord[] = [
+  // 陳梓軒 — 1 次缺席 + 4 次遲到，合計 5 次，觸發「缺席／遲到逾3次」預警
+  a("ab-lat-1", "s1a01", "2026-02-02", 1, "late", "遲到（交通擠塞）", "none", false, "pending", undefined, undefined, undefined, "父親陳先生", "08:25"),
+  a("ab-lat-2", "s1a01", "2026-03-09", 1, "late", "遲到（睡過頭）", "none", false, "pending"),
+  a("ab-lat-3", "s1a01", "2026-04-13", 1, "late", "遲到（原因不明）", "none", false, "pending"),
+  a("ab-lat-4", "s1a01", "2026-05-04", 1, "late", "遲到（交通擠塞）", "none", false, "pending"),
+
   // 林凱晴 — 4 天計入，觸發一半上限預警
   a("ab-1", "s1a02", "2025-10-08", 1, "absent", "無故缺席", "none", false, "rejected", "家長未有回覆", "u-office", "2025-10-10T09:20:00+08:00"),
   a("ab-2", "s1a02", "2025-11-14", 1, "absent", "無故缺席", "none", false, "rejected", "未能聯絡家長", "u-office", "2025-11-17T11:05:00+08:00"),
@@ -174,6 +180,7 @@ const absences: AbsenceRecord[] = [
 ];
 
 const warnings: WarningLetter[] = [
+  w("warn-s1a01-freq", "s1a01", "frequent", "2026-05-04T16:00:00+08:00", 5, 3, "issued"),
   w("warn-s1a02-half", "s1a02", "half_limit", "2026-03-05T16:00:00+08:00", 4, 9, "issued"),
   w("warn-s1a03-half", "s1a03", "half_limit", "2025-11-21T16:00:00+08:00", 4, 9, "followed_up", "u-office", "2025-11-24T11:00:00+08:00", "已致電家長，提醒補交文件及改善出勤。"),
   w("warn-s1a03-over", "s1a03", "over_limit", "2026-04-17T16:00:00+08:00", 9, 9, "issued"),
@@ -189,6 +196,7 @@ const warnings: WarningLetter[] = [
 const notifications: NotificationItem[] = [
   n("nt-1", "2026-06-12T08:12:00+08:00", "eClass 點名已同步", "已匯入 2026-06-12 上課日點名：出席 24、缺席 2、請假 1。", "sync", true),
   n("nt-2", "2026-05-22T16:00:00+08:00", "缺席已達上限：黃梓謙（中六甲）", "計入缺席 4.5 天，已自動發出警告信，請校務處跟進。", "warning", false, "s6a07", "warn-s6a07-over"),
+  n("nt-10", "2026-05-04T16:05:00+08:00", "缺席／遲到超過 3 次：陳梓軒（中一甲）", "本學年缺席 1 次、遲到 4 次，合計 5 次（超過 3 次上限），已自動發出警告信並電郵通知指定收件人。", "warning", false, "s1a01", "warn-s1a01-freq"),
   n("nt-3", "2026-05-15T08:20:00+08:00", "待審核文件：張嘉怡", "中一甲張嘉怡尚有 3 筆請假紀錄等待核對醫生證明。", "review", false, "s1a04"),
   n("nt-4", "2026-04-24T16:00:00+08:00", "缺席預警：羅子謙（中三乙）", "計入缺席已達 4 天（上限一半），已發出警告信。", "warning", true, "s3b06", "warn-s3b06-half"),
   n("nt-5", "2026-04-17T16:00:00+08:00", "缺席已超過上限：黃子諾（中一甲）", "計入缺席 10 天，已自動發出警告信，請即時跟進。", "warning", false, "s1a03", "warn-s1a03-over"),

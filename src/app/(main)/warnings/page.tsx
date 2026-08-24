@@ -29,7 +29,7 @@ export default function WarningsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">警告信</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          學生計入缺席達上限一半或超過上限時，平台會自動發出 PDF 警告信並通知校務處。
+          學生計入缺席達上限一半、超過上限，或缺席＋遲到合計超過 3 次時，平台會自動發出警告信並電郵通知指定收件人。
           {currentUser?.role === "homeroom" ? "班主任可預覽及列印，但不能登記跟進。" : ""}
         </p>
       </div>
@@ -69,7 +69,9 @@ export default function WarningsPage() {
                       <WarningTypeBadge type={letter.type} />
                     </TableCell>
                     <TableCell>
-                      {formatDays(letter.triggerDays)} / {formatDays(letter.limitDays)} 天
+                      {letter.type === "frequent"
+                        ? `${formatDays(letter.triggerDays)} 次（缺席＋遲到）`
+                        : `${formatDays(letter.triggerDays)} / ${formatDays(letter.limitDays)} 天`}
                     </TableCell>
                     <TableCell>
                       <WarningStatusBadge status={letter.status} />

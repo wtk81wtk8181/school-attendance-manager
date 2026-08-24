@@ -22,6 +22,7 @@ const documentLabels: Record<DocumentType, string> = {
 const warningTypeLabels: Record<WarningType, string> = {
   half_limit: "缺席預警",
   over_limit: "超過上限",
+  frequent: "缺席／遲到逾3次",
 };
 
 const warningStatusLabels: Record<WarningStatus, string> = {
@@ -73,7 +74,9 @@ export function WarningTypeBadge({ type }: { type: WarningType }) {
       className={
         type === "over_limit"
           ? "bg-rose-50 text-rose-800 ring-rose-200"
-          : "bg-amber-50 text-amber-800 ring-amber-200"
+          : type === "frequent"
+            ? "bg-purple-50 text-purple-800 ring-purple-200"
+            : "bg-amber-50 text-amber-800 ring-amber-200"
       }
     >
       {warningTypeLabels[type]}

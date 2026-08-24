@@ -94,6 +94,9 @@ export default function StudentsPage() {
   const selectedDayLeave = rows.filter(
     (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "leave"
   ).length;
+  const selectedDayLate = rows.filter(
+    (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "late"
+  ).length;
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
@@ -103,7 +106,7 @@ export default function StudentsPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {isOffice
-            ? "請先選班，再為該班每位學生標記當日出席、缺席或事假。點選姓名可查看缺席日期與文件。"
+            ? "請先選班，再為該班每位學生標記當日出席、缺席、遲到或事假。點選姓名可查看缺席日期與文件。"
             : "點選學生可查看缺席日期、文件與審核狀態。老師帳號為唯讀，可更換班別。"}
         </p>
       </div>
@@ -240,8 +243,8 @@ export default function StudentsPage() {
         <p className="text-sm text-muted-foreground">
           {klass !== "all" ? classLabel(klass) : "本班"}
           {selectedTeacher ? `　班主任 ${selectedTeacher}` : ""}
-          　上課日 {schoolDay}：出席 {selectedDayPresent}　缺席 {selectedDayAbsent}　事假{" "}
-          {selectedDayLeave}
+          　上課日 {schoolDay}：出席 {selectedDayPresent}　缺席 {selectedDayAbsent}　遲到{" "}
+          {selectedDayLate}　事假 {selectedDayLeave}
         </p>
       ) : null}
 

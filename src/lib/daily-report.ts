@@ -1,4 +1,4 @@
-import { classLabel } from "@/lib/rules";
+import { classLabel, attendanceStatusLabel } from "@/lib/rules";
 import type { AbsenceRecord, Student } from "@/lib/types";
 
 export interface DailyAbsenceRow {
@@ -15,6 +15,12 @@ export interface DailyAbsenceRow {
   reason: string;
   calledBy: string;
   calledAt: string;
+}
+
+export interface DailyReportPayload {
+  schoolDay: string;
+  scope: string;
+  rows: DailyAbsenceRow[];
 }
 
 export function buildDailyAbsenceRows(
@@ -35,7 +41,7 @@ export function buildDailyAbsenceRows(
         name: student?.name ?? "未知學生",
         nameEn: student?.nameEn ?? "",
         teacher: student?.homeroomTeacherName ?? "",
-        status: item.eclassStatus === "leave" ? "請假" : "缺席",
+        status: attendanceStatusLabel(item.eclassStatus),
         days: item.days,
         reason: item.reason,
         calledBy: item.calledBy?.trim() || "尚未致電",

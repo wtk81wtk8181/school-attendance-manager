@@ -1,4 +1,4 @@
-import { classLabel } from "@/lib/rules";
+import { attendanceStatusLabel, classLabel } from "@/lib/rules";
 import type { AbsenceRecord, Student } from "@/lib/types";
 
 const documentLabels = {
@@ -36,6 +36,7 @@ export interface ClassSummary {
   teacher: string;
   studentCount: number;
   absent: number;
+  late: number;
   leave: number;
   pending: number;
   counted: number;
@@ -102,6 +103,7 @@ export function buildDigest(
     );
     const teacher = classStudents[0]?.homeroomTeacherName ?? "";
     const absent = classRecords.filter((item) => item.eclassStatus === "absent").length;
+    const late = classRecords.filter((item) => item.eclassStatus === "late").length;
     const leave = classRecords.filter((item) => item.eclassStatus === "leave").length;
     return {
       className,
@@ -109,6 +111,7 @@ export function buildDigest(
       teacher,
       studentCount: classStudents.length,
       absent,
+      late,
       leave,
       pending: classRecords.filter((item) => item.reviewStatus === "pending").length,
       counted: classRecords.filter((item) => item.reviewStatus !== "approved").length,
@@ -128,7 +131,7 @@ export function buildDigest(
       name: student.name,
       nameEn: student.nameEn,
       teacher: student.homeroomTeacherName,
-      eclassStatus: record.eclassStatus === "absent" ? "缺席" : "請假",
+      eclassStatus: attendanceStatusLabel(record.eclassStatus),
       days: record.days,
       reason: record.reason,
       documentType: documentLabels[record.documentType],

@@ -152,7 +152,9 @@ export function StudentDetail({ id }: { id: string }) {
                 <div>
                   <p className="text-sm font-medium">發出日期 {formatDate(letter.issuedAt)}</p>
                   <p className="text-xs text-muted-foreground">
-                    當時計入缺席 {formatDays(letter.triggerDays)} 天
+                    {letter.type === "frequent"
+                      ? `當時缺席＋遲到 ${formatDays(letter.triggerDays)} 次`
+                      : `當時計入缺席 ${formatDays(letter.triggerDays)} 天`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
