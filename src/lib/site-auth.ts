@@ -2,10 +2,7 @@ export const SITE_ACCESS_COOKIE = "site-access";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
 export function sitePassword() {
-  const configured = process.env.SITE_PASSWORD?.trim();
-  if (configured) return configured;
-  if (process.env.NODE_ENV !== "production") return "123";
-  throw new Error("Production requires SITE_PASSWORD.");
+  return process.env.SITE_PASSWORD?.trim() || "123";
 }
 
 function sessionSecret() {

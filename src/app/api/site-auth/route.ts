@@ -31,17 +31,7 @@ export async function POST(request: Request) {
   const body = (await request.json()) as { password?: string };
   const password = body.password?.trim() ?? "";
 
-  let expectedPassword: string;
-  try {
-    expectedPassword = sitePassword();
-  } catch {
-    return NextResponse.json(
-      { error: "網站尚未設定存取密碼，請聯絡管理員。" },
-      { status: 503 }
-    );
-  }
-
-  if (password !== expectedPassword) {
+  if (password !== sitePassword()) {
     attempts.set(clientKey, { ...attempt, count: attempt.count + 1 });
     return NextResponse.json({ error: "密碼錯誤，請再試一次。" }, { status: 401 });
   }
