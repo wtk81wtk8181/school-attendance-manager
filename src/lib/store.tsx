@@ -11,7 +11,8 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, frequentOccurrences, neededWarningTypes } from "@/lib/rules";
-import { hongKongToday } from "@/lib/digest";
+import { hongKongToday, hongKongHHMM } from "@/lib/digest";
+import { isGenericAttendanceReason } from "@/lib/attendance-extras";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
 import {
   mergeSharedState,
@@ -46,6 +47,7 @@ import type {
   DayAttendance,
   DigestSettings,
   DocumentType,
+  EarlyPickup,
   ReviewStatus,
   StaffAbsenceKind,
   StaffLeaveCategory,
@@ -73,6 +75,13 @@ interface FollowUpInput {
   archive: boolean;
 }
 
+interface AttendanceExtras {
+  returnedAt?: string;
+  earlyReason?: string;
+  earlyPickup?: EarlyPickup;
+  earlyAt?: string;
+}
+
 interface StoreValue {
   ready: boolean;
   state: AppState;
@@ -82,7 +91,12 @@ interface StoreValue {
   logout: () => void;
   selectClass: (className: string | null) => void;
   reviewAbsence: (id: string, input: ReviewInput) => void;
-  setDayAttendance: (studentId: string, date: string, status: DayAttendance) => void;
+  setDayAttendance: (
+    studentId: string,
+    date: string,
+    status: DayAttendance,
+    extras?: AttendanceExtras
+  ) => void;
   updateAbsenceDetails: (
     id: string,
     input: { reason: string; calledBy: string; calledAt: string }
@@ -777,7 +791,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setDayAttendance = useCallback(
-    (studentId: string, date: string, status: DayAttendance) => {
+    (studentId: string, date: string, status: DayAttendance, extras?: AttendanceExtras) => {
       if (!currentUser || currentUser.role !== "office") {
         toast.error("只有校務處職員可以編輯出勤。");
         return;
@@ -787,7 +801,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         (item) => item.studentId === studentId && item.date === date
       );
       const currentStatus = existingNow?.eclassStatus ?? "present";
-      if (currentStatus === status) return;
+      const extrasTouched = Boolean(
+        extras &&
+          (extras.returnedAt !== undefined ||
+            extras.earlyReason !== undefined ||
+            extras.earlyPickup !== undefined ||
+            extras.earlyAt !== undefined)
+      );
+      if (currentStatus === status && !extrasTouched) return;
       const wasHidden = isStudentHidden(
         memory.hiddenStudents,
         memory.hiddenStudentRemovals,
@@ -832,26 +853,55 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             `${student.name}（${classLabel(student.className)}）${date}`
           );
         } else {
+          const nowTime = hongKongHHMM();
           const defaultReason =
-            status === "absent" ? "缺席" : status === "late" ? "遲到" : "事假";
+            status === "absent"
+              ? "缺席"
+              : status === "late"
+                ? "遲到"
+                : status === "leave"
+                  ? "事假"
+                  : status === "half_absent"
+                    ? "缺席"
+                    : "早退";
+          const keepReason =
+            existing && !isGenericAttendanceReason(existing.reason)
+              ? existing.reason
+              : defaultReason;
+          const nextReason =
+            status === "early"
+              ? (extras?.earlyReason?.trim() || keepReason)
+              : keepReason;
           const nextRecord: AbsenceRecord = existing
             ? {
                 ...existing,
                 eclassStatus: status,
-                reason:
-                  !existing.reason || ["缺席", "遲到", "事假"].includes(existing.reason)
-                    ? defaultReason
-                    : existing.reason,
+                days: status === "half_absent" ? 0.5 : 1,
+                reason: nextReason,
                 source: "office",
                 notes: "校務處於學生出勤頁更新當日狀態",
+                reviewedBy: currentUser.id,
+                reviewedAt: nowIso(),
+                returnedAt:
+                  status === "half_absent"
+                    ? extras?.returnedAt ?? existing.returnedAt ?? nowTime
+                    : undefined,
+                earlyAt:
+                  status === "early"
+                    ? extras?.earlyAt ?? existing.earlyAt ?? nowTime
+                    : undefined,
+                earlyPickup:
+                  status === "early"
+                    ? extras?.earlyPickup ?? existing.earlyPickup ?? "self"
+                    : undefined,
               }
             : {
                 id: `ab-office-${studentId}-${date}-${Date.now()}`,
                 studentId,
                 date,
-                days: 1,
+                days: status === "half_absent" ? 0.5 : 1,
                 eclassStatus: status,
-                reason: defaultReason,
+                reason: nextReason,
                 documentType: "none",
                 documentSubmitted: false,
                 reviewStatus: "pending",
@@ -859,6 +909,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 reviewedAt: nowIso(),
                 notes: "校務處於學生出勤頁登記",
                 source: "office",
+                returnedAt: status === "half_absent" ? extras?.returnedAt ?? nowTime : undefined,
+                earlyAt: status === "early" ? extras?.earlyAt ?? nowTime : undefined,
+                earlyPickup: status === "early" ? extras?.earlyPickup ?? "self" : undefined,
               };
 
           nextAbsences = existing
@@ -867,6 +920,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               )
             : [nextRecord, ...prev.absences];
         }
+
+        const statusLabel =
+          status === "absent"
+            ? "缺席"
+            : status === "late"
+              ? "遲到"
+              : status === "leave"
+                ? "事假"
+                : status === "half_absent"
+                  ? "半日缺席"
+                  : "早退";
 
         return withAudit(
           applyLongAbsenceHide(
@@ -884,15 +948,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             student
           ),
           existing ? "更新學生當日狀態" : "登記學生缺席／遲到／事假",
-          `${student.name}（${classLabel(student.className)}）${date} → ${status === "absent" ? "缺席" : status === "late" ? "遲到" : "事假"}`
+          `${student.name}（${classLabel(student.className)}）${date} → ${statusLabel}`
         );
       });
 
-      const labels = {
+      const labels: Record<DayAttendance, string> = {
         present: "出席",
         absent: "缺席",
         late: "遲到",
         leave: "事假",
+        half_absent: "半日缺席",
+        early: "早退",
       };
       const hiddenNow = isStudentHidden(
         memory.hiddenStudents,
@@ -903,6 +969,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const studentName =
           memory.students.find((item) => item.id === studentId)?.name ?? "該";
         toast.warning(`${studentName}同學已連續七天缺席，已從班別名單隱藏。`);
+      } else if (extrasTouched && currentStatus === status) {
+        toast.success("已更新時間／早退資料。請按「確定儲存」寫入資料庫。");
       } else {
         toast.success(`已標記為${labels[status]}。請按「確定儲存」寫入資料庫。`);
       }

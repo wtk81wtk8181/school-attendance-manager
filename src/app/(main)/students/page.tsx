@@ -107,6 +107,12 @@ export default function StudentsPage() {
   const selectedDayLate = rows.filter(
     (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "late"
   ).length;
+  const selectedDayHalf = rows.filter(
+    (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "half_absent"
+  ).length;
+  const selectedDayEarly = rows.filter(
+    (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "early"
+  ).length;
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
@@ -116,7 +122,7 @@ export default function StudentsPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {isOffice
-            ? "請先選班，再為該班每位學生標記當日出席、缺席、遲到或事假。標記後請按「確定儲存」，另一部裝置才會看到。"
+            ? "請先選班，再為該班每位學生標記當日出席、缺席、遲到、事假、半日缺席或早退。標記後請按「確定儲存」，另一部裝置才會看到。"
             : "點選學生可查看缺席日期、文件與審核狀態。老師帳號為唯讀，可更換班別。"}
         </p>
       </div>
@@ -284,8 +290,8 @@ export default function StudentsPage() {
         <p className="text-sm text-muted-foreground">
           {klass !== "all" ? classLabel(klass) : "本班"}
           {selectedTeacher ? `　班主任 ${selectedTeacher}` : ""}
-          　上課日 {schoolDay}：出席 {selectedDayPresent}　缺席 {selectedDayAbsent}　遲到{" "}
-          {selectedDayLate}　事假 {selectedDayLeave}
+          　上課日 {schoolDay}：出席 {selectedDayPresent}　缺席 {selectedDayAbsent}　半日缺席{" "}
+          {selectedDayHalf}　遲到 {selectedDayLate}　事假 {selectedDayLeave}　早退 {selectedDayEarly}
           {hiddenInView.length > 0 ? `　已隱藏 ${hiddenInView.length} 人` : ""}
         </p>
       ) : null}
@@ -370,9 +376,13 @@ export default function StudentsPage() {
                             item.student.id,
                             schoolDay
                           )}
+                          record={state.absences.find(
+                            (row) =>
+                              row.studentId === item.student.id && row.date === schoolDay
+                          )}
                           disabled={!isOffice}
-                          onChange={(status) =>
-                            setDayAttendance(item.student.id, schoolDay, status)
+                          onChange={(status, extras) =>
+                            setDayAttendance(item.student.id, schoolDay, status, extras)
                           }
                         />
                       </TableCell>

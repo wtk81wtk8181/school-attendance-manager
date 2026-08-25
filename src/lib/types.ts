@@ -2,7 +2,7 @@ export type Role = "office" | "homeroom";
 
 export type FormLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
-export type EclassStatus = "present" | "absent" | "late" | "leave";
+export type EclassStatus = "present" | "absent" | "late" | "leave" | "half_absent" | "early";
 
 export type DayAttendance = Exclude<EclassStatus, never>;
 
@@ -35,6 +35,14 @@ export interface Student {
   homeroomTeacherName: string;
 }
 
+export type EarlyPickup =
+  | "father"
+  | "mother"
+  | "grandfather"
+  | "grandmother"
+  | "guardian"
+  | "self";
+
 export interface AbsenceRecord {
   id: string;
   studentId: string;
@@ -51,6 +59,11 @@ export interface AbsenceRecord {
   reviewedAt?: string;
   notes?: string;
   source: AbsenceSource;
+  /** 半日缺席回校時間，例如 13:02 */
+  returnedAt?: string;
+  /** 早退時間，例如 13:15 */
+  earlyAt?: string;
+  earlyPickup?: EarlyPickup;
 }
 
 export interface WarningLetter {
@@ -157,7 +170,7 @@ export interface StudentLeaveRecord {
   studentName: string;
   className: string;
   category: StudentLeaveCategory;
-  status: Exclude<EclassStatus, "present" | "late">;
+  status: "leave" | "absent";
   startDate: string;
   endDate: string;
   reason: string;

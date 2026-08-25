@@ -3,6 +3,7 @@ import {
   classLabel,
   isCountedTowardAbsence,
 } from "@/lib/rules";
+import { formatAbsenceRecordLine } from "@/lib/attendance-extras";
 import type { AbsenceRecord, Student } from "@/lib/types";
 
 const documentLabels = {
@@ -108,7 +109,9 @@ export function buildDigest(
       classStudents.some((student) => student.id === item.studentId)
     );
     const teacher = classStudents[0]?.homeroomTeacherName ?? "";
-    const absent = classRecords.filter((item) => item.eclassStatus === "absent").length;
+    const absent = classRecords.filter(
+      (item) => item.eclassStatus === "absent" || item.eclassStatus === "half_absent"
+    ).length;
     const late = classRecords.filter((item) => item.eclassStatus === "late").length;
     const leave = classRecords.filter((item) => item.eclassStatus === "leave").length;
     return {
@@ -141,7 +144,7 @@ export function buildDigest(
       teacher: student.homeroomTeacherName,
       eclassStatus: attendanceStatusLabel(record.eclassStatus),
       days: record.days,
-      reason: record.reason,
+      reason: formatAbsenceRecordLine(student.name, record),
       documentType: documentLabels[record.documentType],
       documentSubmitted: record.documentSubmitted ? "已提交" : "未提交",
       reviewStatus: reviewLabels[record.reviewStatus],

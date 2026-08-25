@@ -4,6 +4,7 @@ import { sendMail } from "@/lib/mailer";
 import { buildDailySchoolWorkbook } from "@/lib/excel-daily";
 import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
 import type { DailySchoolReportPayload } from "@/lib/daily-report";
+import { formatDailyAbsenceLine } from "@/lib/daily-report";
 import { SCHOOL_NAME } from "@/lib/seed";
 import { isSiteRequestAuthorized } from "@/lib/site-auth";
 
@@ -106,7 +107,7 @@ function dailyEmailHtml(
               `<tr>
                 <td>${row.classLabel}</td>
                 <td>${row.name}<br/><span style="color:#666;font-size:12px">${row.studentNo}　${row.status}${row.days === 0.5 ? "（半日）" : ""}</span></td>
-                <td>${row.reason}</td>
+                <td>${formatDailyAbsenceLine(row)}</td>
                 <td>${row.calledBy}</td>
                 <td>${row.calledAt}</td>
               </tr>`

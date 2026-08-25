@@ -13,8 +13,14 @@ import {
   formatStudentLeaveLine,
   studentLeavesForDate,
 } from "@/lib/student-leave";
+import {
+  formatEarlyLeaveReportLine,
+  formatHalfAbsentReportLine,
+} from "@/lib/attendance-extras";
 import type {
   AbsenceRecord,
+  DayAttendance,
+  EarlyPickup,
   FormLevel,
   StaffAbsenceKind,
   StaffDailyAbsence,
@@ -34,11 +40,14 @@ export interface DailyAbsenceRow {
   nameEn: string;
   teacher: string;
   status: string;
-  statusKey: "absent" | "late" | "leave";
+  statusKey: Exclude<DayAttendance, "present">;
   days: number;
   reason: string;
   calledBy: string;
   calledAt: string;
+  returnedAt: string;
+  earlyAt: string;
+  earlyPickup?: EarlyPickup;
 }
 
 export interface DailyClassBlock {
@@ -114,6 +123,9 @@ export function buildDailyAbsenceRows(
         reason: item.reason,
         calledBy: item.calledBy?.trim() || "尚未致電",
         calledAt: item.calledAt?.trim() || "—",
+        returnedAt: item.returnedAt?.trim() || "",
+        earlyAt: item.earlyAt?.trim() || "",
+        earlyPickup: item.earlyPickup,
       };
     })
     .sort(
@@ -123,6 +135,12 @@ export function buildDailyAbsenceRows(
 }
 
 export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
+  if (row.statusKey === "half_absent") {
+    return formatHalfAbsentReportLine(row.name, row.reason, row.returnedAt);
+  }
+  if (row.statusKey === "early") {
+    return formatEarlyLeaveReportLine(row.name, row.reason, row.earlyAt, row.earlyPickup);
+  }
   const reason = row.reason.trim() || row.status;
   const half = row.days === 0.5 ? "（半日）" : "";
   const caller =
@@ -162,8 +180,12 @@ export function buildDailySchoolReport(
     const classStudents = students.filter((item) => item.className === className);
     const classRows = rows.filter((item) => item.className === className);
     const notPresent = classRows.filter(
-      (item) => item.statusKey === "absent" || item.statusKey === "leave"
+      (item) =>
+        item.statusKey === "absent" ||
+        item.statusKey === "leave" ||
+        item.statusKey === "half_absent"
     );
+    const earlyRows = classRows.filter((item) => item.statusKey === "early");
     const lateCount = classRows.filter((item) => item.statusKey === "late").length;
     const registered = classStudents.length;
     const present = Math.max(0, registered - notPresent.length);
@@ -174,12 +196,12 @@ export function buildDailySchoolReport(
       form,
       registered,
       present,
-      earlyLeave: 0,
+      earlyLeave: earlyRows.length,
       lateCount,
       absentCount: notPresent.length,
       attendanceRate: rate(present, registered),
       punctualityRate: rate(Math.max(0, present - lateCount), present),
-      absenceLines: notPresent.map(formatDailyAbsenceLine),
+      absenceLines: [...notPresent, ...earlyRows].map(formatDailyAbsenceLine),
     };
   });
 

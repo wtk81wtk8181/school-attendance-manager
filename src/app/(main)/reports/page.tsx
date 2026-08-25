@@ -23,7 +23,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { downloadCsv, formatPercent, formatPercentExact, formatShortDate } from "@/lib/format";
+import { formatAbsenceRecordLine } from "@/lib/attendance-extras";
 import {
+  attendanceStatusLabel,
   buildStudentStats,
   classLabel,
   formLabel,
@@ -33,7 +35,7 @@ import { AbsenceDetailFields } from "@/components/absence-detail-fields";
 import { DailyAbsenceReport } from "@/components/daily-absence-report";
 import { DailyStaffSection } from "@/components/daily-staff-section";
 import { documentLabels, reviewLabels, warningStatusLabels, warningTypeLabels } from "@/components/status-badges";
-import { buildDailyAbsenceRows, buildDailySchoolReport } from "@/lib/daily-report";
+import { buildDailyAbsenceRows, buildDailySchoolReport, formatDailyAbsenceLine } from "@/lib/daily-report";
 import { hongKongToday, resolveDigestSchoolDay } from "@/lib/digest";
 import { buildMonthlyReport, currentYearMonth, monthRange } from "@/lib/monthly-report";
 import { EmailRecipientPicker } from "@/components/email-recipient-picker";
@@ -247,13 +249,9 @@ export default function ReportsPage() {
           student ? classLabel(student.className) : "",
           student?.studentNo ?? "",
           student?.name ?? "",
-          item.eclassStatus === "absent"
-            ? "缺席"
-            : item.eclassStatus === "late"
-              ? "遲到"
-              : "請假",
+          attendanceStatusLabel(item.eclassStatus),
           item.days,
-          item.reason,
+          formatAbsenceRecordLine(student?.name ?? "", item),
           item.calledBy ?? "",
           item.calledAt ?? "",
           documentLabels[item.documentType],
@@ -535,7 +533,13 @@ export default function ReportsPage() {
                     {row.name}
                     <span className="ml-2 text-xs text-muted-foreground">
                       {row.studentNo}　{row.status}
+                      {row.days === 0.5 ? "（半日）" : ""}
                     </span>
+                    {row.statusKey === "half_absent" || row.statusKey === "early" ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {formatDailyAbsenceLine(row)}
+                      </p>
+                    ) : null}
                   </TableCell>
                   {canEditDaily ? (
                     <AbsenceDetailFields
@@ -548,7 +552,7 @@ export default function ReportsPage() {
                     />
                   ) : (
                     <>
-                      <TableCell>{row.reason}</TableCell>
+                      <TableCell>{formatDailyAbsenceLine(row)}</TableCell>
                       <TableCell>{row.calledBy}</TableCell>
                       <TableCell>{row.calledAt}</TableCell>
                     </>

@@ -29,7 +29,9 @@ const statusLabels = {
   present: "出席",
   absent: "缺席",
   late: "遲到",
-  leave: "請假",
+  leave: "事假",
+  half_absent: "半日缺席",
+  early: "早退",
 } as const;
 
 export function attendanceStatusLabel(status: DayAttendance): string {
@@ -56,7 +58,11 @@ export function countedAbsenceDays(records: AbsenceRecord[]): number {
 }
 
 export function isCountedTowardAbsence(record: AbsenceRecord): boolean {
-  return record.reviewStatus !== "approved" && record.eclassStatus !== "late";
+  return (
+    record.reviewStatus !== "approved" &&
+    record.eclassStatus !== "late" &&
+    record.eclassStatus !== "early"
+  );
 }
 
 export function approvedLeaveDays(records: AbsenceRecord[]): number {
@@ -72,7 +78,9 @@ export function pendingDays(records: AbsenceRecord[]): number {
   return records
     .filter(
       (record) =>
-        record.reviewStatus === "pending" && record.eclassStatus !== "late"
+        record.reviewStatus === "pending" &&
+      record.eclassStatus !== "late" &&
+      record.eclassStatus !== "early"
     )
     .reduce((sum, record) => sum + record.days, 0);
 }
@@ -113,7 +121,9 @@ export function frequentOccurrences(records: AbsenceRecord[]): number {
   return records.filter(
     (record) =>
       record.reviewStatus !== "approved" &&
-      (record.eclassStatus === "absent" || record.eclassStatus === "late")
+      (record.eclassStatus === "absent" ||
+        record.eclassStatus === "late" ||
+        record.eclassStatus === "half_absent")
   ).length;
 }
 

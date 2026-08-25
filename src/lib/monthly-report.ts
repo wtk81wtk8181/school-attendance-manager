@@ -3,6 +3,7 @@ import {
   classLabel,
   isCountedTowardAbsence,
 } from "@/lib/rules";
+import { formatAbsenceRecordLine } from "@/lib/attendance-extras";
 import type { AbsenceRecord, Student } from "@/lib/types";
 
 const documentLabels = {
@@ -135,7 +136,9 @@ export function buildMonthlyReport(
       teacher: classStudents[0]?.homeroomTeacherName ?? "",
       studentCount: classStudents.length,
       schoolDaysInMonth,
-      absentCount: classRecords.filter((item) => item.eclassStatus === "absent").length,
+      absentCount: classRecords.filter(
+        (item) => item.eclassStatus === "absent" || item.eclassStatus === "half_absent"
+      ).length,
       lateCount: classRecords.filter((item) => item.eclassStatus === "late").length,
       leaveCount: classRecords.filter((item) => item.eclassStatus === "leave").length,
       countedAbsenceDays,
@@ -146,7 +149,12 @@ export function buildMonthlyReport(
         )
         .reduce((sum, item) => sum + item.days, 0),
       pendingDays: classRecords
-        .filter((item) => item.reviewStatus === "pending" && item.eclassStatus !== "late")
+        .filter(
+          (item) =>
+            item.reviewStatus === "pending" &&
+            item.eclassStatus !== "late" &&
+            item.eclassStatus !== "early"
+        )
         .reduce((sum, item) => sum + item.days, 0),
       studentsWithAbsence: absentees.size,
       attendanceRate:
@@ -168,7 +176,7 @@ export function buildMonthlyReport(
       teacher: student.homeroomTeacherName,
       status: attendanceStatusLabel(record.eclassStatus),
       days: record.days,
-      reason: record.reason,
+      reason: formatAbsenceRecordLine(student.name, record),
       documentType: documentLabels[record.documentType],
       documentSubmitted: record.documentSubmitted ? "已提交" : "未提交",
       reviewStatus: reviewLabels[record.reviewStatus],
