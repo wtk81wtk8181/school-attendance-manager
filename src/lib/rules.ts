@@ -39,7 +39,7 @@ export function attendanceStatusLabel(status: DayAttendance): string {
 export function classLabel(className: string): string {
   const form = Number(className[0]) as FormLevel;
   const stream = className.slice(1);
-  return `${formLabel(form)}${stream}`;
+  return `${form}${stream}`;
 }
 
 export function listClasses(students: Student[]): string[] {

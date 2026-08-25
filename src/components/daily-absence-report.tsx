@@ -114,64 +114,125 @@ export function DailyAbsenceReport({
         </section>
       </div>
 
-      <section className="mt-3 overflow-x-auto rounded border border-zinc-300">
-        <table className="w-full border-collapse text-center text-[10px]">
-          <thead>
-            <tr className="bg-slate-100">
-              <th className="border border-zinc-300 px-1 py-1 text-left">班別</th>
-              {payload.classes.map((item) => (
-                <th key={item.className} className="border border-zinc-300 px-0.5 py-1">
-                  {item.className}
-                </th>
-              ))}
-              <th className="border border-zinc-300 px-1 py-1">TOTAL</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="border border-zinc-300 px-1 py-1 text-left">缺席人數</td>
-              {payload.classes.map((item) => (
-                <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
-                  {item.absentCount || ""}
-                </td>
-              ))}
-              <td className="border border-zinc-300 px-1 py-1">{payload.totalAbsent}</td>
-            </tr>
-            <tr>
-              <td className="border border-zinc-300 px-1 py-1 text-left">出席百分比</td>
-              {payload.classes.map((item) => (
-                <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
-                  {formatPercentExact(item.attendanceRate)}
-                </td>
-              ))}
-              <td className="border border-zinc-300 px-1 py-1">
-                {formatPercentExact(payload.totalAttendanceRate)}
-              </td>
-            </tr>
-            <tr>
-              <td className="border border-zinc-300 px-1 py-1 text-left">學生遲到人數</td>
-              {payload.classes.map((item) => (
-                <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
-                  {item.lateCount}
-                </td>
-              ))}
-              <td className="border border-zinc-300 px-1 py-1">{payload.totalLate}</td>
-            </tr>
-            <tr>
-              <td className="border border-zinc-300 px-1 py-1 text-left">守時百分比</td>
-              {payload.classes.map((item) => (
-                <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
-                  {formatPercentExact(item.punctualityRate)}
-                </td>
-              ))}
-              <td className="border border-zinc-300 px-1 py-1">
-                {formatPercentExact(payload.schoolPunctualityRate)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      <div className="mt-3 space-y-3">
+        <ClassMetricsTable
+          title="中一至中三"
+          classes={payload.classes.slice(0, 15)}
+          totalLabel="小計"
+          totals={{
+            absent: payload.classes.slice(0, 15).reduce((sum, item) => sum + item.absentCount, 0),
+            attendanceRate: summarizeAttendance(payload.classes.slice(0, 15)),
+            late: payload.classes.slice(0, 15).reduce((sum, item) => sum + item.lateCount, 0),
+            punctualityRate: summarizePunctuality(payload.classes.slice(0, 15)),
+          }}
+        />
+        <ClassMetricsTable
+          title="中四至中六"
+          classes={payload.classes.slice(15, 30)}
+          totalLabel="TOTAL"
+          totals={{
+            absent: payload.totalAbsent,
+            attendanceRate: payload.totalAttendanceRate,
+            late: payload.totalLate,
+            punctualityRate: payload.schoolPunctualityRate,
+          }}
+        />
+      </div>
     </article>
+  );
+}
+
+function summarizeAttendance(classes: DailyClassBlock[]): number {
+  const registered = classes.reduce((sum, item) => sum + item.registered, 0);
+  const present = classes.reduce((sum, item) => sum + item.present, 0);
+  if (registered <= 0) return 1;
+  return present / registered;
+}
+
+function summarizePunctuality(classes: DailyClassBlock[]): number {
+  const present = classes.reduce((sum, item) => sum + item.present, 0);
+  const late = classes.reduce((sum, item) => sum + item.lateCount, 0);
+  if (present <= 0) return 1;
+  return Math.max(0, present - late) / present;
+}
+
+function ClassMetricsTable({
+  title,
+  classes,
+  totalLabel,
+  totals,
+}: {
+  title: string;
+  classes: DailyClassBlock[];
+  totalLabel: string;
+  totals: {
+    absent: number;
+    attendanceRate: number;
+    late: number;
+    punctualityRate: number;
+  };
+}) {
+  return (
+    <section className="rounded border border-zinc-300">
+      <h3 className="border-b border-zinc-300 bg-slate-50 px-2 py-1 text-center text-xs font-semibold">
+        {title}
+      </h3>
+      <table className="w-full border-collapse text-center text-[10px]">
+        <thead>
+          <tr className="bg-slate-100">
+            <th className="border border-zinc-300 px-1 py-1 text-left">班別</th>
+            {classes.map((item) => (
+              <th key={item.className} className="border border-zinc-300 px-0.5 py-1">
+                {item.className}
+              </th>
+            ))}
+            <th className="border border-zinc-300 px-1 py-1">{totalLabel}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="border border-zinc-300 px-1 py-1 text-left">缺席人數</td>
+            {classes.map((item) => (
+              <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+                {item.absentCount || ""}
+              </td>
+            ))}
+            <td className="border border-zinc-300 px-1 py-1">{totals.absent}</td>
+          </tr>
+          <tr>
+            <td className="border border-zinc-300 px-1 py-1 text-left">出席百分比</td>
+            {classes.map((item) => (
+              <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+                {formatPercentExact(item.attendanceRate)}
+              </td>
+            ))}
+            <td className="border border-zinc-300 px-1 py-1">
+              {formatPercentExact(totals.attendanceRate)}
+            </td>
+          </tr>
+          <tr>
+            <td className="border border-zinc-300 px-1 py-1 text-left">學生遲到人數</td>
+            {classes.map((item) => (
+              <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+                {item.lateCount}
+              </td>
+            ))}
+            <td className="border border-zinc-300 px-1 py-1">{totals.late}</td>
+          </tr>
+          <tr>
+            <td className="border border-zinc-300 px-1 py-1 text-left">守時百分比</td>
+            {classes.map((item) => (
+              <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+                {formatPercentExact(item.punctualityRate)}
+              </td>
+            ))}
+            <td className="border border-zinc-300 px-1 py-1">
+              {formatPercentExact(totals.punctualityRate)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
   );
 }
 

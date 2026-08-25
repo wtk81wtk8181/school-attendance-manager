@@ -23,6 +23,7 @@ import {
   writeSession,
 } from "@/lib/db-client";
 import { emptyStaffDaily, staffDailyFor, withToggledStaff } from "@/lib/staff";
+import { studentLeaveCategoryLabel } from "@/lib/student-leave";
 import type {
   AbsenceRecord,
   AppState,
@@ -112,6 +113,15 @@ interface StoreValue {
     reason: string;
     activity: string;
   }) => boolean;
+  addStudentLeaves: (input: {
+    studentIds: string[];
+    category: StudentLeaveCategory;
+    status: "leave" | "absent";
+    startDate: string;
+    endDate: string;
+    reason: string;
+    activity: string;
+  }) => { added: number; skipped: number };
   removeStudentLeave: (id: string) => void;
   toggleStaffAbsence: (
     date: string,
@@ -1295,6 +1305,98 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [currentUser]
   );
 
+  const addStudentLeaves = useCallback(
+    (input: {
+      studentIds: string[];
+      category: StudentLeaveCategory;
+      status: "leave" | "absent";
+      startDate: string;
+      endDate: string;
+      reason: string;
+      activity: string;
+    }) => {
+      if (currentUser?.role !== "office") {
+        toast.error("只有校務處職員可以登記學生請假。");
+        return { added: 0, skipped: 0 };
+      }
+      const uniqueIds = [...new Set(input.studentIds.filter(Boolean))];
+      if (uniqueIds.length === 0 || !input.startDate) {
+        return { added: 0, skipped: 0 };
+      }
+
+      let added = 0;
+      let skipped = 0;
+      patch((prev) => {
+        const now = nowIso();
+        const endDate =
+          input.endDate && input.endDate >= input.startDate
+            ? input.endDate
+            : input.startDate;
+        const records = [...(prev.studentLeaveRecords ?? [])];
+        const addedNames: string[] = [];
+        const skippedNames: string[] = [];
+
+        for (const studentId of uniqueIds) {
+          const student = prev.students.find((item) => item.id === studentId);
+          if (!student) continue;
+          const overlapping = records.some(
+            (item) =>
+              item.studentId === studentId &&
+              item.startDate <= endDate &&
+              item.endDate >= input.startDate
+          );
+          if (overlapping) {
+            skipped += 1;
+            skippedNames.push(student.name);
+            continue;
+          }
+          records.unshift({
+            id: `pleave-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            studentId: student.id,
+            studentName: student.name,
+            className: student.className,
+            category: input.category,
+            status: input.status,
+            startDate: input.startDate,
+            endDate,
+            reason: input.reason.trim(),
+            activity: input.activity.trim(),
+            createdBy: prev.currentUserId ?? "",
+            createdAt: now,
+            updatedAt: now,
+          });
+          added += 1;
+          addedNames.push(student.name);
+        }
+
+        if (added === 0) return prev;
+
+        const activityLabel = input.activity.trim() || studentLeaveCategoryLabel(input.category);
+        return withAudit(
+          {
+            ...prev,
+            studentLeaveRecords: records,
+          },
+          "批量登記學生請假",
+          `${activityLabel}　${input.startDate}${
+            endDate !== input.startDate ? ` 至 ${endDate}` : ""
+          }　${added} 人${skipped > 0 ? `（略過 ${skipped} 人）` : ""}：${addedNames
+            .slice(0, 6)
+            .join("、")}${addedNames.length > 6 ? "…" : ""}`
+        );
+      });
+
+      if (added === 0 && skipped > 0) {
+        toast.error("所選學生在這段日期已有預先請假紀錄。");
+      } else if (skipped > 0) {
+        toast.warning(`已登記 ${added} 人，${skipped} 人因日期重疊而略過。`);
+      }
+
+      return { added, skipped };
+    },
+    [currentUser]
+  );
+
   const removeStudentLeave = useCallback(
     (id: string) => {
       if (currentUser?.role !== "office") {
@@ -1488,6 +1590,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStaffLeave,
       removeStaffLeave,
       addStudentLeave,
+      addStudentLeaves,
       removeStudentLeave,
       toggleStaffAbsence,
       recordDigestSend,
@@ -1521,6 +1624,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStaffLeave,
       removeStaffLeave,
       addStudentLeave,
+      addStudentLeaves,
       removeStudentLeave,
       toggleStaffAbsence,
       recordDigestSend,

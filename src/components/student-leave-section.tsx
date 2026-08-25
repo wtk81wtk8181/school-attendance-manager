@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { CalendarPlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   STUDENT_LEAVE_CATEGORIES,
   formatStudentLeaveLine,
@@ -33,12 +35,12 @@ import type { StudentLeaveCategory } from "@/lib/types";
 import { toast } from "sonner";
 
 export function StudentLeaveSection({ date }: { date: string }) {
-  const { state, addStudentLeave, removeStudentLeave } = useStore();
+  const { state, addStudentLeaves, removeStudentLeave } = useStore();
   const [open, setOpen] = useState(false);
   const [classFilter, setClassFilter] = useState("all");
   const [query, setQuery] = useState("");
-  const [studentId, setStudentId] = useState("");
-  const [category, setCategory] = useState<StudentLeaveCategory>("personal");
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [category, setCategory] = useState<StudentLeaveCategory>("official");
   const [status, setStatus] = useState<"leave" | "absent">("leave");
   const [startDate, setStartDate] = useState(date);
   const [endDate, setEndDate] = useState(date);
@@ -54,22 +56,50 @@ export function StudentLeaveSection({ date }: { date: string }) {
             (classFilter === "all" || student.className === classFilter) &&
             studentMatchesQuery(student, query)
         )
-        .slice(0, 80),
+        .sort(
+          (a, b) =>
+            a.className.localeCompare(b.className) ||
+            a.studentNo.localeCompare(b.studentNo)
+        ),
     [classFilter, query, state.students]
   );
+  const selectedSet = useMemo(() => new Set(selectedStudentIds), [selectedStudentIds]);
   const dayLeaves = studentLeavesForDate(state.studentLeaveRecords, date);
   const upcomingLeaves = (state.studentLeaveRecords ?? [])
     .filter((item) => item.endDate >= date)
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
 
+  function resetForm() {
+    setSelectedStudentIds([]);
+    setReason("");
+    setActivity("");
+  }
+
+  function openDialog() {
+    setStartDate(date);
+    setEndDate(date);
+    resetForm();
+    setOpen(true);
+  }
+
+  function toggleStudent(studentId: string, checked: boolean) {
+    setSelectedStudentIds((current) =>
+      checked ? [...new Set([...current, studentId])] : current.filter((id) => id !== studentId)
+    );
+  }
+
+  function selectAllFiltered() {
+    setSelectedStudentIds(filteredStudents.map((student) => student.id));
+  }
+
   function submitLeave(event: FormEvent) {
     event.preventDefault();
-    if (!studentId) {
-      toast.error("請先選擇學生。");
+    if (selectedStudentIds.length === 0) {
+      toast.error("請至少選擇一名學生。");
       return;
     }
-    const ok = addStudentLeave({
-      studentId,
+    const { added, skipped } = addStudentLeaves({
+      studentIds: selectedStudentIds,
       category,
       status,
       startDate,
@@ -77,15 +107,19 @@ export function StudentLeaveSection({ date }: { date: string }) {
       reason,
       activity,
     });
-    if (!ok) {
-      toast.error("未能登記請假，請重試。");
+    if (added === 0) {
+      if (skipped === 0) {
+        toast.error("未能登記請假，請重試。");
+      }
       return;
     }
     setOpen(false);
-    setStudentId("");
-    setReason("");
-    setActivity("");
-    toast.success("已登記學生預先請假，到日會自動顯示於缺席名單。");
+    resetForm();
+    toast.success(
+      added === 1
+        ? "已登記 1 名學生的預先請假，到日會自動顯示於缺席名單。"
+        : `已為 ${added} 名學生登記同一活動的預先請假，到日會自動顯示於缺席名單。`
+    );
   }
 
   return (
@@ -94,18 +128,10 @@ export function StudentLeaveSection({ date }: { date: string }) {
         <div>
           <p className="font-medium">學生預先請假</p>
           <p className="text-xs text-muted-foreground">
-            可預先登記事假、病假、公假／比賽等；到請假當日會自動顯示於總覽及每日缺席報告。
+            可一次為多名學生登記同一活動、同一日期的預先請假；到日會自動顯示於總覽及每日缺席報告。
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setStartDate(date);
-            setEndDate(date);
-            setOpen(true);
-          }}
-        >
+        <Button variant="outline" size="sm" onClick={openDialog}>
           <CalendarPlus className="size-4" />
           登記學生請假
         </Button>
@@ -123,56 +149,14 @@ export function StudentLeaveSection({ date }: { date: string }) {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>登記學生預先請假</DialogTitle>
             <DialogDescription>
-              選擇學生、類別及日期範圍。若當日未有其他缺席紀錄，系統會自動顯示於缺席名單。
+              可一次選擇多名學生，登記同一活動及日期範圍。若當日未有其他缺席紀錄，系統會自動顯示於缺席名單。
             </DialogDescription>
           </DialogHeader>
           <form className="space-y-3" onSubmit={submitLeave}>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5">
-                <Label>班別篩選</Label>
-                <Select value={classFilter} onValueChange={(value) => setClassFilter(value ?? "all")}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部班別</SelectItem>
-                    {classes.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {classLabel(item)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="student-search">搜尋</Label>
-                <Input
-                  id="student-search"
-                  value={query}
-                  placeholder="姓名、學號或班別"
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>學生</Label>
-              <Select value={studentId} onValueChange={(value) => setStudentId(value ?? "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="選擇學生" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredStudents.map((student) => (
-                    <SelectItem key={student.id} value={student.id}>
-                      {classLabel(student.className)}　{student.name}（{student.studentNo}）
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
                 <Label>類別</Label>
@@ -229,7 +213,7 @@ export function StudentLeaveSection({ date }: { date: string }) {
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="student-leave-activity">外出活動／比賽（選填）</Label>
+              <Label htmlFor="student-leave-activity">外出活動／比賽</Label>
               <Input
                 id="student-leave-activity"
                 value={activity}
@@ -246,8 +230,85 @@ export function StudentLeaveSection({ date }: { date: string }) {
                 onChange={(event) => setReason(event.target.value)}
               />
             </div>
+
+            <div className="space-y-2 rounded-lg border p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label>選擇學生（已選 {selectedStudentIds.length} 人）</Label>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="xs" onClick={selectAllFiltered}>
+                    全選目前列表
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => setSelectedStudentIds([])}
+                  >
+                    清除
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5">
+                  <Label>班別篩選</Label>
+                  <Select value={classFilter} onValueChange={(value) => setClassFilter(value ?? "all")}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">全部班別</SelectItem>
+                      {classes.map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {classLabel(item)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="student-search">搜尋</Label>
+                  <Input
+                    id="student-search"
+                    value={query}
+                    placeholder="姓名、學號或班別"
+                    onChange={(event) => setQuery(event.target.value)}
+                  />
+                </div>
+              </div>
+              <ScrollArea className="h-56 rounded-md border">
+                <div className="space-y-1 p-2">
+                  {filteredStudents.length === 0 ? (
+                    <p className="px-2 py-6 text-center text-sm text-muted-foreground">
+                      找不到符合條件的學生。
+                    </p>
+                  ) : (
+                    filteredStudents.map((student) => (
+                      <label
+                        key={student.id}
+                        className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/60"
+                      >
+                        <Checkbox
+                          checked={selectedSet.has(student.id)}
+                          onCheckedChange={(checked) =>
+                            toggleStudent(student.id, checked === true)
+                          }
+                        />
+                        <span className="text-sm">
+                          {classLabel(student.className)}　{student.name}（{student.studentNo}）
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+
             <DialogFooter>
-              <Button type="submit">登記請假</Button>
+              <Button type="submit" disabled={selectedStudentIds.length === 0}>
+                {selectedStudentIds.length <= 1
+                  ? "登記請假"
+                  : `批量登記 ${selectedStudentIds.length} 人`}
+              </Button>
             </DialogFooter>
           </form>
 
