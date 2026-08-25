@@ -17,9 +17,9 @@ import {
   LogOut,
   Menu,
   RefreshCw,
-  School,
   Users,
 } from "lucide-react";
+import { SchoolLogoMark } from "@/components/school-logo";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -128,9 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="no-print hidden w-60 shrink-0 flex-col bg-[var(--school-navy)] text-white md:flex">
         <div className="border-b border-white/10 py-4">
           <Link href="/dashboard" className="flex items-center gap-2.5 px-3 py-1">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-[var(--school-gold)] text-[var(--school-navy)]">
-              <School className="size-4" />
-            </span>
+            <SchoolLogoMark />
             <span className="leading-tight">
               <span className="block text-sm font-semibold tracking-wide">{SCHOOL_NAME}</span>
               <span className="block text-[11px] text-white/70">出勤與請假管理</span>
@@ -325,7 +323,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           className="w-64 border-none bg-[var(--school-navy)] p-0 text-white"
         >
           <SheetHeader className="border-b border-white/10 p-4">
-            <SheetTitle className="text-white">{SCHOOL_NAME}</SheetTitle>
+            <SheetTitle className="flex items-center gap-2.5 text-white">
+              <SchoolLogoMark />
+              <span className="leading-tight">
+                <span className="block text-sm font-semibold">{SCHOOL_NAME}</span>
+                <span className="block text-[11px] font-normal text-white/70">出勤與請假管理</span>
+              </span>
+            </SheetTitle>
           </SheetHeader>
           <div className="py-4">
             <SideNav items={nav} pathname={pathname} onNavigate={() => setMobileOpen(false)} />

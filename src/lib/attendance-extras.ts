@@ -1,5 +1,34 @@
 import type { AbsenceRecord, EarlyPickup } from "@/lib/types";
 
+export const ABSENCE_ECLASS_STATUSES = [
+  "absent",
+  "late",
+  "leave",
+  "half_absent",
+  "early",
+] as const;
+
+export const ABSENCE_ADMIN_COLUMNS = [
+  "id",
+  "studentId",
+  "date",
+  "days",
+  "eclassStatus",
+  "reason",
+  "calledBy",
+  "calledAt",
+  "documentType",
+  "documentSubmitted",
+  "reviewStatus",
+  "reviewedBy",
+  "reviewedAt",
+  "notes",
+  "source",
+  "returnedAt",
+  "earlyAt",
+  "earlyPickup",
+] as const;
+
 export const EARLY_PICKUP_OPTIONS: Array<{ value: EarlyPickup; label: string }> = [
   { value: "father", label: "父親接送" },
   { value: "mother", label: "母親接送" },
@@ -8,6 +37,18 @@ export const EARLY_PICKUP_OPTIONS: Array<{ value: EarlyPickup; label: string }> 
   { value: "guardian", label: "監護人接送" },
   { value: "self", label: "自行離開" },
 ];
+
+export function normalizeAbsenceDays(status: string, days: unknown): 0.5 | 1 {
+  if (status === "half_absent") return 0.5;
+  return Number(days) === 0.5 ? 0.5 : 1;
+}
+
+export function normalizeAbsenceRecord(record: AbsenceRecord): AbsenceRecord {
+  return {
+    ...record,
+    days: normalizeAbsenceDays(record.eclassStatus, record.days),
+  };
+}
 
 export function earlyPickupLabel(value: EarlyPickup | undefined): string {
   return EARLY_PICKUP_OPTIONS.find((item) => item.value === value)?.label ?? "自行離開";

@@ -1,4 +1,5 @@
 import { createSeed, OPERATIONAL_DATA_VERSION } from "@/lib/seed";
+import { normalizeAbsenceRecord } from "@/lib/attendance-extras";
 import type {
   AbsenceRecord,
   AppState,
@@ -84,7 +85,7 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
   const operational = resetOperational
     ? emptyOperationalData(seed)
     : {
-        absences: shared.absences ?? seed.absences,
+        absences: (shared.absences ?? seed.absences).map(normalizeAbsenceRecord),
         warnings: shared.warnings ?? seed.warnings,
         notifications: shared.notifications ?? seed.notifications,
         digestLogs: shared.digestLogs ?? seed.digestLogs,
@@ -217,6 +218,7 @@ function mergeAbsences(
       if (cleared === undefined || Number.isNaN(cleared)) return true;
       return absenceActivity(record) > cleared;
     })
+    .map(normalizeAbsenceRecord)
     .sort((a, b) => b.date.localeCompare(a.date) || a.studentId.localeCompare(b.studentId));
 }
 

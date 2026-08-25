@@ -1,4 +1,10 @@
-import type { AppState } from "@/lib/types";
+import {
+  ABSENCE_ADMIN_COLUMNS,
+  ABSENCE_ECLASS_STATUSES,
+  EARLY_PICKUP_OPTIONS,
+  normalizeAbsenceRecord,
+} from "@/lib/attendance-extras";
+import type { AbsenceRecord, AppState } from "@/lib/types";
 
 /** 必須與伺服器 REPLACEABLE_ARRAY_SECTIONS 一致，否則雲端會略過整段覆寫。 */
 export const ADMIN_JSON_SECTIONS = [
@@ -181,6 +187,35 @@ export function validateAdminSectionRows(
     }
   }
 
+  if (section === "absences") {
+    const allowedStatus = new Set<string>(ABSENCE_ECLASS_STATUSES);
+    const allowedPickup = new Set<string>(EARLY_PICKUP_OPTIONS.map((item) => item.value));
+    const pairs = new Set<string>();
+    for (const [index, row] of rows.entries()) {
+      const studentId = String(row.studentId ?? "").trim();
+      const date = String(row.date ?? "").trim();
+      const status = String(row.eclassStatus ?? "").trim();
+      const pickup = String(row.earlyPickup ?? "").trim();
+      if (!studentId) {
+        return `缺席紀錄第 ${index + 1} 列缺少 studentId。`;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return `缺席紀錄第 ${index + 1} 列日期無效（須為 YYYY-MM-DD）。`;
+      }
+      if (!allowedStatus.has(status)) {
+        return `缺席紀錄第 ${index + 1} 列的 eclassStatus 無效。只允許：${ABSENCE_ECLASS_STATUSES.join("、")}。`;
+      }
+      if (pickup && !allowedPickup.has(pickup)) {
+        return `缺席紀錄第 ${index + 1} 列的 earlyPickup 無效。`;
+      }
+      const pair = `${studentId}:${date}`;
+      if (pairs.has(pair)) {
+        return `缺席紀錄包含重複的學生與日期：${pair}`;
+      }
+      pairs.add(pair);
+    }
+  }
+
   return null;
 }
 
@@ -213,7 +248,9 @@ export function applyAdminSectionRows(
       }));
     return {
       ...prev,
-      absences: nextRows as unknown as AppState["absences"],
+      absences: nextRows.map((row) =>
+        normalizeAbsenceRecord(row as unknown as AbsenceRecord)
+      ),
       clearedAttendance: [...extraClears, ...(prev.clearedAttendance ?? [])],
     };
   }
@@ -325,6 +362,21 @@ export function applyAdminJsonSections(
     next = applyAdminSectionRows(next, section, rows, removedAt);
   }
   return next;
+}
+
+export function collectAdminColumns(
+  section: string,
+  rows: Array<Record<string, unknown>>
+): string[] {
+  const keys = new Set<string>();
+  const preferred =
+    section === "absences" ? (ABSENCE_ADMIN_COLUMNS as readonly string[]) : [];
+  for (const key of preferred) keys.add(key);
+  for (const row of rows) {
+    for (const key of Object.keys(row)) keys.add(key);
+  }
+  const extras = [...keys].filter((key) => !preferred.includes(key));
+  return [...preferred, ...extras];
 }
 
 export function exampleAdminJson(section: AdminJsonSection = "students"): string {

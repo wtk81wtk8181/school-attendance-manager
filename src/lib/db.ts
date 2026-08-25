@@ -6,6 +6,10 @@ import {
   sharedFromState,
   needsOperationalDataReset,
 } from "@/lib/db-client";
+import {
+  validateAdminSectionRows,
+  type AdminJsonSection,
+} from "@/lib/admin-json-patch";
 import type { AppState } from "@/lib/types";
 
 const SNAPSHOT_ID = "default";
@@ -29,40 +33,8 @@ export type ReplaceableArraySection =
 export class RevisionConflictError extends Error {}
 
 function validateReplacementSection(section: ReplaceableArraySection, rows: unknown[]) {
-  if (!rows.every((row) => row !== null && typeof row === "object" && !Array.isArray(row))) {
-    throw new Error(`${section} 包含無效資料列。`);
-  }
-
-  if (section === "staffDailyAbsences") {
-    const dates = rows.map((row) => String((row as { date?: unknown }).date ?? ""));
-    if (dates.some((date) => !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
-      throw new Error("教職員每日缺席包含無效日期。");
-    }
-    if (new Set(dates).size !== dates.length) {
-      throw new Error("教職員每日缺席包含重複日期。");
-    }
-    return;
-  }
-
-  const ids = rows.map((row) => String((row as { id?: unknown }).id ?? "").trim());
-  if (ids.some((id) => !id)) {
-    throw new Error(`${section} 包含缺少 id 的資料列。`);
-  }
-  if (new Set(ids).size !== ids.length) {
-    throw new Error(`${section} 包含重複 id。`);
-  }
-
-  if (section === "students") {
-    const studentNumbers = rows.map((row) =>
-      String((row as { studentNo?: unknown }).studentNo ?? "").trim()
-    );
-    if (studentNumbers.some((studentNo) => !studentNo)) {
-      throw new Error("學生名單包含缺少學號的資料列。");
-    }
-    if (new Set(studentNumbers).size !== studentNumbers.length) {
-      throw new Error("學生名單包含重複學號。");
-    }
-  }
+  const error = validateAdminSectionRows(section as AdminJsonSection, rows);
+  if (error) throw new Error(error);
 }
 
 export interface SharedSnapshot {

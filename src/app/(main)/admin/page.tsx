@@ -26,11 +26,13 @@ import {
 } from "@/components/ui/select";
 import {
   attachCurrentCounts,
+  collectAdminColumns,
   parseAdminJsonPatch,
   type AdminJsonPatchPreview,
 } from "@/lib/admin-json-patch";
 import { useStore } from "@/lib/store";
 import type { AppState } from "@/lib/types";
+import { hongKongToday } from "@/lib/digest";
 import { toast } from "sonner";
 
 type Row = Record<string, unknown>;
@@ -99,13 +101,10 @@ export default function AdminPage() {
   const safePage = Math.min(page, pageCount - 1);
   const pageStart = safePage * PAGE_SIZE;
   const visibleRows = rows.slice(pageStart, pageStart + PAGE_SIZE);
-  const columns = useMemo(() => {
-    const keys = new Set<string>();
-    for (const row of rows.slice(0, 50)) {
-      for (const key of Object.keys(row)) keys.add(key);
-    }
-    return [...keys];
-  }, [rows]);
+  const columns = useMemo(
+    () => collectAdminColumns(String(sectionKey), rows),
+    [rows, sectionKey]
+  );
 
   if (currentUser?.role !== "office") {
     return (
@@ -145,6 +144,16 @@ export default function AdminPage() {
     const template: Row = {};
     for (const column of columns) template[column] = "";
     if (!template.id) template.id = `row-${Date.now()}`;
+    if (sectionKey === "absences") {
+      template.eclassStatus = template.eclassStatus || "absent";
+      template.days = template.days === "" ? 1 : template.days;
+      template.date = template.date || hongKongToday();
+      template.documentType = template.documentType || "none";
+      template.documentSubmitted = false;
+      template.reviewStatus = template.reviewStatus || "pending";
+      template.source = template.source || "office";
+      template.reason = template.reason || "缺席";
+    }
     setDraft([...base, template]);
   }
 
@@ -155,8 +164,8 @@ export default function AdminPage() {
 
   function save() {
     if (!draft) return;
-    adminPatchState({ section: sectionKey, rows: draft });
-    setDraft(null);
+    const ok = adminPatchState({ section: sectionKey, rows: draft });
+    if (ok) setDraft(null);
   }
 
   function previewJsonPatch() {

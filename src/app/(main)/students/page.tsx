@@ -159,66 +159,68 @@ export default function StudentsPage() {
       ) : null}
 
       {isOffice ? (
-        <section className="space-y-3 rounded-xl border bg-white p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-medium">按班點名</p>
-              <p className="text-xs text-muted-foreground">
-                全校中一至中六各有 A 至 E 班。選班後可編輯該班每位學生的當日狀態。
-              </p>
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="school-day">上課日</Label>
+        <section className="space-y-2 rounded-xl border bg-white px-3 py-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium">
+              按班點名
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                選班後可編輯該班當日狀態
+              </span>
+            </p>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="school-day" className="text-xs">
+                上課日
+              </Label>
               <Input
                 id="school-day"
                 type="date"
-                className="w-44"
+                className="h-8 w-40"
                 value={schoolDay}
                 onChange={(event) => setSchoolDay(event.target.value)}
               />
             </div>
           </div>
-          {FORMS.map((item) => (
-            <div key={item} className="space-y-1.5">
-              <p className="text-xs font-medium text-[var(--school-navy)]">
-                {formLabel(item)}
-              </p>
-              <div className="grid grid-cols-5 gap-1.5">
-                {CLASS_STREAMS.map((stream) => {
-                  const className = `${item}${stream}`;
-                  const selected = klass === className;
-                  const count = state.students.filter(
-                    (student) => student.className === className
-                  ).length;
-                  return (
-                    <button
-                      key={className}
-                      type="button"
-                      onClick={() => setKlass(className)}
-                      className={cn(
-                        "rounded-lg border px-2 py-2 text-left transition-colors",
-                        selected
-                          ? "border-[var(--school-navy)] bg-[var(--school-navy)] text-white"
-                          : "bg-[var(--school-paper)] hover:bg-muted"
-                      )}
-                    >
-                      <span className="block text-sm font-semibold">
-                        {classLabel(className)}
-                      </span>
-                      <span
+          <div className="space-y-1">
+            {FORMS.map((item) => (
+              <div key={item} className="flex items-center gap-2">
+                <p className="w-9 shrink-0 text-[11px] font-medium text-[var(--school-navy)]">
+                  {formLabel(item)}
+                </p>
+                <div className="grid min-w-0 flex-1 grid-cols-5 gap-1">
+                  {CLASS_STREAMS.map((stream) => {
+                    const className = `${item}${stream}`;
+                    const selected = klass === className;
+                    const count = state.students.filter(
+                      (student) => student.className === className
+                    ).length;
+                    return (
+                      <button
+                        key={className}
+                        type="button"
+                        onClick={() => setKlass(className)}
                         className={cn(
-                          "block text-[11px]",
-                          selected ? "text-white/75" : "text-muted-foreground"
+                          "rounded-md border px-1.5 py-0.5 text-center leading-tight transition-colors",
+                          selected
+                            ? "border-[var(--school-navy)] bg-[var(--school-navy)] text-white"
+                            : "bg-[var(--school-paper)] hover:bg-muted"
                         )}
                       >
-                        {count} 人
-                      </span>
-                    </button>
-                  );
-                })}
+                        <span className="text-xs font-semibold">{classLabel(className)}</span>
+                        <span
+                          className={cn(
+                            "ml-1 text-[10px]",
+                            selected ? "text-white/75" : "text-muted-foreground"
+                          )}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </section>
       ) : null}
 

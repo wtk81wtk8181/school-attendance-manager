@@ -146,7 +146,7 @@ interface StoreValue {
     selected: boolean
   ) => void;
   recordDigestSend: (log: Omit<DigestLog, "id" | "createdAt">) => void;
-  adminPatchState: (input: { section: string; rows: unknown[] }) => void;
+  adminPatchState: (input: { section: string; rows: unknown[] }) => boolean;
   adminPatchSections: (sections: Record<string, unknown[]>) => boolean;
   refreshFromDatabase: () => Promise<void>;
   saveToDatabase: () => Promise<boolean>;
@@ -1717,16 +1717,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (input: { section: string; rows: unknown[] }) => {
       if (!currentUser || currentUser.role !== "office") {
         toast.error("只有校務處職員可以使用後台管理。");
-        return;
+        return false;
       }
       if (!ADMIN_EDITABLE_SECTIONS.has(input.section)) {
         toast.error("此資料表不可由後台直接修改。");
-        return;
+        return false;
       }
       const currentSection = memory[input.section as keyof AppState];
       if (!Array.isArray(currentSection)) {
         toast.error("此資料表不支援試算表方式修改。");
-        return;
+        return false;
+      }
+      const error = validateAdminSectionRows(
+        input.section as AdminJsonSection,
+        input.rows
+      );
+      if (error) {
+        toast.error(error);
+        return false;
       }
       pendingReplaceSections.add(input.section);
       patch((prev) =>
@@ -1742,6 +1750,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         )
       );
       toast.success("已更新資料，同步中……");
+      return true;
     },
     [currentUser]
   );
