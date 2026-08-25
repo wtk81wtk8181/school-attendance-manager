@@ -38,20 +38,54 @@ export const EARLY_PICKUP_OPTIONS: Array<{ value: EarlyPickup; label: string }> 
   { value: "self", label: "自行離開" },
 ];
 
-export function normalizeAbsenceDays(status: string, days: unknown): 0.5 | 1 {
+export function normalizeAbsenceDays(status: string): 0.5 | 1 {
   if (status === "half_absent") return 0.5;
-  return Number(days) === 0.5 ? 0.5 : 1;
+  return 1;
 }
 
 export function normalizeAbsenceRecord(record: AbsenceRecord): AbsenceRecord {
+  const status = ABSENCE_ECLASS_STATUSES.includes(
+    record.eclassStatus as (typeof ABSENCE_ECLASS_STATUSES)[number]
+  )
+    ? record.eclassStatus
+    : "absent";
+  const defaultReason =
+    status === "leave"
+      ? "事假"
+      : status === "late"
+        ? "遲到"
+        : status === "early"
+          ? "早退"
+          : "病假";
+  const optionalString = (value: unknown) =>
+    typeof value === "string" && value.trim() ? value : undefined;
+  const pickup = EARLY_PICKUP_OPTIONS.some((item) => item.value === record.earlyPickup)
+    ? record.earlyPickup
+    : undefined;
+
   return {
     ...record,
-    days: normalizeAbsenceDays(record.eclassStatus, record.days),
+    eclassStatus: status,
+    days: normalizeAbsenceDays(status),
+    reason: typeof record.reason === "string" ? record.reason : defaultReason,
+    calledBy: optionalString(record.calledBy),
+    calledAt: optionalString(record.calledAt),
+    documentType: ["doctor", "parent", "none"].includes(record.documentType)
+      ? record.documentType
+      : "none",
+    documentSubmitted: record.documentSubmitted === true,
+    reviewStatus: ["pending", "approved", "rejected"].includes(record.reviewStatus)
+      ? record.reviewStatus
+      : "pending",
+    source: ["eclass", "office"].includes(record.source) ? record.source : "office",
+    returnedAt: optionalString(record.returnedAt),
+    earlyAt: optionalString(record.earlyAt),
+    earlyPickup: pickup,
   };
 }
 
 export function earlyPickupLabel(value: EarlyPickup | undefined): string {
-  return EARLY_PICKUP_OPTIONS.find((item) => item.value === value)?.label ?? "自行離開";
+  return EARLY_PICKUP_OPTIONS.find((item) => item.value === value)?.label ?? "—";
 }
 
 export function isGenericAttendanceReason(reason: string | undefined): boolean {

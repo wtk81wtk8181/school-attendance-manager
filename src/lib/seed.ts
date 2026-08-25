@@ -4,6 +4,7 @@ import type {
   DigestSettings,
 } from "@/lib/types";
 import { ROSTER_STUDENTS } from "@/data/roster-students";
+import { OFFICIAL_STAFF_MEMBERS } from "@/data/staff-members";
 
 export const SCHOOL_NAME = "萬鈞伯裘書院";
 export const SCHOOL_NAME_EN = "Man Kwan Pak Kau College";
@@ -53,7 +54,7 @@ export function createSeed(): AppState {
     digestLogs: [],
     clearedAttendance: [],
     removedRecipients: [],
-    staffMembers: [],
+    staffMembers: OFFICIAL_STAFF_MEMBERS.map((item) => ({ ...item })),
     staffRemovals: [],
     staffDailyAbsences: [],
     staffLeaveRecords: [],

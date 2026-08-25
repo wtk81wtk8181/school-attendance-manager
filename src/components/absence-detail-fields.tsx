@@ -26,6 +26,7 @@ export function AbsenceDetailFields({
   disabled,
   compact,
   asCells,
+  labels,
   onChange,
 }: {
   reason: string;
@@ -34,6 +35,7 @@ export function AbsenceDetailFields({
   disabled?: boolean;
   compact?: boolean;
   asCells?: boolean;
+  labels?: boolean;
   onChange: (next: { reason: string; calledBy: string; calledAt: string }) => void;
 }) {
   const reasonParts = splitReason(reason);
@@ -47,6 +49,9 @@ export function AbsenceDetailFields({
     <>
       {wrap(
       <div className={stack}>
+        {labels ? (
+          <p className="text-[11px] text-muted-foreground">請假／缺席原因</p>
+        ) : null}
         <Select
           value={reasonParts.option}
           disabled={disabled}
@@ -89,6 +94,9 @@ export function AbsenceDetailFields({
 
       {wrap(
       <div className={stack}>
+        {labels ? (
+          <p className="text-[11px] text-muted-foreground">致電人士</p>
+        ) : null}
         <Select
           value={callerParts.relation}
           disabled={disabled}
@@ -97,7 +105,7 @@ export function AbsenceDetailFields({
             onChange({
               reason,
               calledBy: joinCaller(value, callerParts.name),
-              calledAt,
+              calledAt: value === "尚未致電" ? "" : calledAt,
             });
           }}
         >
@@ -132,19 +140,24 @@ export function AbsenceDetailFields({
       )}
 
       {wrap(
-      <Input
-        type="time"
-        disabled={disabled}
-        value={calledAt}
-        className={compact ? "w-32" : undefined}
-        onChange={(event) =>
-          onChange({
-            reason,
-            calledBy,
-            calledAt: event.target.value,
-          })
-        }
-      />
+      <div className={stack}>
+        {labels ? (
+          <p className="text-[11px] text-muted-foreground">致電時間</p>
+        ) : null}
+        <Input
+          type="time"
+          disabled={disabled}
+          value={calledAt}
+          className={compact ? "w-32" : undefined}
+          onChange={(event) =>
+            onChange({
+              reason,
+              calledBy,
+              calledAt: event.target.value,
+            })
+          }
+        />
+      </div>
       )}
     </>
   );

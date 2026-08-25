@@ -190,23 +190,55 @@ export function validateAdminSectionRows(
   if (section === "absences") {
     const allowedStatus = new Set<string>(ABSENCE_ECLASS_STATUSES);
     const allowedPickup = new Set<string>(EARLY_PICKUP_OPTIONS.map((item) => item.value));
+    const allowedDocumentTypes = new Set(["doctor", "parent", "none"]);
+    const allowedReviewStatuses = new Set(["pending", "approved", "rejected"]);
+    const allowedSources = new Set(["eclass", "office"]);
     const pairs = new Set<string>();
     for (const [index, row] of rows.entries()) {
       const studentId = String(row.studentId ?? "").trim();
       const date = String(row.date ?? "").trim();
       const status = String(row.eclassStatus ?? "").trim();
       const pickup = String(row.earlyPickup ?? "").trim();
+      const rowLabel = `缺席紀錄第 ${index + 1} 列`;
       if (!studentId) {
-        return `缺席紀錄第 ${index + 1} 列缺少 studentId。`;
+        return `${rowLabel}缺少 studentId。`;
       }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        return `缺席紀錄第 ${index + 1} 列日期無效（須為 YYYY-MM-DD）。`;
+        return `${rowLabel}日期無效（須為 YYYY-MM-DD）。`;
       }
       if (!allowedStatus.has(status)) {
-        return `缺席紀錄第 ${index + 1} 列的 eclassStatus 無效。只允許：${ABSENCE_ECLASS_STATUSES.join("、")}。`;
+        return `${rowLabel}的 eclassStatus 無效。只允許：${ABSENCE_ECLASS_STATUSES.join("、")}。`;
       }
       if (pickup && !allowedPickup.has(pickup)) {
-        return `缺席紀錄第 ${index + 1} 列的 earlyPickup 無效。`;
+        return `${rowLabel}的 earlyPickup 無效。`;
+      }
+      if (typeof row.reason !== "string") {
+        return `${rowLabel}的 reason 必須是文字。`;
+      }
+      for (const field of [
+        "calledBy",
+        "calledAt",
+        "reviewedBy",
+        "reviewedAt",
+        "notes",
+        "returnedAt",
+        "earlyAt",
+      ] as const) {
+        if (row[field] !== undefined && row[field] !== null && typeof row[field] !== "string") {
+          return `${rowLabel}的 ${field} 必須是文字。`;
+        }
+      }
+      if (!allowedDocumentTypes.has(String(row.documentType ?? ""))) {
+        return `${rowLabel}的 documentType 無效。`;
+      }
+      if (typeof row.documentSubmitted !== "boolean") {
+        return `${rowLabel}的 documentSubmitted 必須是 true 或 false。`;
+      }
+      if (!allowedReviewStatuses.has(String(row.reviewStatus ?? ""))) {
+        return `${rowLabel}的 reviewStatus 無效。`;
+      }
+      if (!allowedSources.has(String(row.source ?? ""))) {
+        return `${rowLabel}的 source 無效。`;
       }
       const pair = `${studentId}:${date}`;
       if (pairs.has(pair)) {

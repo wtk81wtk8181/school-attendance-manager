@@ -41,8 +41,17 @@ import type { FormLevel, StudentStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export default function StudentsPage() {
-  const { state, visibleStudents, currentUser, setDayAttendance, saveToDatabase, pendingSave, usingDatabase, restoreHiddenStudent } =
-    useStore();
+  const {
+    state,
+    visibleStudents,
+    currentUser,
+    setDayAttendance,
+    updateAbsenceDetails,
+    saveToDatabase,
+    pendingSave,
+    usingDatabase,
+    restoreHiddenStudent,
+  } = useStore();
   const isOffice = currentUser?.role === "office";
   const [query, setQuery] = useState("");
   const [form, setForm] = useState<string>("all");
@@ -386,6 +395,14 @@ export default function StudentsPage() {
                           onChange={(status, extras) =>
                             setDayAttendance(item.student.id, schoolDay, status, extras)
                           }
+                          onDetailsChange={(next) => {
+                            const record = state.absences.find(
+                              (row) =>
+                                row.studentId === item.student.id &&
+                                row.date === schoolDay
+                            );
+                            if (record) updateAbsenceDetails(record.id, next);
+                          }}
                         />
                       </TableCell>
                       <TableCell>{formatPercent(item.attendanceRate)}</TableCell>

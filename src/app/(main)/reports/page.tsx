@@ -32,7 +32,6 @@ import {
   isCountedTowardAbsence,
 } from "@/lib/rules";
 import { AbsenceDetailFields } from "@/components/absence-detail-fields";
-import { DailyAbsenceReport } from "@/components/daily-absence-report";
 import { DailyStaffSection } from "@/components/daily-staff-section";
 import { documentLabels, reviewLabels, warningStatusLabels, warningTypeLabels } from "@/components/status-badges";
 import { buildDailyAbsenceRows, buildDailySchoolReport, formatDailyAbsenceLine } from "@/lib/daily-report";
@@ -478,22 +477,6 @@ export default function ReportsPage() {
         <DailyStaffSection date={reportDay} />
       </div>
 
-      <div className="overflow-auto rounded-xl border bg-white p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <p className="font-medium">學校格式預覽</p>
-            <p className="text-xs text-muted-foreground">
-              含各班出席、缺席名單、年級百分比、守時百分比及教職員缺席情況
-            </p>
-          </div>
-          <Button variant="outline" size="sm" onClick={exportDailyPdf}>
-            <FileText className="size-4" />
-            匯出 PDF
-          </Button>
-        </div>
-        <DailyAbsenceReport payload={dailySchoolReport} />
-      </div>
-
       <div className="rounded-xl border bg-white">
         <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
           <div>
@@ -548,7 +531,18 @@ export default function ReportsPage() {
                       reason={row.reason}
                       calledBy={row.calledBy === "尚未致電" ? "" : row.calledBy}
                       calledAt={row.calledAt === "—" ? "" : row.calledAt}
-                      onChange={(next) => updateAbsenceDetails(row.id, next)}
+                      onChange={(next) =>
+                        updateAbsenceDetails(row.id, {
+                          ...next,
+                          create: row.id.startsWith("pleave-")
+                            ? {
+                                studentId: row.studentId,
+                                date: row.date,
+                                status: row.statusKey,
+                              }
+                            : undefined,
+                        })
+                      }
                     />
                   ) : (
                     <>

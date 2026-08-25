@@ -1,5 +1,6 @@
 import { createSeed, OPERATIONAL_DATA_VERSION } from "@/lib/seed";
 import { normalizeAbsenceRecord } from "@/lib/attendance-extras";
+import { applyOfficialStaffRoster } from "@/lib/staff";
 import type {
   AbsenceRecord,
   AppState,
@@ -94,6 +95,12 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
         removedRecipients: shared.removedRecipients ?? seed.removedRecipients,
       };
 
+  const staffApplied = applyOfficialStaffRoster(
+    shared.staffMembers ?? seed.staffMembers,
+    shared.staffRemovals ?? seed.staffRemovals,
+    seed.staffMembers
+  );
+
   return {
     ...seed,
     ...shared,
@@ -104,8 +111,8 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     selectedClassName: null,
     students: replaceRoster ? seed.students : (shared.students ?? seed.students),
     digestRecipients: shared.digestRecipients ?? seed.digestRecipients,
-    staffMembers: shared.staffMembers ?? seed.staffMembers,
-    staffRemovals: shared.staffRemovals ?? seed.staffRemovals,
+    staffMembers: staffApplied.members,
+    staffRemovals: mergeStaffRemovals(shared.staffRemovals, staffApplied.extraRemovals),
     staffDailyAbsences: shared.staffDailyAbsences ?? seed.staffDailyAbsences,
     staffLeaveRecords: shared.staffLeaveRecords ?? seed.staffLeaveRecords,
     staffLeaveRemovals: shared.staffLeaveRemovals ?? seed.staffLeaveRemovals,
@@ -529,7 +536,13 @@ export function mergeSharedStates(
   const next = mergeSharedState(incoming);
   const clearedAttendance = mergeClears(base.clearedAttendance, next.clearedAttendance);
   const removedRecipients = mergeRemovals(base.removedRecipients, next.removedRecipients);
-  const staffRemovals = mergeStaffRemovals(base.staffRemovals, next.staffRemovals);
+  let staffRemovals = mergeStaffRemovals(base.staffRemovals, next.staffRemovals);
+  const staffApplied = applyOfficialStaffRoster(
+    mergeStaffMembers(base.staffMembers, next.staffMembers, staffRemovals),
+    staffRemovals,
+    seed.staffMembers
+  );
+  staffRemovals = mergeStaffRemovals(staffRemovals, staffApplied.extraRemovals);
   const staffLeaveRemovals = mergeStaffLeaveRemovals(
     base.staffLeaveRemovals,
     next.staffLeaveRemovals
@@ -559,7 +572,7 @@ export function mergeSharedStates(
     digestSettings: mergeDigestSettings(base.digestSettings, next.digestSettings),
     clearedAttendance,
     removedRecipients,
-    staffMembers: mergeStaffMembers(base.staffMembers, next.staffMembers, staffRemovals),
+    staffMembers: staffApplied.members,
     staffRemovals,
     staffDailyAbsences: mergeStaffDailyAbsences(
       base.staffDailyAbsences,

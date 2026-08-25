@@ -110,7 +110,15 @@ export async function loadSharedSnapshot(): Promise<SharedSnapshot> {
   const revision = asRevision(rows[0].revision);
   const updatedAt = formatUpdatedAt(rows[0].updated_at);
 
-  if (needsOperationalDataReset(raw)) {
+  const rawStaffIds = (raw.staffMembers ?? []).map((item) => item.id).join("|");
+  const mergedStaffIds = merged.staffMembers.map((item) => item.id).join("|");
+  const rawRemovalIds = (raw.staffRemovals ?? []).map((item) => item.id).join("|");
+  const mergedRemovalIds = merged.staffRemovals.map((item) => item.id).join("|");
+  if (
+    needsOperationalDataReset(raw) ||
+    rawStaffIds !== mergedStaffIds ||
+    rawRemovalIds !== mergedRemovalIds
+  ) {
     return saveSharedState(merged);
   }
 

@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   AlertTriangle,
   CalendarClock,
-  CalendarDays,
   CheckCircle2,
   ClipboardList,
   FileText,
@@ -25,19 +24,6 @@ import {
 } from "@/lib/rules";
 import { formatDate, formatPercent, formatShortDate } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import { hongKongToday } from "@/lib/digest";
-import {
-  STAFF_ABSENCE_ROWS,
-  applyStaffLeavesToDaily,
-  formatStaffLeaveLine,
-  staffDailyFor,
-  staffLeavesForDate,
-  staffNamesForKind,
-} from "@/lib/staff";
-import {
-  formatStudentLeaveLine,
-  studentLeavesForDate,
-} from "@/lib/student-leave";
 import { isStudentHidden } from "@/lib/hidden-students";
 
 export default function DashboardPage() {
@@ -73,16 +59,8 @@ export default function DashboardPage() {
   const watchList = [...stats]
     .filter((item) => item.level !== "ok")
     .sort((a, b) => b.countedDays - a.countedDays);
-  const today = hongKongToday();
-  const todayStaffLeaves = staffLeavesForDate(state.staffLeaveRecords, today);
-  const todayStudentLeaves = studentLeavesForDate(state.studentLeaveRecords, today);
   const hiddenStudents = (state.hiddenStudents ?? []).filter((item) =>
     isStudentHidden(state.hiddenStudents, state.hiddenStudentRemovals, item.studentId)
-  );
-  const todayStaff = applyStaffLeavesToDaily(
-    staffDailyFor(state.staffDailyAbsences, today),
-    todayStaffLeaves,
-    ""
   );
 
   return (
@@ -95,60 +73,6 @@ export default function DashboardPage() {
             : `正在檢閱 ${currentUser?.title} 負責班級，僅供查閱。`}
         </p>
       </div>
-
-      {currentUser?.role === "office" ? (
-        <Card className="shadow-none">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CalendarDays className="size-4" />
-              今日教職員缺席／請假
-            </CardTitle>
-            <CardDescription>
-              {formatShortDate(today)}；預先登記的複診、手術、白事及活動會自動在此顯示。
-            </CardDescription>
-            <div className="pt-1">
-            <Button variant="outline" size="sm" render={<Link href="/pre-leave" />}>
-              登記／管理預先請假
-            </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-2 text-sm md:grid-cols-2">
-            {STAFF_ABSENCE_ROWS.map((row) => {
-              const names = staffNamesForKind(
-                state.staffMembers,
-                todayStaff,
-                row.kind
-              );
-              return (
-                <p key={row.kind} className="rounded-md border px-3 py-2">
-                  <span className="font-medium">{row.label}：</span>
-                  {names.length > 0 ? names.join("、") : "—"}
-                </p>
-              );
-            })}
-            {todayStudentLeaves.length > 0 ? (
-              <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 md:col-span-2">
-                <p className="font-medium text-sky-950">學生預先請假</p>
-                {todayStudentLeaves.map((leave) => (
-                  <p key={leave.id} className="mt-1 text-sky-950">
-                    {formatStudentLeaveLine(leave)}
-                  </p>
-                ))}
-              </div>
-            ) : null}
-            {todayStaffLeaves.length > 0 ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 md:col-span-2">
-                <p className="font-medium text-amber-900">提早登記資料</p>
-                {todayStaffLeaves.map((leave) => (
-                  <p key={leave.id} className="mt-1 text-amber-900">
-                    {formatStaffLeaveLine(leave)}
-                  </p>
-                ))}
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      ) : null}
 
       {currentUser?.role === "office" && hiddenStudents.length > 0 ? (
         <Card className="shadow-none border-amber-200">

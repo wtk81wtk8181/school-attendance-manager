@@ -32,6 +32,7 @@ import type {
 
 export interface DailyAbsenceRow {
   id: string;
+  studentId: string;
   date: string;
   className: string;
   classLabel: string;
@@ -110,6 +111,7 @@ export function buildDailyAbsenceRows(
       const student = students.find((row) => row.id === item.studentId);
       return {
         id: item.id,
+        studentId: item.studentId,
         date: item.date,
         className: student?.className ?? "",
         classLabel: student ? classLabel(student.className) : "",

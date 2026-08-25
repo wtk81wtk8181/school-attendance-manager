@@ -1,9 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { CalendarPlus, Plus, Trash2, Users } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { CalendarPlus, Check, Plus, Search, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -32,8 +31,15 @@ import {
   staffLeavesForDate,
 } from "@/lib/staff";
 import { useStore } from "@/lib/store";
-import type { StaffLeaveCategory } from "@/lib/types";
+import type { StaffAbsenceKind, StaffLeaveCategory } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+interface DragSelection {
+  kind: StaffAbsenceKind;
+  selected: boolean;
+  ids: Set<string>;
+}
 
 export function DailyStaffSection({ date }: { date: string }) {
   const {
@@ -45,20 +51,31 @@ export function DailyStaffSection({ date }: { date: string }) {
     addStaffLeave,
     removeStaffLeave,
     toggleStaffAbsence,
+    toggleStaffAbsences,
   } = useStore();
   const canEdit = currentUser?.role === "office";
   const [open, setOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [name, setName] = useState("");
   const [bulkNames, setBulkNames] = useState("");
+  const [search, setSearch] = useState("");
   const [leaveStaffId, setLeaveStaffId] = useState("");
   const [leaveCategory, setLeaveCategory] = useState<StaffLeaveCategory>("checkup");
   const [leaveStart, setLeaveStart] = useState(date);
   const [leaveEnd, setLeaveEnd] = useState(date);
   const [leaveNote, setLeaveNote] = useState("");
   const [leaveActivity, setLeaveActivity] = useState("");
+  const [dragPreview, setDragPreview] = useState<DragSelection | null>(null);
+  const dragRef = useRef<DragSelection | null>(null);
+  const ignoreNextClickRef = useRef(false);
 
   const members = state.staffMembers ?? [];
+  const normalizedSearch = search.trim().toLocaleLowerCase("zh-HK");
+  const filteredMembers = normalizedSearch
+    ? members.filter((member) =>
+        member.name.toLocaleLowerCase("zh-HK").includes(normalizedSearch)
+      )
+    : members;
   const dayLeaves = staffLeavesForDate(state.staffLeaveRecords, date);
   const daily = applyStaffLeavesToDaily(
     staffDailyFor(state.staffDailyAbsences, date),
@@ -68,6 +85,54 @@ export function DailyStaffSection({ date }: { date: string }) {
   const upcomingLeaves = (state.staffLeaveRecords ?? [])
     .filter((item) => item.endDate >= date)
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+  useEffect(() => {
+    function finishDrag(commit: boolean) {
+      const drag = dragRef.current;
+      if (!drag) return;
+      dragRef.current = null;
+      setDragPreview(null);
+      if (!commit) return;
+      ignoreNextClickRef.current = true;
+      window.setTimeout(() => {
+        ignoreNextClickRef.current = false;
+      }, 0);
+      toggleStaffAbsences(date, drag.kind, [...drag.ids], drag.selected);
+    }
+
+    const commitDrag = () => finishDrag(true);
+    const cancelDrag = () => finishDrag(false);
+    window.addEventListener("pointerup", commitDrag);
+    window.addEventListener("pointercancel", cancelDrag);
+    window.addEventListener("blur", cancelDrag);
+    return () => {
+      window.removeEventListener("pointerup", commitDrag);
+      window.removeEventListener("pointercancel", cancelDrag);
+      window.removeEventListener("blur", cancelDrag);
+    };
+  }, [date, toggleStaffAbsences]);
+
+  function startDrag(
+    kind: StaffAbsenceKind,
+    staffId: string,
+    currentlySelected: boolean
+  ) {
+    if (!canEdit) return;
+    const drag = {
+      kind,
+      selected: !currentlySelected,
+      ids: new Set([staffId]),
+    };
+    dragRef.current = drag;
+    setDragPreview(drag);
+  }
+
+  function extendDrag(kind: StaffAbsenceKind, staffId: string) {
+    const drag = dragRef.current;
+    if (!drag || drag.kind !== kind || drag.ids.has(staffId)) return;
+    drag.ids.add(staffId);
+    setDragPreview({ ...drag, ids: new Set(drag.ids) });
+  }
 
   function submitName(event: FormEvent) {
     event.preventDefault();
@@ -126,7 +191,7 @@ export function DailyStaffSection({ date }: { date: string }) {
         <div>
           <p className="font-medium">教職員缺席情況</p>
           <p className="text-xs text-muted-foreground">
-            先在對話框填入教職員名稱（可批量匯入），再於病假、事假、公假、早退四行勾選當日缺席同事。同一人只會出現在其中一行。
+            名單已載入文件傳閱教職員姓名。可按住姓名拖過多人一次選取；同一人只會出現在其中一行。
           </p>
         </div>
         {canEdit ? (
@@ -161,6 +226,18 @@ export function DailyStaffSection({ date }: { date: string }) {
         </div>
       )}
 
+      {members.length > 0 ? (
+        <div className="relative max-w-sm">
+          <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="搜尋教職員姓名"
+            className="pl-8"
+          />
+        </div>
+      ) : null}
+
       {members.length === 0 ? (
         <p className="rounded-md border border-dashed px-3 py-4 text-sm text-muted-foreground">
           尚未有教職員名稱。請先開啟對話框新增，例如校長、主任或當日缺席的同事。
@@ -173,23 +250,64 @@ export function DailyStaffSection({ date }: { date: string }) {
               <div key={row.kind} className="rounded-lg border bg-white p-3">
                 <p className="text-sm font-medium">{row.label}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {members.map((member) => (
-                    <label
-                      key={`${row.kind}-${member.id}`}
-                      htmlFor={`staff-${row.kind}-${member.id}`}
-                      className="flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm"
-                    >
-                      <Checkbox
-                        id={`staff-${row.kind}-${member.id}`}
-                        checked={selected.has(member.id)}
-                        disabled={!canEdit}
-                        onCheckedChange={(checked) =>
-                          toggleStaffAbsence(date, row.kind, member.id, checked === true)
-                        }
-                      />
-                      {member.name}
-                    </label>
-                  ))}
+                  {filteredMembers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">找不到符合的姓名。</p>
+                  ) : (
+                    filteredMembers.map((member) => {
+                      const previewed =
+                        dragPreview?.kind === row.kind &&
+                        dragPreview.ids.has(member.id);
+                      const checked = previewed
+                        ? dragPreview.selected
+                        : selected.has(member.id);
+                      return (
+                        <button
+                          key={`${row.kind}-${member.id}`}
+                          type="button"
+                          disabled={!canEdit}
+                          aria-pressed={checked}
+                          onPointerDown={(event) => {
+                            if (event.button !== 0) return;
+                            event.preventDefault();
+                            startDrag(row.kind, member.id, selected.has(member.id));
+                          }}
+                          onPointerEnter={() => extendDrag(row.kind, member.id)}
+                          onClick={() => {
+                            if (ignoreNextClickRef.current) {
+                              ignoreNextClickRef.current = false;
+                              return;
+                            }
+                            toggleStaffAbsence(
+                              date,
+                              row.kind,
+                              member.id,
+                              !selected.has(member.id)
+                            );
+                          }}
+                          onDragStart={(event) => event.preventDefault()}
+                          className={cn(
+                            "flex select-none items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors",
+                            checked
+                              ? "border-[var(--school-navy)] bg-[var(--school-navy)] text-white"
+                              : "bg-white hover:bg-muted",
+                            canEdit ? "cursor-pointer" : "cursor-default opacity-75"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "flex size-4 items-center justify-center rounded border",
+                              checked
+                                ? "border-white/70 bg-white/15"
+                                : "border-input bg-white"
+                            )}
+                          >
+                            {checked ? <Check className="size-3" /> : null}
+                          </span>
+                          {member.name}
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             );

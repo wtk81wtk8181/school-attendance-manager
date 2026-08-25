@@ -82,6 +82,17 @@ interface AttendanceExtras {
   earlyAt?: string;
 }
 
+interface AbsenceDetailsInput {
+  reason: string;
+  calledBy: string;
+  calledAt: string;
+  create?: {
+    studentId: string;
+    date: string;
+    status: Exclude<DayAttendance, "present">;
+  };
+}
+
 interface StoreValue {
   ready: boolean;
   state: AppState;
@@ -97,10 +108,7 @@ interface StoreValue {
     status: DayAttendance,
     extras?: AttendanceExtras
   ) => void;
-  updateAbsenceDetails: (
-    id: string,
-    input: { reason: string; calledBy: string; calledAt: string }
-  ) => void;
+  updateAbsenceDetails: (id: string, input: AbsenceDetailsInput) => void;
   followUpWarning: (id: string, input: FollowUpInput) => void;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
@@ -143,6 +151,12 @@ interface StoreValue {
     date: string,
     kind: StaffAbsenceKind,
     staffId: string,
+    selected: boolean
+  ) => void;
+  toggleStaffAbsences: (
+    date: string,
+    kind: StaffAbsenceKind,
+    staffIds: string[],
     selected: boolean
   ) => void;
   recordDigestSend: (log: Omit<DigestLog, "id" | "createdAt">) => void;
@@ -340,6 +354,10 @@ function loadLocalState(): AppState {
     }
     const parsed = JSON.parse(raw) as Partial<AppState>;
     const merged = mergeSharedState(parsed);
+    const parsedIds = (parsed.staffMembers ?? []).map((item) => item.id).join("|");
+    const mergedIds = merged.staffMembers.map((item) => item.id).join("|");
+    const parsedRemovalIds = (parsed.staffRemovals ?? []).map((item) => item.id).join("|");
+    const mergedRemovalIds = merged.staffRemovals.map((item) => item.id).join("|");
     const legacyTeacher =
       parsed.currentUserId === "u-1a"
         ? "1A"
@@ -357,7 +375,11 @@ function loadLocalState(): AppState {
       selectedClassName:
         session.selectedClassName ?? parsed.selectedClassName ?? legacyTeacher,
     };
-    if (needsOperationalDataReset(parsed)) {
+    if (
+      needsOperationalDataReset(parsed) ||
+      parsedIds !== mergedIds ||
+      parsedRemovalIds !== mergedRemovalIds
+    ) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
     }
     return result;
@@ -738,6 +760,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           state: sharedFromState(memory),
           baseRevision: remoteRevision,
+          replaceSections: [...pendingReplaceSections],
         }),
       });
     };
@@ -856,13 +879,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const nowTime = hongKongHHMM();
           const defaultReason =
             status === "absent"
-              ? "缺席"
+              ? "病假"
               : status === "late"
                 ? "遲到"
                 : status === "leave"
                   ? "事假"
                   : status === "half_absent"
-                    ? "缺席"
+                    ? "病假"
                     : "早退";
           const keepReason =
             existing && !isGenericAttendanceReason(existing.reason)
@@ -979,13 +1002,50 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   const updateAbsenceDetails = useCallback(
-    (id: string, input: { reason: string; calledBy: string; calledAt: string }) => {
+    (id: string, input: AbsenceDetailsInput) => {
       if (!currentUser || currentUser.role !== "office") {
         toast.error("只有校務處職員可以更新請假資料。");
         return;
       }
       patch((prev) => {
         const current = prev.absences.find((item) => item.id === id);
+        if (!current && input.create) {
+          const create = input.create;
+          const student = prev.students.find(
+            (item) => item.id === create.studentId
+          );
+          if (!student) return prev;
+          const reviewedAt = nowIso();
+          const created: AbsenceRecord = {
+            id: `ab-office-${student.id}-${create.date}-${Date.now()}`,
+            studentId: student.id,
+            date: create.date,
+            days: create.status === "half_absent" ? 0.5 : 1,
+            eclassStatus: create.status,
+            reason: input.reason.trim() || "病假",
+            calledBy: input.calledBy.trim() || undefined,
+            calledAt: input.calledAt.trim() || undefined,
+            documentType: "none",
+            documentSubmitted: false,
+            reviewStatus: "pending",
+            reviewedBy: currentUser.id,
+            reviewedAt,
+            notes: "由預先請假紀錄建立",
+            source: "office",
+          };
+          return withAudit(
+            applyLongAbsenceHide(
+              applyWarnings(
+                { ...prev, absences: [created, ...prev.absences] },
+                student,
+                "校務處"
+              ),
+              student
+            ),
+            "更新預先請假資料",
+            `${student.name}　${created.date}`
+          );
+        }
         if (!current) return prev;
         const student = prev.students.find((item) => item.id === current.studentId);
         return withAudit(
@@ -1605,22 +1665,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [currentUser]
   );
 
-  const toggleStaffAbsence = useCallback(
-    (date: string, kind: StaffAbsenceKind, staffId: string, selected: boolean) => {
+  const toggleStaffAbsences = useCallback(
+    (date: string, kind: StaffAbsenceKind, staffIds: string[], selected: boolean) => {
       if (currentUser?.role !== "office") {
         toast.error("只有校務處職員可以修改教職員缺席。");
         return;
       }
+      const ids = [...new Set(staffIds)];
+      if (ids.length === 0) return;
       patch((prev) => {
         const current = staffDailyFor(prev.staffDailyAbsences, date);
-        const next = withToggledStaff(
-          current.updatedAt ? current : emptyStaffDaily(date),
-          kind,
-          staffId,
-          selected,
-          nowIso()
+        const updatedAt = nowIso();
+        const next = ids.reduce(
+          (record, staffId) =>
+            withToggledStaff(record, kind, staffId, selected, updatedAt),
+          current.updatedAt ? current : emptyStaffDaily(date)
         );
-        const member = (prev.staffMembers ?? []).find((item) => item.id === staffId);
+        const names = (prev.staffMembers ?? [])
+          .filter((item) => ids.includes(item.id))
+          .map((item) => item.name);
         return withAudit(
           {
             ...prev,
@@ -1630,11 +1693,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ],
           },
           selected ? "登記教職員當日缺席" : "取消教職員當日缺席",
-          `${member?.name ?? staffId}　${date}`
+          `${names.join("、") || `${ids.length} 人`}　${date}`
         );
       });
     },
     [currentUser]
+  );
+
+  const toggleStaffAbsence = useCallback(
+    (date: string, kind: StaffAbsenceKind, staffId: string, selected: boolean) =>
+      toggleStaffAbsences(date, kind, [staffId], selected),
+    [toggleStaffAbsences]
   );
 
   const recordDigestSend = useCallback((log: Omit<DigestLog, "id" | "createdAt">) => {
@@ -1838,6 +1907,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeStudentLeave,
       restoreHiddenStudent,
       toggleStaffAbsence,
+      toggleStaffAbsences,
       recordDigestSend,
       adminPatchState,
       adminPatchSections,
@@ -1874,6 +1944,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeStudentLeave,
       restoreHiddenStudent,
       toggleStaffAbsence,
+      toggleStaffAbsences,
       recordDigestSend,
       adminPatchState,
       adminPatchSections,

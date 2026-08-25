@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { AbsenceDetailFields } from "@/components/absence-detail-fields";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -62,6 +63,7 @@ export function AttendanceMark({
   record,
   disabled,
   onChange,
+  onDetailsChange,
 }: {
   value: DayAttendance;
   record?: AbsenceRecord;
@@ -75,6 +77,11 @@ export function AttendanceMark({
       earlyAt?: string;
     }
   ) => void;
+  onDetailsChange?: (next: {
+    reason: string;
+    calledBy: string;
+    calledAt: string;
+  }) => void;
 }) {
   const [earlyOpen, setEarlyOpen] = useState(false);
   const [earlyReason, setEarlyReason] = useState("");
@@ -160,6 +167,21 @@ export function AttendanceMark({
               }
             />
           )}
+        </div>
+      ) : null}
+
+      {record &&
+      ["absent", "late", "leave", "half_absent"].includes(value) ? (
+        <div className="flex flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
+          <AbsenceDetailFields
+            compact
+            labels
+            reason={record.reason}
+            calledBy={record.calledBy ?? ""}
+            calledAt={record.calledAt ?? ""}
+            disabled={disabled}
+            onChange={(next) => onDetailsChange?.(next)}
+          />
         </div>
       ) : null}
 

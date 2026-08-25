@@ -1,10 +1,54 @@
+import { OFFICIAL_STAFF_ID_PREFIX } from "@/data/staff-members";
 import type {
   StaffAbsenceKind,
   StaffDailyAbsence,
   StaffLeaveCategory,
   StaffLeaveRecord,
   StaffMember,
+  StaffRemoval,
 } from "@/lib/types";
+
+const OFFICIAL_STAFF_REPLACED_AT = "2026-08-25T06:00:00.000Z";
+const OFFICIAL_STAFF_ROSTER_MARKER = `${OFFICIAL_STAFF_ID_PREFIX}roster-applied`;
+
+/** 以文件傳閱名單取代舊教職員名單；已在新名單上的刪除會保留。 */
+export function applyOfficialStaffRoster(
+  current: StaffMember[] | undefined,
+  removals: StaffRemoval[] | undefined,
+  official: StaffMember[]
+): { members: StaffMember[]; extraRemovals: StaffRemoval[] } {
+  const list = current ?? [];
+  const extraRemovals: StaffRemoval[] = [];
+  const removalList = removals ?? [];
+  const hasMarker = removalList.some((item) => item.id === OFFICIAL_STAFF_ROSTER_MARKER);
+  const hasOfficial = list.some((item) => item.id.startsWith(OFFICIAL_STAFF_ID_PREFIX));
+  const rosterApplied = hasMarker || hasOfficial;
+  if (!rosterApplied) {
+    for (const item of list) {
+      extraRemovals.push({ id: item.id, removedAt: OFFICIAL_STAFF_REPLACED_AT });
+    }
+  }
+  if (!hasMarker) {
+    extraRemovals.push({
+      id: OFFICIAL_STAFF_ROSTER_MARKER,
+      removedAt: OFFICIAL_STAFF_REPLACED_AT,
+    });
+  }
+
+  const removed = new Set(
+    [...removalList, ...extraRemovals].map((item) => item.id)
+  );
+  const members = official.filter((item) => !removed.has(item.id));
+  if (rosterApplied) {
+    const officialNames = new Set(members.map((item) => item.name));
+    for (const item of list) {
+      if (item.id.startsWith(OFFICIAL_STAFF_ID_PREFIX)) continue;
+      if (removed.has(item.id) || officialNames.has(item.name)) continue;
+      members.push(item);
+    }
+  }
+  return { members, extraRemovals };
+}
 
 export const STAFF_ABSENCE_ROWS: Array<{
   kind: StaffAbsenceKind;
@@ -80,6 +124,8 @@ export function applyStaffLeavesToDaily(
 ): StaffDailyAbsence {
   let next = daily;
   for (const leave of leaves) {
+    const manualSelection = next.selectionChanges?.[leave.staffId];
+    if (manualSelection?.updatedAt) continue;
     next = withToggledStaff(next, staffLeaveKind(leave.category), leave.staffId, true, updatedAt);
   }
   return next;

@@ -22,7 +22,7 @@ export default function DailyAbsencePrintPage() {
 }
 
 function DailyAbsencePrintBody() {
-  const { state, visibleStudents } = useStore();
+  const { state, visibleStudents, ready } = useStore();
   const searchParams = useSearchParams();
   const schoolDay = searchParams.get("date") ?? hongKongToday();
   const form = searchParams.get("form") ?? "all";
@@ -68,9 +68,18 @@ function DailyAbsencePrintBody() {
   );
 
   useEffect(() => {
+    if (!ready) return;
     const timer = window.setTimeout(() => window.print(), 400);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [ready]);
+
+  if (!ready) {
+    return (
+      <p className="p-6 text-sm text-muted-foreground">
+        正在從資料庫載入每日缺席報告……
+      </p>
+    );
+  }
 
   return (
     <div className="daily-school-print min-h-full bg-zinc-200/70 p-4 print:bg-white print:p-0">
