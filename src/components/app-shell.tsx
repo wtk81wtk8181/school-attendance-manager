@@ -123,7 +123,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const userInitial = currentUser?.name.slice(0, 1) ?? "";
 
   return (
-    <div className="flex min-h-full">
+    <div className="flex min-h-full bg-[var(--school-paper)]">
       {currentUser?.role === "office" ? <DigestScheduler /> : null}
       <aside className="no-print hidden w-60 shrink-0 flex-col bg-[var(--school-navy)] text-white md:flex">
         <div className="border-b border-white/10 py-4">
@@ -144,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="no-print sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/85 px-4 backdrop-blur">
+        <header className="no-print sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-[var(--school-paper)]/90 px-4 backdrop-blur">
           <Button
             variant="ghost"
             size="icon"

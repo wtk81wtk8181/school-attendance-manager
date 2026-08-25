@@ -12,11 +12,11 @@ export function AuthLandingShell({
   wide?: boolean;
 }) {
   return (
-    <div className="auth-landing relative flex min-h-full flex-1 flex-col overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#1b365d] via-[#2d2458] to-[#12182b]" />
-      <div className="pointer-events-none absolute -left-24 top-10 size-[28rem] rounded-full bg-[#8b5cf6]/18 blur-3xl" />
-      <div className="pointer-events-none absolute -right-16 bottom-0 size-80 rounded-full bg-[#c4a35a]/14 blur-3xl" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.035] [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:24px_24px]" />
+    <div className="auth-landing relative flex min-h-full flex-1 flex-col overflow-hidden bg-[var(--school-paper)]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[url('/school-background-light.jpg')] bg-cover bg-center bg-no-repeat opacity-50"
+      />
 
       <div
         className={cn(
