@@ -1,10 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { School } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
+import { SchoolLogo } from "@/components/school-logo";
 import { useStore } from "@/lib/store";
 import { useEffect } from "react";
 
@@ -27,16 +26,10 @@ export default function LoginPage() {
       />
       <div className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-4 py-12">
         <header className="mb-10 text-center text-white">
-          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[var(--school-gold)] text-[var(--school-navy)]">
-            <School className="size-7" />
+          <div className="mx-auto mb-6 w-fit max-w-full rounded-2xl bg-white px-5 py-4 shadow-lg">
+            <SchoolLogo className="h-auto w-full max-w-md min-w-[240px]" />
           </div>
-          <p className="text-xs tracking-[0.35em] text-[var(--school-gold)]">
-            {SCHOOL_NAME_EN}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-wide md:text-4xl">
-            {SCHOOL_NAME}
-          </h1>
-          <p className="mt-2 text-white/75">學生出勤與請假管理平台　2026-2027學年</p>
+          <p className="text-white/75">學生出勤與請假管理平台　2026-2027學年</p>
         </header>
 
         <div className="grid gap-4 md:grid-cols-2">

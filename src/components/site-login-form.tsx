@@ -2,12 +2,12 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LockKeyhole, School } from "lucide-react";
+import { LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
+import { SchoolLogo } from "@/components/school-logo";
 import { rehydrateStore } from "@/lib/store";
 
 export function SiteLoginForm({ nextPath }: { nextPath: string }) {
@@ -55,14 +55,10 @@ export function SiteLoginForm({ nextPath }: { nextPath: string }) {
       />
       <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <header className="mb-8 text-center text-white">
-          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[var(--school-gold)] text-[var(--school-navy)]">
-            <School className="size-7" />
+          <div className="mx-auto mb-5 w-fit max-w-full rounded-2xl bg-white px-4 py-3 shadow-lg">
+            <SchoolLogo className="h-auto w-full max-w-sm min-w-[220px]" />
           </div>
-          <p className="text-xs tracking-[0.35em] text-[var(--school-gold)]">
-            {SCHOOL_NAME_EN}
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-wide">{SCHOOL_NAME}</h1>
-          <p className="mt-2 text-sm text-white/75">此平台僅供授權人士使用</p>
+          <p className="text-sm text-white/75">此平台僅供授權人士使用</p>
         </header>
 
         <Card className="border-0 shadow-xl">
