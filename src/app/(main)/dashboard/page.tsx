@@ -38,6 +38,7 @@ import {
   formatStudentLeaveLine,
   studentLeavesForDate,
 } from "@/lib/student-leave";
+import { isStudentHidden } from "@/lib/hidden-students";
 
 export default function DashboardPage() {
   const { state, visibleStudents, currentUser } = useStore();
@@ -75,6 +76,9 @@ export default function DashboardPage() {
   const today = hongKongToday();
   const todayStaffLeaves = staffLeavesForDate(state.staffLeaveRecords, today);
   const todayStudentLeaves = studentLeavesForDate(state.studentLeaveRecords, today);
+  const hiddenStudents = (state.hiddenStudents ?? []).filter((item) =>
+    isStudentHidden(state.hiddenStudents, state.hiddenStudentRemovals, item.studentId)
+  );
   const todayStaff = applyStaffLeavesToDaily(
     staffDailyFor(state.staffDailyAbsences, today),
     todayStaffLeaves,
@@ -142,6 +146,29 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {currentUser?.role === "office" && hiddenStudents.length > 0 ? (
+        <Card className="shadow-none border-amber-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">連續七天缺席</CardTitle>
+            <CardDescription>
+              這些學生已從班別名單隱藏，該班人數已扣減。可到學生出勤頁加回。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            {hiddenStudents.map((item) => (
+              <p key={item.studentId}>
+                {classLabel(item.className)}　{item.studentName}同學已連續七天缺席
+              </p>
+            ))}
+            <div className="pt-2">
+              <Button size="sm" variant="outline" render={<Link href="/students" />}>
+                前往學生出勤
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : null}

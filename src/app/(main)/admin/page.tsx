@@ -26,10 +26,8 @@ import {
 } from "@/components/ui/select";
 import {
   attachCurrentCounts,
-  exampleAdminJson,
   parseAdminJsonPatch,
   type AdminJsonPatchPreview,
-  type AdminJsonSection,
 } from "@/lib/admin-json-patch";
 import { useStore } from "@/lib/store";
 import type { AppState } from "@/lib/types";
@@ -49,6 +47,7 @@ const SECTIONS: Array<{ key: keyof AppState; label: string }> = [
   { key: "staffDailyAbsences", label: "教職員每日缺席" },
   { key: "staffLeaveRecords", label: "教職員提早請假" },
   { key: "studentLeaveRecords", label: "學生預先請假" },
+  { key: "hiddenStudents", label: "連續缺席隱藏學生" },
 ];
 
 function cellText(value: unknown): string {
@@ -81,13 +80,14 @@ function parseCell(text: string, original: unknown): unknown {
 }
 
 export default function AdminPage() {
-  const { currentUser, state, adminPatchState, adminPatchSections } = useStore();
+  const { currentUser, state, adminPatchState, adminPatchSections, saveToDatabase } = useStore();
   const [sectionKey, setSectionKey] = useState<keyof AppState>("students");
   const [draft, setDraft] = useState<Row[] | null>(null);
   const [page, setPage] = useState(0);
   const [jsonInput, setJsonInput] = useState("");
   const [jsonPreview, setJsonPreview] = useState<AdminJsonPatchPreview | null>(null);
   const [jsonError, setJsonError] = useState("");
+  const [jsonSaving, setJsonSaving] = useState(false);
 
   const sectionRows = useMemo(() => {
     const value: unknown = state[sectionKey];
@@ -173,7 +173,7 @@ export default function AdminPage() {
     toast.success("JSON 已通過檢查，請確認後才套用。");
   }
 
-  function applyJsonPatch() {
+  async function applyJsonPatch() {
     if (!jsonPreview) {
       toast.error("請先按「預覽」確認 JSON 內容。");
       return;
@@ -182,17 +182,50 @@ export default function AdminPage() {
       toast.error("請先儲存或還原試算表的修改，再套用 JSON。");
       return;
     }
+    const shrinks = jsonPreview.summary.filter((item) => item.nextCount < item.currentCount);
+    if (shrinks.length > 0) {
+      const detail = shrinks
+        .map((item) => `${item.label} ${item.currentCount}→${item.nextCount}`)
+        .join("、");
+      const confirmed = window.confirm(
+        `以下資料表列數會減少（${detail}）。這會整段覆寫並同步至雲端，確定繼續？`
+      );
+      if (!confirmed) return;
+    }
     const ok = adminPatchSections(jsonPreview.sections as Record<string, unknown[]>);
     if (!ok) return;
-    setJsonInput("");
-    setJsonPreview(null);
-    setJsonError("");
+    setJsonSaving(true);
+    try {
+      const saved = await saveToDatabase();
+      if (!saved) {
+        toast.error("已套用本機修改，但未能確定寫入資料庫。請按頂部「確定儲存」再試。");
+        return;
+      }
+      setJsonInput("");
+      setJsonPreview(null);
+      setJsonError("");
+    } finally {
+      setJsonSaving(false);
+    }
   }
 
-  function loadJsonExample() {
-    setJsonInput(exampleAdminJson(sectionKey as AdminJsonSection));
+  function exportCurrentJson() {
+    const current = Array.isArray(state[sectionKey])
+      ? (state[sectionKey] as unknown[])
+      : [];
+    setJsonInput(
+      JSON.stringify(
+        {
+          section: sectionKey,
+          rows: current,
+        },
+        null,
+        2
+      )
+    );
     setJsonPreview(null);
     setJsonError("");
+    toast.success(`已匯出目前「${SECTIONS.find((item) => item.key === sectionKey)?.label ?? sectionKey}」JSON，修改後請先預覽再套用。`);
   }
 
   return (
@@ -348,7 +381,7 @@ export default function AdminPage() {
           </CardTitle>
           <CardDescription>
             貼上完整 JSON 後先預覽，確認無誤才套用。此操作會<strong>整段替換</strong>
-            指定資料表，不是合併；貼上時必須包含該表的全部資料列。
+            指定資料表，不是合併；貼上時必須包含該表的全部資料列。套用後會立即寫入雲端資料庫。
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -395,21 +428,24 @@ export default function AdminPage() {
                 ))}
               </ul>
               <p className="mt-2 text-xs text-amber-900">
-                確認後會立即覆寫以上資料表，並同步至雲端資料庫。
+                確認後會立即覆寫以上資料表，並寫入雲端資料庫。
+                {jsonPreview.summary.some((item) => item.nextCount < item.currentCount)
+                  ? " 列數減少表示會刪除現有紀錄。"
+                  : ""}
               </p>
             </div>
           ) : null}
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={loadJsonExample}>
-              載入示例
+            <Button variant="outline" size="sm" onClick={exportCurrentJson}>
+              匯出目前資料表
             </Button>
-            <Button variant="outline" size="sm" onClick={previewJsonPatch} disabled={!jsonInput.trim()}>
+            <Button variant="outline" size="sm" onClick={previewJsonPatch} disabled={!jsonInput.trim() || jsonSaving}>
               <Eye className="size-4" />
               預覽
             </Button>
-            <Button size="sm" onClick={applyJsonPatch} disabled={!jsonPreview}>
-              確認套用
+            <Button size="sm" onClick={() => void applyJsonPatch()} disabled={!jsonPreview || jsonSaving}>
+              {jsonSaving ? "寫入資料庫中……" : "確認套用並寫入資料庫"}
             </Button>
             {jsonPreview ? (
               <Button

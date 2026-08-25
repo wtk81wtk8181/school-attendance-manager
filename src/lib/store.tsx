@@ -25,8 +25,17 @@ import {
 import { emptyStaffDaily, staffDailyFor, withToggledStaff } from "@/lib/staff";
 import { studentLeaveCategoryLabel } from "@/lib/student-leave";
 import {
+  CONSECUTIVE_ABSENT_LIMIT,
+  consecutiveAbsentStreak,
+  isStudentHidden,
+  visibleRosterStudents,
+} from "@/lib/hidden-students";
+import {
+  applyAdminJsonSections,
+  applyAdminSectionRows,
   validateAdminSectionRows,
   ADMIN_JSON_SECTIONS,
+  type AdminJsonSection,
 } from "@/lib/admin-json-patch";
 import type {
   AbsenceRecord,
@@ -115,6 +124,7 @@ interface StoreValue {
     activity: string;
   }) => { added: number; skipped: number };
   removeStudentLeave: (id: string) => void;
+  restoreHiddenStudent: (studentId: string) => void;
   toggleStaffAbsence: (
     date: string,
     kind: StaffAbsenceKind,
@@ -497,6 +507,49 @@ function auditEntry(
   };
 }
 
+function applyLongAbsenceHide(state: AppState, student: Student): AppState {
+  if (isStudentHidden(state.hiddenStudents, state.hiddenStudentRemovals, student.id)) {
+    return state;
+  }
+  const streak = consecutiveAbsentStreak(state.absences, student.id);
+  if (streak < CONSECUTIVE_ABSENT_LIMIT) return state;
+
+  const lastAbsentDate =
+    state.absences
+      .filter((item) => item.studentId === student.id && item.eclassStatus === "absent")
+      .map((item) => item.date)
+      .sort()
+      .at(-1) ?? "";
+
+  return {
+    ...state,
+    hiddenStudents: [
+      {
+        id: student.id,
+        studentId: student.id,
+        studentName: student.name,
+        className: student.className,
+        hiddenAt: nowIso(),
+        lastAbsentDate,
+        streak,
+      },
+      ...(state.hiddenStudents ?? []).filter((item) => item.studentId !== student.id),
+    ],
+    notifications: [
+      {
+        id: `nt-hidden-${student.id}-${Date.now()}`,
+        createdAt: nowIso(),
+        title: `${student.name}同學已連續七天缺席`,
+        body: `${classLabel(student.className)}　${student.name}已連續 ${streak} 天缺席，已從班別名單隱藏並扣減該班一人。`,
+        kind: "warning",
+        studentId: student.id,
+        read: false,
+      },
+      ...(state.notifications ?? []),
+    ],
+  };
+}
+
 function withAudit(state: AppState, action: string, detail: string): AppState {
   return {
     ...state,
@@ -692,11 +745,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const visibleStudents = useMemo(() => {
     if (!currentUser) return [];
-    if (currentUser.role === "office") return state.students;
-    return state.students.filter(
-      (student) => student.className === state.selectedClassName
+    const roster = visibleRosterStudents(
+      state.students,
+      state.hiddenStudents,
+      state.hiddenStudentRemovals
     );
-  }, [currentUser, state.selectedClassName, state.students]);
+    if (currentUser.role === "office") return roster;
+    return roster.filter((student) => student.className === state.selectedClassName);
+  }, [
+    currentUser,
+    state.hiddenStudentRemovals,
+    state.hiddenStudents,
+    state.selectedClassName,
+    state.students,
+  ]);
 
   const login = useCallback((userId: string) => {
     patch((prev) => ({
@@ -726,6 +788,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       );
       const currentStatus = existingNow?.eclassStatus ?? "present";
       if (currentStatus === status) return;
+      const wasHidden = isStudentHidden(
+        memory.hiddenStudents,
+        memory.hiddenStudentRemovals,
+        studentId
+      );
 
       patch((prev) => {
         const student = prev.students.find((item) => item.id === studentId);
@@ -753,10 +820,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ),
           ];
           return withAudit(
-            applyWarnings(
-              { ...prev, absences: nextAbsences, clearedAttendance },
-              student,
-              "校務處"
+            applyLongAbsenceHide(
+              applyWarnings(
+                { ...prev, absences: nextAbsences, clearedAttendance },
+                student,
+                "校務處"
+              ),
+              student
             ),
             "標記出席",
             `${student.name}（${classLabel(student.className)}）${date}`
@@ -799,16 +869,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
 
         return withAudit(
-          applyWarnings(
-            {
-              ...prev,
-              absences: nextAbsences,
-              clearedAttendance: (prev.clearedAttendance ?? []).filter(
-                (item) => !(item.studentId === studentId && item.date === date)
-              ),
-            },
-            student,
-            "校務處"
+          applyLongAbsenceHide(
+            applyWarnings(
+              {
+                ...prev,
+                absences: nextAbsences,
+                clearedAttendance: (prev.clearedAttendance ?? []).filter(
+                  (item) => !(item.studentId === studentId && item.date === date)
+                ),
+              },
+              student,
+              "校務處"
+            ),
+            student
           ),
           existing ? "更新學生當日狀態" : "登記學生缺席／遲到／事假",
           `${student.name}（${classLabel(student.className)}）${date} → ${status === "absent" ? "缺席" : status === "late" ? "遲到" : "事假"}`
@@ -821,7 +894,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         late: "遲到",
         leave: "事假",
       };
-      toast.success(`已標記為${labels[status]}。請按「確定儲存」寫入資料庫。`);
+      const hiddenNow = isStudentHidden(
+        memory.hiddenStudents,
+        memory.hiddenStudentRemovals,
+        studentId
+      );
+      if (status === "absent" && !wasHidden && hiddenNow) {
+        const studentName =
+          memory.students.find((item) => item.id === studentId)?.name ?? "該";
+        toast.warning(`${studentName}同學已連續七天缺席，已從班別名單隱藏。`);
+      } else {
+        toast.success(`已標記為${labels[status]}。請按「確定儲存」寫入資料庫。`);
+      }
     },
     [currentUser]
   );
@@ -1420,6 +1504,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [currentUser]
   );
 
+  const restoreHiddenStudent = useCallback(
+    (studentId: string) => {
+      if (currentUser?.role !== "office") {
+        toast.error("只有校務處職員可以恢復隱藏學生。");
+        return;
+      }
+      const current = (memory.hiddenStudents ?? []).find((item) => item.studentId === studentId);
+      if (!current || !isStudentHidden(memory.hiddenStudents, memory.hiddenStudentRemovals, studentId)) {
+        toast.error("找不到已隱藏的學生。");
+        return;
+      }
+      patch((prev) => {
+        const removedAt = nowIso();
+        return withAudit(
+          {
+            ...prev,
+            hiddenStudents: (prev.hiddenStudents ?? []).filter(
+              (item) => item.studentId !== studentId
+            ),
+            hiddenStudentRemovals: [
+              { id: studentId, removedAt },
+              ...(prev.hiddenStudentRemovals ?? []).filter((item) => item.id !== studentId),
+            ],
+          },
+          "恢復連續缺席隱藏學生",
+          `${current.studentName}（${current.className}）`
+        );
+      });
+      toast.success(`已將${current.studentName}加回班別名單。`);
+    },
+    [currentUser]
+  );
+
   const toggleStaffAbsence = useCallback(
     (date: string, kind: StaffAbsenceKind, staffId: string, selected: boolean) => {
       if (currentUser?.role !== "office") {
@@ -1546,10 +1663,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       pendingReplaceSections.add(input.section);
       patch((prev) =>
         withAudit(
-          {
-            ...prev,
-            [input.section]: input.rows,
-          } as AppState,
+          applyAdminSectionRows(
+            prev,
+            input.section as AdminJsonSection,
+            input.rows,
+            nowIso()
+          ),
           "後台管理修改",
           `${input.section}（${input.rows.length} 列）`
         )
@@ -1598,17 +1717,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       patch((prev) =>
         withAudit(
-          {
-            ...prev,
-            ...Object.fromEntries(entries),
-          } as AppState,
+          applyAdminJsonSections(
+            prev,
+            sections as Partial<Record<AdminJsonSection, unknown[]>>,
+            nowIso()
+          ),
           "後台 JSON 批量修改",
           entries
             .map(([section, rows]) => `${section}（${rows.length} 列）`)
             .join("；")
         )
       );
-      toast.success("已套用 JSON 修改，同步中……");
       return true;
     },
     [currentUser]
@@ -1640,6 +1759,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStudentLeave,
       addStudentLeaves,
       removeStudentLeave,
+      restoreHiddenStudent,
       toggleStaffAbsence,
       recordDigestSend,
       adminPatchState,
@@ -1675,6 +1795,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStudentLeave,
       addStudentLeaves,
       removeStudentLeave,
+      restoreHiddenStudent,
       toggleStaffAbsence,
       recordDigestSend,
       adminPatchState,

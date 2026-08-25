@@ -2,11 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import { classLabel, formLabel } from "@/lib/rules";
+import { visibleRosterStudents } from "@/lib/hidden-students";
 import { CLASS_STREAMS, CLASS_TEACHERS, FORMS } from "@/lib/roster";
 import { useStore } from "@/lib/store";
 
 export function ClassPicker() {
   const { state, selectClass } = useStore();
+  const roster = visibleRosterStudents(
+    state.students,
+    state.hiddenStudents,
+    state.hiddenStudentRemovals
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -22,7 +28,7 @@ export function ClassPicker() {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
             {CLASS_STREAMS.map((stream) => {
               const className = `${form}${stream}`;
-              const count = state.students.filter((item) => item.className === className).length;
+              const count = roster.filter((item) => item.className === className).length;
               return (
                 <Button
                   key={className}

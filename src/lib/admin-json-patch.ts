@@ -1,17 +1,18 @@
 import type { AppState } from "@/lib/types";
 
+/** 必須與伺服器 REPLACEABLE_ARRAY_SECTIONS 一致，否則雲端會略過整段覆寫。 */
 export const ADMIN_JSON_SECTIONS = [
   "students",
   "absences",
   "warnings",
   "notifications",
-  "clearedAttendance",
+  "digestRecipients",
+  "digestLogs",
   "staffMembers",
   "staffDailyAbsences",
   "staffLeaveRecords",
   "studentLeaveRecords",
-  "digestRecipients",
-  "digestLogs",
+  "hiddenStudents",
 ] as const;
 
 export type AdminJsonSection = (typeof ADMIN_JSON_SECTIONS)[number];
@@ -33,13 +34,13 @@ export const ADMIN_SECTION_LABELS: Record<AdminJsonSection, string> = {
   absences: "缺席紀錄",
   warnings: "警告信",
   notifications: "通知",
-  clearedAttendance: "已清除出席",
+  digestRecipients: "電郵收件人",
+  digestLogs: "電郵寄出紀錄",
   staffMembers: "教職員名單",
   staffDailyAbsences: "教職員每日缺席",
   staffLeaveRecords: "教職員提早請假",
   studentLeaveRecords: "學生預先請假",
-  digestRecipients: "電郵收件人",
-  digestLogs: "電郵寄出紀錄",
+  hiddenStudents: "連續缺席隱藏學生",
 };
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -67,7 +68,18 @@ export function parseAdminJsonPatch(raw: string):
 
   const sections: Partial<Record<AdminJsonSection, unknown[]>> = {};
 
-  if ("section" in parsed && "rows" in parsed) {
+  const hasSingleFormat = "section" in parsed && "rows" in parsed;
+  const otherSectionKeys = Object.keys(parsed).filter(
+    (key) => key !== "section" && key !== "rows" && SECTION_SET.has(key)
+  );
+  if (hasSingleFormat && otherSectionKeys.length > 0) {
+    return {
+      ok: false,
+      error: "請只用一種格式：要用 section／rows，或直接用資料表名稱作為欄位，不要混用。",
+    };
+  }
+
+  if (hasSingleFormat) {
     const section = String(parsed.section ?? "").trim();
     if (!SECTION_SET.has(section)) {
       return { ok: false, error: `不支援的資料表：${section || "（空白）"}` };
@@ -170,6 +182,149 @@ export function validateAdminSectionRows(
   }
 
   return null;
+}
+
+function absenceKey(record: { studentId?: unknown; date?: unknown }): string {
+  return `${String(record.studentId ?? "")}:${String(record.date ?? "")}`;
+}
+
+function asRecordRows(rows: unknown[]): Array<Record<string, unknown>> {
+  return rows.filter(isObject);
+}
+
+/** 整段覆寫資料表，並為刪除列寫入 tombstone，避免之後合併時被舊資料救回。 */
+export function applyAdminSectionRows(
+  prev: AppState,
+  section: AdminJsonSection,
+  rows: unknown[],
+  removedAt: string
+): AppState {
+  const nextRows = asRecordRows(rows);
+  const nextIds = new Set(nextRows.map((row) => String(row.id ?? "").trim()).filter(Boolean));
+
+  if (section === "absences") {
+    const nextKeys = new Set(nextRows.map(absenceKey));
+    const extraClears = (prev.absences ?? [])
+      .filter((item) => !nextKeys.has(absenceKey(item)))
+      .map((item) => ({
+        studentId: item.studentId,
+        date: item.date,
+        clearedAt: removedAt,
+      }));
+    return {
+      ...prev,
+      absences: nextRows as unknown as AppState["absences"],
+      clearedAttendance: [...extraClears, ...(prev.clearedAttendance ?? [])],
+    };
+  }
+
+  if (section === "digestRecipients") {
+    const extraRemovals = (prev.digestRecipients ?? [])
+      .filter((item) => !nextIds.has(item.id))
+      .map((item) => ({
+        id: item.id,
+        email: item.email,
+        removedAt,
+      }));
+    return {
+      ...prev,
+      digestRecipients: nextRows as unknown as AppState["digestRecipients"],
+      removedRecipients: [
+        ...extraRemovals,
+        ...(prev.removedRecipients ?? []).filter(
+          (item) =>
+            !extraRemovals.some(
+              (row) =>
+                row.id === item.id ||
+                row.email.trim().toLowerCase() === item.email.trim().toLowerCase()
+            )
+        ),
+      ],
+    };
+  }
+
+  if (section === "staffMembers") {
+    const extraRemovals = (prev.staffMembers ?? [])
+      .filter((item) => !nextIds.has(item.id))
+      .map((item) => ({ id: item.id, removedAt }));
+    return {
+      ...prev,
+      staffMembers: nextRows as unknown as AppState["staffMembers"],
+      staffRemovals: [
+        ...extraRemovals,
+        ...(prev.staffRemovals ?? []).filter(
+          (item) => !extraRemovals.some((row) => row.id === item.id)
+        ),
+      ],
+    };
+  }
+
+  if (section === "staffLeaveRecords") {
+    const extraRemovals = (prev.staffLeaveRecords ?? [])
+      .filter((item) => !nextIds.has(item.id))
+      .map((item) => ({ id: item.id, removedAt }));
+    return {
+      ...prev,
+      staffLeaveRecords: nextRows as unknown as AppState["staffLeaveRecords"],
+      staffLeaveRemovals: [
+        ...extraRemovals,
+        ...(prev.staffLeaveRemovals ?? []).filter(
+          (item) => !extraRemovals.some((row) => row.id === item.id)
+        ),
+      ],
+    };
+  }
+
+  if (section === "studentLeaveRecords") {
+    const extraRemovals = (prev.studentLeaveRecords ?? [])
+      .filter((item) => !nextIds.has(item.id))
+      .map((item) => ({ id: item.id, removedAt }));
+    return {
+      ...prev,
+      studentLeaveRecords: nextRows as unknown as AppState["studentLeaveRecords"],
+      studentLeaveRemovals: [
+        ...extraRemovals,
+        ...(prev.studentLeaveRemovals ?? []).filter(
+          (item) => !extraRemovals.some((row) => row.id === item.id)
+        ),
+      ],
+    };
+  }
+
+  if (section === "hiddenStudents") {
+    const extraRemovals = (prev.hiddenStudents ?? [])
+      .filter((item) => !nextIds.has(item.id) && !nextIds.has(item.studentId))
+      .map((item) => ({ id: item.studentId, removedAt }));
+    return {
+      ...prev,
+      hiddenStudents: nextRows as unknown as AppState["hiddenStudents"],
+      hiddenStudentRemovals: [
+        ...extraRemovals,
+        ...(prev.hiddenStudentRemovals ?? []).filter(
+          (item) => !extraRemovals.some((row) => row.id === item.id)
+        ),
+      ],
+    };
+  }
+
+  return {
+    ...prev,
+    [section]: nextRows,
+  } as AppState;
+}
+
+export function applyAdminJsonSections(
+  prev: AppState,
+  sections: Partial<Record<AdminJsonSection, unknown[]>>,
+  removedAt: string
+): AppState {
+  let next = prev;
+  for (const [section, rows] of Object.entries(sections) as Array<
+    [AdminJsonSection, unknown[]]
+  >) {
+    next = applyAdminSectionRows(next, section, rows, removedAt);
+  }
+  return next;
 }
 
 export function exampleAdminJson(section: AdminJsonSection = "students"): string {

@@ -18,6 +18,8 @@ import type {
   Student,
   StudentLeaveRecord,
   StudentLeaveRemoval,
+  HiddenStudent,
+  HiddenStudentRemoval,
   WarningLetter,
 } from "@/lib/types";
 
@@ -108,6 +110,8 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     staffLeaveRemovals: shared.staffLeaveRemovals ?? seed.staffLeaveRemovals,
     studentLeaveRecords: shared.studentLeaveRecords ?? seed.studentLeaveRecords,
     studentLeaveRemovals: shared.studentLeaveRemovals ?? seed.studentLeaveRemovals,
+    hiddenStudents: shared.hiddenStudents ?? seed.hiddenStudents,
+    hiddenStudentRemovals: shared.hiddenStudentRemovals ?? seed.hiddenStudentRemovals,
     auditLogs: shared.auditLogs ?? seed.auditLogs,
     dataVersion: OPERATIONAL_DATA_VERSION,
   };
@@ -463,6 +467,41 @@ function mergeStudentLeaveRecords(
     .sort((a, b) => b.startDate.localeCompare(a.startDate));
 }
 
+function mergeHiddenStudentRemovals(
+  current: HiddenStudentRemoval[] | undefined,
+  incoming: HiddenStudentRemoval[] | undefined
+): HiddenStudentRemoval[] {
+  const map = new Map<string, HiddenStudentRemoval>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.id);
+    if (!existing || item.removedAt >= existing.removedAt) {
+      map.set(item.id, item);
+    }
+  }
+  return [...map.values()];
+}
+
+function mergeHiddenStudents(
+  current: HiddenStudent[] | undefined,
+  incoming: HiddenStudent[] | undefined,
+  removals: HiddenStudentRemoval[]
+): HiddenStudent[] {
+  const map = new Map<string, HiddenStudent>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.studentId);
+    if (!existing || item.hiddenAt >= existing.hiddenAt) {
+      map.set(item.studentId, item);
+    }
+  }
+  return [...map.values()]
+    .filter((item) => {
+      const removal = removals.find((row) => row.id === item.studentId);
+      if (!removal) return true;
+      return item.hiddenAt > removal.removedAt;
+    })
+    .sort((a, b) => b.hiddenAt.localeCompare(a.hiddenAt));
+}
+
 const AUDIT_LOG_LIMIT = 500;
 
 function mergeAuditLogs(
@@ -496,6 +535,10 @@ export function mergeSharedStates(
   const studentLeaveRemovals = mergeStudentLeaveRemovals(
     base.studentLeaveRemovals,
     next.studentLeaveRemovals
+  );
+  const hiddenStudentRemovals = mergeHiddenStudentRemovals(
+    base.hiddenStudentRemovals,
+    next.hiddenStudentRemovals
   );
 
   return {
@@ -532,6 +575,12 @@ export function mergeSharedStates(
       studentLeaveRemovals
     ),
     studentLeaveRemovals,
+    hiddenStudents: mergeHiddenStudents(
+      base.hiddenStudents,
+      next.hiddenStudents,
+      hiddenStudentRemovals
+    ),
+    hiddenStudentRemovals,
     auditLogs: mergeAuditLogs(base.auditLogs, next.auditLogs),
     dataVersion: OPERATIONAL_DATA_VERSION,
     users: seed.users,

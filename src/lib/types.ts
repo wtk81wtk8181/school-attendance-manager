@@ -172,6 +172,21 @@ export interface StudentLeaveRemoval {
   removedAt: string;
 }
 
+export interface HiddenStudent {
+  id: string;
+  studentId: string;
+  studentName: string;
+  className: string;
+  hiddenAt: string;
+  lastAbsentDate: string;
+  streak: number;
+}
+
+export interface HiddenStudentRemoval {
+  id: string;
+  removedAt: string;
+}
+
 export interface AuditLog {
   id: string;
   at: string;
@@ -230,6 +245,8 @@ export interface AppState {
   staffLeaveRemovals: StaffLeaveRemoval[];
   studentLeaveRecords: StudentLeaveRecord[];
   studentLeaveRemovals: StudentLeaveRemoval[];
+  hiddenStudents: HiddenStudent[];
+  hiddenStudentRemovals: HiddenStudentRemoval[];
   auditLogs: AuditLog[];
   dataVersion: number;
 }

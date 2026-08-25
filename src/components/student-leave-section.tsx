@@ -30,6 +30,7 @@ import {
   studentMatchesQuery,
 } from "@/lib/student-leave";
 import { classLabel, listClasses } from "@/lib/rules";
+import { visibleRosterStudents } from "@/lib/hidden-students";
 import { useStore } from "@/lib/store";
 import type { StudentLeaveCategory } from "@/lib/types";
 import { toast } from "sonner";
@@ -47,10 +48,19 @@ export function StudentLeaveSection({ date }: { date: string }) {
   const [reason, setReason] = useState("");
   const [activity, setActivity] = useState("");
 
-  const classes = useMemo(() => listClasses(state.students), [state.students]);
+  const roster = useMemo(
+    () =>
+      visibleRosterStudents(
+        state.students,
+        state.hiddenStudents,
+        state.hiddenStudentRemovals
+      ),
+    [state.hiddenStudentRemovals, state.hiddenStudents, state.students]
+  );
+  const classes = useMemo(() => listClasses(roster), [roster]);
   const filteredStudents = useMemo(
     () =>
-      state.students
+      roster
         .filter(
           (student) =>
             (classFilter === "all" || student.className === classFilter) &&
@@ -61,7 +71,7 @@ export function StudentLeaveSection({ date }: { date: string }) {
             a.className.localeCompare(b.className) ||
             a.studentNo.localeCompare(b.studentNo)
         ),
-    [classFilter, query, state.students]
+    [classFilter, query, roster]
   );
   const selectedSet = useMemo(() => new Set(selectedStudentIds), [selectedStudentIds]);
   const dayLeaves = studentLeavesForDate(state.studentLeaveRecords, date);

@@ -20,6 +20,7 @@ const REPLACEABLE_ARRAY_SECTIONS = new Set([
   "staffDailyAbsences",
   "staffLeaveRecords",
   "studentLeaveRecords",
+  "hiddenStudents",
 ] as const);
 
 export type ReplaceableArraySection =

@@ -36,11 +36,12 @@ import {
   progressPercent,
 } from "@/lib/rules";
 import { useStore } from "@/lib/store";
+import { isStudentHidden } from "@/lib/hidden-students";
 import type { FormLevel, StudentStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export default function StudentsPage() {
-  const { state, visibleStudents, currentUser, setDayAttendance, saveToDatabase, pendingSave, usingDatabase } =
+  const { state, visibleStudents, currentUser, setDayAttendance, saveToDatabase, pendingSave, usingDatabase, restoreHiddenStudent } =
     useStore();
   const isOffice = currentUser?.role === "office";
   const [query, setQuery] = useState("");
@@ -88,6 +89,12 @@ export default function StudentsPage() {
   }, [rows]);
 
   const selectedTeacher = klass !== "all" ? CLASS_TEACHERS[klass] : undefined;
+  const hiddenInView = (state.hiddenStudents ?? []).filter(
+    (item) =>
+      isStudentHidden(state.hiddenStudents, state.hiddenStudentRemovals, item.studentId) &&
+      (klass === "all" || item.className === klass) &&
+      (form === "all" || item.className.startsWith(form))
+  );
   const selectedDayPresent = rows.filter(
     (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "present"
   ).length;
@@ -279,7 +286,37 @@ export default function StudentsPage() {
           {selectedTeacher ? `　班主任 ${selectedTeacher}` : ""}
           　上課日 {schoolDay}：出席 {selectedDayPresent}　缺席 {selectedDayAbsent}　遲到{" "}
           {selectedDayLate}　事假 {selectedDayLeave}
+          {hiddenInView.length > 0 ? `　已隱藏 ${hiddenInView.length} 人` : ""}
         </p>
+      ) : null}
+
+      {isOffice && hiddenInView.length > 0 ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-medium text-amber-950">
+            連續七天缺席而隱藏的學生（已從該班人數扣除）
+          </p>
+          <ul className="mt-2 space-y-2">
+            {hiddenInView.map((item) => (
+              <li
+                key={item.studentId}
+                className="flex flex-wrap items-center justify-between gap-2 text-sm text-amber-950"
+              >
+                <span>
+                  {classLabel(item.className)}　{item.studentName}同學已連續七天缺席
+                  {item.lastAbsentDate ? `（至 ${item.lastAbsentDate}）` : ""}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => restoreHiddenStudent(item.studentId)}
+                >
+                  加回名單
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
 
       {rows.length === 0 ? (
