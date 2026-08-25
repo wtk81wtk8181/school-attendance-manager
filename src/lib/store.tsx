@@ -24,6 +24,10 @@ import {
 } from "@/lib/db-client";
 import { emptyStaffDaily, staffDailyFor, withToggledStaff } from "@/lib/staff";
 import { studentLeaveCategoryLabel } from "@/lib/student-leave";
+import {
+  validateAdminSectionRows,
+  ADMIN_JSON_SECTIONS,
+} from "@/lib/admin-json-patch";
 import type {
   AbsenceRecord,
   AppState,
@@ -42,19 +46,7 @@ import type {
   WarningLetter,
 } from "@/lib/types";
 
-const ADMIN_EDITABLE_SECTIONS = new Set([
-  "students",
-  "absences",
-  "warnings",
-  "notifications",
-  "clearedAttendance",
-  "staffMembers",
-  "staffDailyAbsences",
-  "staffLeaveRecords",
-  "studentLeaveRecords",
-  "digestRecipients",
-  "digestLogs",
-]);
+const ADMIN_EDITABLE_SECTIONS = new Set<string>(ADMIN_JSON_SECTIONS);
 
 interface ReviewInput {
   documentType: DocumentType;
@@ -131,6 +123,7 @@ interface StoreValue {
   ) => void;
   recordDigestSend: (log: Omit<DigestLog, "id" | "createdAt">) => void;
   adminPatchState: (input: { section: string; rows: unknown[] }) => void;
+  adminPatchSections: (sections: Record<string, unknown[]>) => boolean;
   refreshFromDatabase: () => Promise<void>;
   saveToDatabase: () => Promise<boolean>;
   reconnectDatabase: () => Promise<void>;
@@ -1566,6 +1559,61 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [currentUser]
   );
 
+  const adminPatchSections = useCallback(
+    (sections: Record<string, unknown[]>) => {
+      if (!currentUser || currentUser.role !== "office") {
+        toast.error("只有校務處職員可以使用後台管理。");
+        return false;
+      }
+
+      const entries = Object.entries(sections);
+      if (entries.length === 0) {
+        toast.error("沒有可套用的資料表。");
+        return false;
+      }
+
+      for (const [section, rows] of entries) {
+        if (!ADMIN_EDITABLE_SECTIONS.has(section)) {
+          toast.error(`此資料表不可由後台直接修改：${section}`);
+          return false;
+        }
+        const currentSection = memory[section as keyof AppState];
+        if (!Array.isArray(currentSection)) {
+          toast.error(`此資料表不支援試算表方式修改：${section}`);
+          return false;
+        }
+        const error = validateAdminSectionRows(
+          section as (typeof ADMIN_JSON_SECTIONS)[number],
+          rows
+        );
+        if (error) {
+          toast.error(error);
+          return false;
+        }
+      }
+
+      for (const [section] of entries) {
+        pendingReplaceSections.add(section);
+      }
+
+      patch((prev) =>
+        withAudit(
+          {
+            ...prev,
+            ...Object.fromEntries(entries),
+          } as AppState,
+          "後台 JSON 批量修改",
+          entries
+            .map(([section, rows]) => `${section}（${rows.length} 列）`)
+            .join("；")
+        )
+      );
+      toast.success("已套用 JSON 修改，同步中……");
+      return true;
+    },
+    [currentUser]
+  );
+
   const value = useMemo<StoreValue>(
     () => ({
       ready,
@@ -1595,6 +1643,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toggleStaffAbsence,
       recordDigestSend,
       adminPatchState,
+      adminPatchSections,
       refreshFromDatabase: refreshFromDatabaseNow,
       saveToDatabase,
       reconnectDatabase,
@@ -1629,6 +1678,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toggleStaffAbsence,
       recordDigestSend,
       adminPatchState,
+      adminPatchSections,
       refreshFromDatabaseNow,
       saveToDatabase,
       reconnectDatabase,

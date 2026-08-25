@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  Code2,
   Database,
+  Eye,
   Lock,
   Plus,
   Save,
@@ -13,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/empty-state";
 import {
   Select,
@@ -21,6 +24,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  attachCurrentCounts,
+  exampleAdminJson,
+  parseAdminJsonPatch,
+  type AdminJsonPatchPreview,
+  type AdminJsonSection,
+} from "@/lib/admin-json-patch";
 import { useStore } from "@/lib/store";
 import type { AppState } from "@/lib/types";
 import { toast } from "sonner";
@@ -71,10 +81,13 @@ function parseCell(text: string, original: unknown): unknown {
 }
 
 export default function AdminPage() {
-  const { currentUser, state, adminPatchState } = useStore();
+  const { currentUser, state, adminPatchState, adminPatchSections } = useStore();
   const [sectionKey, setSectionKey] = useState<keyof AppState>("students");
   const [draft, setDraft] = useState<Row[] | null>(null);
   const [page, setPage] = useState(0);
+  const [jsonInput, setJsonInput] = useState("");
+  const [jsonPreview, setJsonPreview] = useState<AdminJsonPatchPreview | null>(null);
+  const [jsonError, setJsonError] = useState("");
 
   const sectionRows = useMemo(() => {
     const value: unknown = state[sectionKey];
@@ -144,6 +157,42 @@ export default function AdminPage() {
     if (!draft) return;
     adminPatchState({ section: sectionKey, rows: draft });
     setDraft(null);
+  }
+
+  function previewJsonPatch() {
+    const result = parseAdminJsonPatch(jsonInput);
+    if (!result.ok) {
+      setJsonPreview(null);
+      setJsonError(result.error);
+      toast.error(result.error);
+      return;
+    }
+    const preview = attachCurrentCounts(result.preview, state);
+    setJsonPreview(preview);
+    setJsonError("");
+    toast.success("JSON 已通過檢查，請確認後才套用。");
+  }
+
+  function applyJsonPatch() {
+    if (!jsonPreview) {
+      toast.error("請先按「預覽」確認 JSON 內容。");
+      return;
+    }
+    if (draft) {
+      toast.error("請先儲存或還原試算表的修改，再套用 JSON。");
+      return;
+    }
+    const ok = adminPatchSections(jsonPreview.sections as Record<string, unknown[]>);
+    if (!ok) return;
+    setJsonInput("");
+    setJsonPreview(null);
+    setJsonError("");
+  }
+
+  function loadJsonExample() {
+    setJsonInput(exampleAdminJson(sectionKey as AdminJsonSection));
+    setJsonPreview(null);
+    setJsonError("");
   }
 
   return (
@@ -288,6 +337,93 @@ export default function AdminPage() {
               </div>
             </div>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-none">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Code2 className="size-5" />
+            JSON 批量修改
+          </CardTitle>
+          <CardDescription>
+            貼上完整 JSON 後先預覽，確認無誤才套用。此操作會<strong>整段替換</strong>
+            指定資料表，不是合併；貼上時必須包含該表的全部資料列。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="rounded-md border bg-muted/30 p-3 text-xs leading-6 text-muted-foreground">
+            <p className="font-medium text-foreground">支援兩種格式：</p>
+            <p>1. 單一資料表：</p>
+            <pre className="overflow-x-auto rounded bg-background p-2 text-[11px]">{`{
+  "section": "students",
+  "rows": [ ...完整學生陣列... ]
+}`}</pre>
+            <p className="mt-2">2. 多個資料表：</p>
+            <pre className="overflow-x-auto rounded bg-background p-2 text-[11px]">{`{
+  "students": [ ... ],
+  "studentLeaveRecords": [ ... ]
+}`}</pre>
+          </div>
+
+          <Textarea
+            value={jsonInput}
+            onChange={(event) => {
+              setJsonInput(event.target.value);
+              setJsonPreview(null);
+              setJsonError("");
+            }}
+            placeholder='貼上 JSON，例如 {"section":"students","rows":[...]}'
+            className="min-h-48 font-mono text-xs"
+          />
+
+          {jsonError ? (
+            <p className="rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+              {jsonError}
+            </p>
+          ) : null}
+
+          {jsonPreview ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+              <p className="font-medium">預覽結果（尚未寫入）</p>
+              <ul className="mt-2 space-y-1">
+                {jsonPreview.summary.map((item) => (
+                  <li key={item.section}>
+                    {item.label}（{item.section}）：{item.currentCount} 列 →{" "}
+                    <strong>{item.nextCount} 列</strong>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-amber-900">
+                確認後會立即覆寫以上資料表，並同步至雲端資料庫。
+              </p>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={loadJsonExample}>
+              載入示例
+            </Button>
+            <Button variant="outline" size="sm" onClick={previewJsonPatch} disabled={!jsonInput.trim()}>
+              <Eye className="size-4" />
+              預覽
+            </Button>
+            <Button size="sm" onClick={applyJsonPatch} disabled={!jsonPreview}>
+              確認套用
+            </Button>
+            {jsonPreview ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setJsonPreview(null);
+                  setJsonError("");
+                }}
+              >
+                取消預覽
+              </Button>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
     </div>
