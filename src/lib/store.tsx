@@ -35,7 +35,6 @@ import type {
   ReviewStatus,
   StaffAbsenceKind,
   StaffLeaveCategory,
-  StaffLeaveRecord,
   StudentLeaveCategory,
   Student,
   User,

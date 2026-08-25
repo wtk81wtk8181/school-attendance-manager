@@ -97,7 +97,15 @@ export function StudentLeaveSection({ date }: { date: string }) {
             可預先登記事假、病假、公假／比賽等；到請假當日會自動顯示於總覽及每日缺席報告。
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setStartDate(date);
+            setEndDate(date);
+            setOpen(true);
+          }}
+        >
           <CalendarPlus className="size-4" />
           登記學生請假
         </Button>

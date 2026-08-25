@@ -77,6 +77,12 @@ function dailyEmailHtml(
           .map((line) => `<li>${line}</li>`)
           .join("")}</ul>`
       : "";
+  const studentLeaveHtml =
+    payload.studentLeaveLines && payload.studentLeaveLines.length > 0
+      ? `<p><strong>學生預先請假：</strong></p><ul>${payload.studentLeaveLines
+          .map((line) => `<li>${line}</li>`)
+          .join("")}</ul>`
+      : "";
 
   const table =
     payload.rows.length === 0
@@ -120,6 +126,7 @@ function dailyEmailHtml(
     <p><strong>教職員缺席情況</strong></p>
     ${staffHtml}
     ${staffLeaveHtml}
+    ${studentLeaveHtml}
     ${table}
     <p>此郵件已發送至：${recipients.map((item) => `${item.name} &lt;${item.email}&gt;`).join("、")}。</p>
     <p>${SCHOOL_NAME}校務處</p>

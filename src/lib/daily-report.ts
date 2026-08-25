@@ -153,7 +153,10 @@ export function buildDailySchoolReport(
     schoolDay,
     studentLeaveRecords
   );
-  const dayStudentLeaves = studentLeavesForDate(studentLeaveRecords, schoolDay);
+  const studentIds = new Set(students.map((item) => item.id));
+  const dayStudentLeaves = studentLeavesForDate(studentLeaveRecords, schoolDay).filter(
+    (item) => studentIds.has(item.studentId)
+  );
   const classNames = allClassNames();
   const classes: DailyClassBlock[] = classNames.map((className) => {
     const classStudents = students.filter((item) => item.className === className);

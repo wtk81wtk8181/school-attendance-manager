@@ -30,6 +30,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClassPicker } from "@/components/class-picker";
+import { DigestScheduler } from "@/components/digest-scheduler";
 import { cn } from "@/lib/utils";
 import { SCHOOL_NAME } from "@/lib/seed";
 import { useStore } from "@/lib/store";
@@ -123,6 +124,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-full bg-[var(--school-paper)]">
+      {currentUser?.role === "office" ? <DigestScheduler /> : null}
       <aside className="no-print hidden w-60 shrink-0 flex-col bg-[var(--school-navy)] text-white md:flex">
         <div className="border-b border-white/10 py-4">
           <Link href="/dashboard" className="flex items-center gap-2.5 px-3 py-1">
