@@ -1,12 +1,18 @@
 import { attendanceStatusLabel, classLabel, formLabel } from "@/lib/rules";
 import { formatSchoolReportDate } from "@/lib/format";
 import { allClassNames } from "@/lib/roster";
-import { staffNamesForKind, staffDailyFor } from "@/lib/staff";
+import {
+  formatStaffLeaveLine,
+  staffNamesForKind,
+  staffDailyFor,
+  staffLeavesForDate,
+} from "@/lib/staff";
 import type {
   AbsenceRecord,
   FormLevel,
   StaffAbsenceKind,
   StaffDailyAbsence,
+  StaffLeaveRecord,
   StaffMember,
   Student,
 } from "@/lib/types";
@@ -64,6 +70,7 @@ export interface DailySchoolReportPayload {
   totalLate: number;
   schoolPunctualityRate: number;
   staff: Record<StaffAbsenceKind, string[]>;
+  staffLeaveLines: string[];
 }
 
 /** @deprecated 使用 DailySchoolReportPayload */
@@ -122,7 +129,8 @@ export function buildDailySchoolReport(
   schoolDay: string,
   staffMembers: StaffMember[] = [],
   staffDailyAbsences: StaffDailyAbsence[] = [],
-  scope = "全校"
+  scope = "全校",
+  staffLeaveRecords: StaffLeaveRecord[] = []
 ): DailySchoolReportPayload {
   const rows = buildDailyAbsenceRows(students, absences, schoolDay);
   const classNames = allClassNames();
@@ -169,6 +177,7 @@ export function buildDailySchoolReport(
   const totalLate = classes.reduce((sum, item) => sum + item.lateCount, 0);
   const totalAbsent = classes.reduce((sum, item) => sum + item.absentCount, 0);
   const staffRecord = staffDailyFor(staffDailyAbsences, schoolDay);
+  const dayLeaves = staffLeavesForDate(staffLeaveRecords, schoolDay);
 
   return {
     schoolDay,
@@ -192,5 +201,6 @@ export function buildDailySchoolReport(
       official: staffNamesForKind(staffMembers, staffRecord, "official"),
       early: staffNamesForKind(staffMembers, staffRecord, "early"),
     },
+    staffLeaveLines: dayLeaves.map(formatStaffLeaveLine),
   };
 }

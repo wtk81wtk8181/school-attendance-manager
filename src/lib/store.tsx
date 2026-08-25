@@ -22,10 +22,11 @@ import {
   sharedFromState,
   writeSession,
 } from "@/lib/db-client";
-import { emptyStaffDaily, staffDailyFor, withToggledStaff } from "@/lib/staff";
+import { emptyStaffDaily, staffDailyFor, staffLeaveKind, withToggledStaff } from "@/lib/staff";
 import type {
   AbsenceRecord,
   AppState,
+  AuditLog,
   DigestLog,
   DigestRecipient,
   DayAttendance,
@@ -33,6 +34,7 @@ import type {
   DocumentType,
   ReviewStatus,
   StaffAbsenceKind,
+  StaffLeaveCategory,
   Student,
   User,
   WarningLetter,
@@ -75,7 +77,17 @@ interface StoreValue {
   upsertRecipient: (recipient: DigestRecipient) => void;
   removeRecipient: (id: string) => void;
   addStaffMember: (name: string) => boolean;
+  addStaffMembers: (names: string[]) => number;
   removeStaffMember: (id: string) => void;
+  addStaffLeave: (input: {
+    staffId: string;
+    category: StaffLeaveCategory;
+    startDate: string;
+    endDate: string;
+    note: string;
+    activity: string;
+  }) => boolean;
+  removeStaffLeave: (id: string) => void;
   toggleStaffAbsence: (
     date: string,
     kind: StaffAbsenceKind,
@@ -83,6 +95,7 @@ interface StoreValue {
     selected: boolean
   ) => void;
   recordDigestSend: (log: Omit<DigestLog, "id" | "createdAt">) => void;
+  adminPatchState: (input: { section: string; rows: unknown[] }) => void;
   refreshFromDatabase: () => Promise<void>;
   saveToDatabase: () => Promise<boolean>;
   reconnectDatabase: () => Promise<void>;
@@ -407,6 +420,29 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function auditEntry(
+  state: AppState,
+  action: string,
+  detail: string
+): AuditLog {
+  const actor = state.users.find((user) => user.id === state.currentUserId);
+  return {
+    id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    at: nowIso(),
+    actorId: actor?.id ?? "system",
+    actorName: actor ? `${actor.name}` : "系統",
+    action,
+    detail,
+  };
+}
+
+function withAudit(state: AppState, action: string, detail: string): AppState {
+  return {
+    ...state,
+    auditLogs: [auditEntry(state, action, detail), ...(state.auditLogs ?? [])].slice(0, 500),
+  };
+}
+
 function applyWarnings(
   state: AppState,
   student: Student,
@@ -655,10 +691,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               (item) => !(item.studentId === studentId && item.date === date)
             ),
           ];
-          return applyWarnings(
-            { ...prev, absences: nextAbsences, clearedAttendance },
-            student,
-            "校務處"
+          return withAudit(
+            applyWarnings(
+              { ...prev, absences: nextAbsences, clearedAttendance },
+              student,
+              "校務處"
+            ),
+            "標記出席",
+            `${student.name}（${classLabel(student.className)}）${date}`
           );
         } else {
           const defaultReason =
@@ -699,16 +739,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             : [nextRecord, ...prev.absences];
         }
 
-        return applyWarnings(
-          {
-            ...prev,
-            absences: nextAbsences,
-            clearedAttendance: (prev.clearedAttendance ?? []).filter(
-              (item) => !(item.studentId === studentId && item.date === date)
-            ),
-          },
-          student,
-          "校務處"
+        return withAudit(
+          applyWarnings(
+            {
+              ...prev,
+              absences: nextAbsences,
+              clearedAttendance: (prev.clearedAttendance ?? []).filter(
+                (item) => !(item.studentId === studentId && item.date === date)
+              ),
+            },
+            student,
+            "校務處"
+          ),
+          existing ? "更新學生當日狀態" : "登記學生缺席／遲到／事假",
+          `${student.name}（${classLabel(student.className)}）${date} → ${status === "absent" ? "缺席" : status === "late" ? "遲到" : "事假"}`
         );
       });
 
@@ -774,10 +818,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
         const student = prev.students.find((item) => item.id === current.studentId);
         if (!student) return { ...prev, absences: nextAbsences };
-        return applyWarnings(
-          { ...prev, absences: nextAbsences },
-          student,
-          "校務處"
+        return withAudit(
+          applyWarnings(
+            { ...prev, absences: nextAbsences },
+            student,
+            "校務處"
+          ),
+          "審核缺席紀錄",
+          `${student.name}（${classLabel(student.className)}）${current.date} → ${input.reviewStatus === "approved" ? "通過" : input.reviewStatus === "rejected" ? "不通過" : "待審"}`
         );
       });
       toast.success("已更新缺席審核。");
@@ -878,17 +926,51 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const members = prev.staffMembers ?? [];
       if (members.some((item) => item.name === trimmed)) return prev;
       added = true;
-      return {
-        ...prev,
-        staffMembers: [
-          ...members,
-          {
-            id: `staff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            name: trimmed,
-            updatedAt: nowIso(),
-          },
-        ],
-      };
+      return withAudit(
+        {
+          ...prev,
+          staffMembers: [
+            ...members,
+            {
+              id: `staff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              name: trimmed,
+              updatedAt: nowIso(),
+            },
+          ],
+        },
+        "新增教職員",
+        trimmed
+      );
+    });
+    return added;
+  }, []);
+
+  const addStaffMembers = useCallback((names: string[]) => {
+    const cleaned = [...new Set(names.map((item) => item.trim()).filter(Boolean))];
+    if (cleaned.length === 0) return 0;
+    let added = 0;
+    patch((prev) => {
+      const members = prev.staffMembers ?? [];
+      const existing = new Set(members.map((item) => item.name));
+      const fresh = cleaned.filter((name) => !existing.has(name));
+      added = fresh.length;
+      if (fresh.length === 0) return prev;
+      const now = nowIso();
+      return withAudit(
+        {
+          ...prev,
+          staffMembers: [
+            ...members,
+            ...fresh.map((name, index) => ({
+              id: `staff-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 6)}`,
+              name,
+              updatedAt: now,
+            })),
+          ],
+        },
+        "批量匯入教職員",
+        `新增 ${fresh.length} 人：${fresh.slice(0, 8).join("、")}${fresh.length > 8 ? "…" : ""}`
+      );
     });
     return added;
   }, []);
@@ -898,21 +980,131 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const current = (prev.staffMembers ?? []).find((item) => item.id === id);
       if (!current) return prev;
       const strip = (ids: string[]) => ids.filter((item) => item !== id);
-      return {
-        ...prev,
-        staffMembers: (prev.staffMembers ?? []).filter((item) => item.id !== id),
-        staffRemovals: [
-          { id, removedAt: nowIso() },
-          ...(prev.staffRemovals ?? []).filter((item) => item.id !== id),
-        ],
-        staffDailyAbsences: (prev.staffDailyAbsences ?? []).map((item) => ({
-          ...item,
-          sickIds: strip(item.sickIds),
-          personalIds: strip(item.personalIds),
-          officialIds: strip(item.officialIds),
-          earlyIds: strip(item.earlyIds),
-        })),
-      };
+      return withAudit(
+        {
+          ...prev,
+          staffMembers: (prev.staffMembers ?? []).filter((item) => item.id !== id),
+          staffRemovals: [
+            { id, removedAt: nowIso() },
+            ...(prev.staffRemovals ?? []).filter((item) => item.id !== id),
+          ],
+          staffDailyAbsences: (prev.staffDailyAbsences ?? []).map((item) => ({
+            ...item,
+            sickIds: strip(item.sickIds),
+            personalIds: strip(item.personalIds),
+            officialIds: strip(item.officialIds),
+            earlyIds: strip(item.earlyIds),
+          })),
+          staffLeaveRecords: (prev.staffLeaveRecords ?? []).filter(
+            (item) => item.staffId !== id
+          ),
+        },
+        "刪除教職員",
+        current.name
+      );
+    });
+  }, []);
+
+  const addStaffLeave = useCallback(
+    (input: {
+      staffId: string;
+      category: StaffLeaveCategory;
+      startDate: string;
+      endDate: string;
+      note: string;
+      activity: string;
+    }) => {
+      if (!input.staffId || !input.startDate) return false;
+      let added = false;
+      patch((prev) => {
+        const member = (prev.staffMembers ?? []).find((item) => item.id === input.staffId);
+        if (!member) return prev;
+        added = true;
+        const now = nowIso();
+        const endDate =
+          input.endDate && input.endDate >= input.startDate
+            ? input.endDate
+            : input.startDate;
+        const record = {
+          id: `sleave-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          staffId: member.id,
+          staffName: member.name,
+          category: input.category,
+          startDate: input.startDate,
+          endDate,
+          note: input.note.trim(),
+          activity: input.activity.trim(),
+          createdBy: prev.currentUserId ?? "",
+          createdAt: now,
+          updatedAt: now,
+        };
+        const kind = staffLeaveKind(input.category);
+        const affectedDates: string[] = [];
+        const cursor = new Date(`${input.startDate}T00:00:00`);
+        const last = new Date(`${endDate}T00:00:00`);
+        let guard = 0;
+        while (cursor <= last && guard < 370) {
+          const year = cursor.getFullYear();
+          const month = String(cursor.getMonth() + 1).padStart(2, "0");
+          const day = String(cursor.getDate()).padStart(2, "0");
+          affectedDates.push(`${year}-${month}-${day}`);
+          cursor.setDate(cursor.getDate() + 1);
+          guard += 1;
+        }
+        let dailies = prev.staffDailyAbsences ?? [];
+        for (const date of affectedDates) {
+          const current = staffDailyFor(dailies, date);
+          const nextDaily = withToggledStaff(
+            current.updatedAt ? current : emptyStaffDaily(date),
+            kind,
+            member.id,
+            true,
+            now
+          );
+          dailies = [nextDaily, ...dailies.filter((item) => item.date !== date)];
+        }
+        return withAudit(
+          {
+            ...prev,
+            staffLeaveRecords: [record, ...(prev.staffLeaveRecords ?? [])],
+            staffDailyAbsences: dailies,
+          },
+          "提早登記教職員請假",
+          `${member.name}　${input.startDate}${endDate !== input.startDate ? ` 至 ${endDate}` : ""}`
+        );
+      });
+      return added;
+    },
+    []
+  );
+
+  const removeStaffLeave = useCallback((id: string) => {
+    patch((prev) => {
+      const current = (prev.staffLeaveRecords ?? []).find((item) => item.id === id);
+      if (!current) return prev;
+      const strip = (ids: string[]) => ids.filter((item) => item !== current.staffId);
+      const inRange = (date: string) =>
+        date >= current.startDate && date <= current.endDate;
+      return withAudit(
+        {
+          ...prev,
+          staffLeaveRecords: (prev.staffLeaveRecords ?? []).filter((item) => item.id !== id),
+          staffDailyAbsences: (prev.staffDailyAbsences ?? []).map((item) =>
+            inRange(item.date)
+              ? {
+                  ...item,
+                  sickIds: strip(item.sickIds),
+                  personalIds: strip(item.personalIds),
+                  officialIds: strip(item.officialIds),
+                  earlyIds: strip(item.earlyIds),
+                  updatedAt: nowIso(),
+                }
+              : item
+          ),
+        },
+        "取消提早請假",
+        `${current.staffName}　${current.startDate}`
+      );
     });
   }, []);
 
@@ -941,9 +1133,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const recordDigestSend = useCallback((log: Omit<DigestLog, "id" | "createdAt">) => {
     const createdAt = nowIso();
-    patch((prev) => ({
-      ...prev,
-      digestLogs: [
+    patch((prev) => withAudit(
+      {
+        ...prev,
+        digestLogs: [
         {
           ...log,
           id: `dg-${Date.now()}`,
@@ -967,7 +1160,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         },
         ...prev.notifications,
       ],
-    }));
+      },
+      "發送每日缺席電郵",
+      `${log.schoolDay} → ${log.recipientEmails.join("、")}`
+    ));
   }, []);
 
   const refreshFromDatabaseNow = useCallback(async () => {
@@ -1009,6 +1205,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const adminPatchState = useCallback(
+    (input: { section: string; rows: unknown[] }) => {
+      if (!currentUser || currentUser.role !== "office") {
+        toast.error("只有校務處職員可以使用後台管理。");
+        return;
+      }
+      patch((prev) =>
+        withAudit(
+          {
+            ...prev,
+            [input.section]: input.rows,
+          } as AppState,
+          "後台管理修改",
+          `${input.section}（${input.rows.length} 列）`
+        )
+      );
+      toast.success("已更新資料，同步中……");
+    },
+    [currentUser]
+  );
+
   const value = useMemo<StoreValue>(
     () => ({
       ready,
@@ -1028,9 +1245,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       upsertRecipient,
       removeRecipient,
       addStaffMember,
+      addStaffMembers,
       removeStaffMember,
+      addStaffLeave,
+      removeStaffLeave,
       toggleStaffAbsence,
       recordDigestSend,
+      adminPatchState,
       refreshFromDatabase: refreshFromDatabaseNow,
       saveToDatabase,
       reconnectDatabase,
@@ -1055,9 +1276,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       upsertRecipient,
       removeRecipient,
       addStaffMember,
+      addStaffMembers,
       removeStaffMember,
+      addStaffLeave,
+      removeStaffLeave,
       toggleStaffAbsence,
       recordDigestSend,
+      adminPatchState,
       refreshFromDatabaseNow,
       saveToDatabase,
       reconnectDatabase,

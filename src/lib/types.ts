@@ -123,6 +123,32 @@ export interface StaffDailyAbsence {
   updatedAt: string;
 }
 
+export type StaffLeaveCategory = "checkup" | "surgery" | "funeral" | "personal" | "official" | "sick" | "other";
+
+export interface StaffLeaveRecord {
+  id: string;
+  staffId: string;
+  staffName: string;
+  category: StaffLeaveCategory;
+  startDate: string;
+  endDate: string;
+  note: string;
+  /** 事假連結的外出活動／比賽名稱 */
+  activity: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuditLog {
+  id: string;
+  at: string;
+  actorId: string;
+  actorName: string;
+  action: string;
+  detail: string;
+}
+
 export interface DigestSettings {
   enabled: boolean;
   sendTime: string;
@@ -167,6 +193,8 @@ export interface AppState {
   staffMembers: StaffMember[];
   staffRemovals: StaffRemoval[];
   staffDailyAbsences: StaffDailyAbsence[];
+  staffLeaveRecords: StaffLeaveRecord[];
+  auditLogs: AuditLog[];
   dataVersion: number;
 }
 

@@ -3,12 +3,14 @@ import type {
   AbsenceRecord,
   AppState,
   AttendanceClear,
+  AuditLog,
   DigestLog,
   DigestRecipient,
   DigestSettings,
   NotificationItem,
   RecipientRemoval,
   StaffDailyAbsence,
+  StaffLeaveRecord,
   StaffMember,
   StaffRemoval,
   Student,
@@ -92,6 +94,8 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     staffMembers: shared.staffMembers ?? seed.staffMembers,
     staffRemovals: shared.staffRemovals ?? seed.staffRemovals,
     staffDailyAbsences: shared.staffDailyAbsences ?? seed.staffDailyAbsences,
+    staffLeaveRecords: shared.staffLeaveRecords ?? seed.staffLeaveRecords,
+    auditLogs: shared.auditLogs ?? seed.auditLogs,
     dataVersion: OPERATIONAL_DATA_VERSION,
   };
 }
@@ -324,6 +328,35 @@ function mergeStaffDailyAbsences(
   return [...map.values()].sort((a, b) => b.date.localeCompare(a.date));
 }
 
+function mergeStaffLeaveRecords(
+  current: StaffLeaveRecord[] | undefined,
+  incoming: StaffLeaveRecord[] | undefined
+): StaffLeaveRecord[] {
+  const map = new Map<string, StaffLeaveRecord>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.id);
+    if (!existing || item.updatedAt >= existing.updatedAt) {
+      map.set(item.id, item);
+    }
+  }
+  return [...map.values()].sort((a, b) => b.startDate.localeCompare(a.startDate));
+}
+
+const AUDIT_LOG_LIMIT = 500;
+
+function mergeAuditLogs(
+  current: AuditLog[] | undefined,
+  incoming: AuditLog[] | undefined
+): AuditLog[] {
+  const map = new Map<string, AuditLog>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    map.set(item.id, item);
+  }
+  return [...map.values()]
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .slice(0, AUDIT_LOG_LIMIT);
+}
+
 /** 合併兩份雲端資料，避免多裝置後寫覆蓋先寫的紀錄。 */
 export function mergeSharedStates(
   current: AppState,
@@ -358,6 +391,11 @@ export function mergeSharedStates(
       base.staffDailyAbsences,
       next.staffDailyAbsences
     ),
+    staffLeaveRecords: mergeStaffLeaveRecords(
+      base.staffLeaveRecords,
+      next.staffLeaveRecords
+    ),
+    auditLogs: mergeAuditLogs(base.auditLogs, next.auditLogs),
     dataVersion: OPERATIONAL_DATA_VERSION,
     users: seed.users,
     currentUserId: null,

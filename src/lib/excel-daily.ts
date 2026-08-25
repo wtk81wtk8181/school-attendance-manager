@@ -198,6 +198,17 @@ function writeStaffFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPa
     });
     sheet.getRow(row).height = 18;
   }
+  if (payload.staffLeaveLines.length > 0) {
+    mergeValue(sheet, 82, 1, 82, 2, "預假：", {
+      font: { bold: true, size: 8 },
+      alignment: { vertical: "middle" },
+    });
+    mergeValue(sheet, 82, 3, 82, 12, payload.staffLeaveLines.join("；"), {
+      font: { size: 8 },
+      alignment: { vertical: "middle", wrapText: true },
+    });
+    sheet.getRow(82).height = 14;
+  }
 }
 
 function writeStatsFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload) {

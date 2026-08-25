@@ -7,9 +7,12 @@ import {
   Bell,
   Check,
   ClipboardList,
+  Database,
   FileWarning,
+  History,
   Home,
   LayoutDashboard,
+  LogOut,
   Menu,
   RefreshCw,
   School,
@@ -41,6 +44,8 @@ const officeNav = [
   { href: "/warnings", label: "警告信", icon: FileWarning },
   { href: "/reports", label: "報表導出", icon: BarChart3 },
   { href: "/digest", label: "每日缺席電郵", icon: Mail },
+  { href: "/changes", label: "最近變更", icon: History },
+  { href: "/admin", label: "後台管理", icon: Database },
 ];
 
 const homeroomNav = [
@@ -91,6 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     currentUser,
     state,
     selectClass,
+    logout,
     markNotificationRead,
     markAllNotificationsRead,
     refreshFromDatabase,
@@ -286,6 +292,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <Home className="size-3.5" />
             返回主頁
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-rose-300 text-rose-700 hover:bg-rose-50"
+            onClick={() => {
+              logout();
+              router.replace("/");
+            }}
+          >
+            <LogOut className="size-3.5" />
+            退出登入
           </Button>
           <span className="hidden size-8 items-center justify-center rounded-full bg-[var(--school-navy)] text-xs font-medium text-white sm:flex">
             {userInitial}

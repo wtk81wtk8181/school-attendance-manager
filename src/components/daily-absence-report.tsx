@@ -41,6 +41,14 @@ export function DailyAbsenceReport({
                   : "—"}
               </p>
             ))}
+            {payload.staffLeaveLines.length > 0 && (
+              <div className="mt-2 border-t border-dashed border-zinc-300 pt-1.5">
+                <p className="font-medium">提早登記請假：</p>
+                {payload.staffLeaveLines.map((line) => (
+                  <p key={line} className="text-zinc-700">{line}</p>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -99,7 +107,7 @@ export function DailyAbsenceReport({
       </div>
 
       <section className="mt-3 overflow-x-auto rounded border border-zinc-300">
-        <table className="w-full min-w-[720px] border-collapse text-center text-[10px]">
+        <table className="w-full border-collapse text-center text-[10px]">
           <thead>
             <tr className="bg-slate-100">
               <th className="border border-zinc-300 px-1 py-1 text-left">班別</th>

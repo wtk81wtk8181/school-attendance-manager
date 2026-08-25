@@ -32,12 +32,14 @@ function DailyAbsencePrintBody() {
         schoolDay,
         state.staffMembers,
         state.staffDailyAbsences,
-        "全校"
+        "全校",
+        state.staffLeaveRecords
       ),
     [
       schoolDay,
       state.absences,
       state.staffDailyAbsences,
+      state.staffLeaveRecords,
       state.staffMembers,
       visibleStudents,
     ]

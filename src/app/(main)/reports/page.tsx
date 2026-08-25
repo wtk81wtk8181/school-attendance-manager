@@ -136,7 +136,8 @@ export default function ReportsPage() {
     reportDay,
     state.staffMembers,
     state.staffDailyAbsences,
-    dailyScope
+    dailyScope,
+    state.staffLeaveRecords
   );
 
   const monthlyReport = buildMonthlyReport(visibleStudents, state.absences, month);

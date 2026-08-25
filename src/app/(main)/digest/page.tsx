@@ -53,6 +53,9 @@ export default function DigestPage() {
   );
 
   const enabledRecipients = state.digestRecipients.filter((item) => item.enabled);
+  const hasDefaultRecipients = ["黃 Sir", "程 Sir", "Cindy"].every((target) =>
+    state.digestRecipients.some((item) => item.name === target)
+  );
 
   if (currentUser?.role !== "office") {
     return (
@@ -78,6 +81,26 @@ export default function DigestPage() {
     setName("");
     setEmail("");
     toast.success("已加入收件人。");
+  }
+
+  function addDefaultRecipients() {
+    const defaults: Array<{ name: string; email: string }> = [
+      { name: "黃 Sir", email: "wong@school.edu.hk" },
+      { name: "程 Sir", email: "cheng@school.edu.hk" },
+      { name: "Cindy", email: "cindy@school.edu.hk" },
+    ];
+    let added = 0;
+    for (const item of defaults) {
+      if (state.digestRecipients.some((row) => row.name === item.name)) continue;
+      const recipient = createRecipientFromEmail(item.email, true);
+      upsertRecipient({ ...recipient, name: item.name, title: "預設收件人" });
+      added += 1;
+    }
+    if (added === 0) {
+      toast.info("三位預設收件人已在名單中。");
+      return;
+    }
+    toast.success(`已加入 ${added} 位預設收件人。請在表格中核對電郵地址。`);
   }
 
   return (
@@ -251,8 +274,18 @@ export default function DigestPage() {
 
           <Card className="shadow-none">
             <CardHeader>
-              <CardTitle>指定收件人</CardTitle>
-              <CardDescription>可加入校務處、各班班主任或其他電郵。</CardDescription>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <CardTitle>指定收件人</CardTitle>
+                  <CardDescription>可加入校務處、各班班主任或其他電郵。</CardDescription>
+                </div>
+                {!hasDefaultRecipients && (
+                  <Button variant="outline" size="sm" onClick={addDefaultRecipients}>
+                    <Plus className="size-4" />
+                    加入預設收件人（黃 Sir／程 Sir／Cindy）
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2 md:grid-cols-4">
