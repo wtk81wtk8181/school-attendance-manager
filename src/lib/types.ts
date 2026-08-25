@@ -120,6 +120,10 @@ export interface StaffDailyAbsence {
   personalIds: string[];
   officialIds: string[];
   earlyIds: string[];
+  selectionChanges?: Record<
+    string,
+    { kind: StaffAbsenceKind | null; updatedAt: string }
+  >;
   updatedAt: string;
 }
 
@@ -140,6 +144,11 @@ export interface StaffLeaveRecord {
   updatedAt: string;
 }
 
+export interface StaffLeaveRemoval {
+  id: string;
+  removedAt: string;
+}
+
 export interface AuditLog {
   id: string;
   at: string;
@@ -154,6 +163,7 @@ export interface DigestSettings {
   sendTime: string;
   lastSentOn: string;
   lastSentSchoolDay: string;
+  updatedAt?: string;
 }
 
 export interface DigestLog {
@@ -194,6 +204,7 @@ export interface AppState {
   staffRemovals: StaffRemoval[];
   staffDailyAbsences: StaffDailyAbsence[];
   staffLeaveRecords: StaffLeaveRecord[];
+  staffLeaveRemovals: StaffLeaveRemoval[];
   auditLogs: AuditLog[];
   dataVersion: number;
 }

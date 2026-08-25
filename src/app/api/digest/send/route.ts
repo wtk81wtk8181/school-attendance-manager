@@ -3,6 +3,7 @@ import { buildAbsenceWorkbook } from "@/lib/excel-digest";
 import { sendMail } from "@/lib/mailer";
 import { SCHOOL_NAME } from "@/lib/seed";
 import type { DigestPayload } from "@/lib/digest";
+import { isSiteRequestAuthorized } from "@/lib/site-auth";
 
 interface SendBody {
   payload: DigestPayload;
@@ -11,6 +12,9 @@ interface SendBody {
 }
 
 export async function POST(request: Request) {
+  if (!(await isSiteRequestAuthorized(request))) {
+    return NextResponse.json({ error: "未獲授權。" }, { status: 401 });
+  }
   const body = (await request.json()) as SendBody;
   if (!body?.payload?.schoolDay) {
     return NextResponse.json({ error: "缺少上課日資料。" }, { status: 400 });

@@ -3,6 +3,7 @@ import { buildMonthlyWorkbook } from "@/lib/excel-monthly";
 import { SCHOOL_NAME } from "@/lib/seed";
 import { sendMail } from "@/lib/mailer";
 import type { MonthlyReportPayload } from "@/lib/monthly-report";
+import { isSiteRequestAuthorized } from "@/lib/site-auth";
 
 interface SendBody {
   payload: MonthlyReportPayload;
@@ -11,6 +12,9 @@ interface SendBody {
 }
 
 export async function POST(request: Request) {
+  if (!(await isSiteRequestAuthorized(request))) {
+    return NextResponse.json({ error: "未獲授權。" }, { status: 401 });
+  }
   const body = (await request.json()) as SendBody;
   if (!body?.payload?.yearMonth || !Array.isArray(body.payload.classes)) {
     return NextResponse.json({ error: "缺少月份報告資料。" }, { status: 400 });

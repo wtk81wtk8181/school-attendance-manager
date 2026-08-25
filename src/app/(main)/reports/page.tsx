@@ -27,6 +27,7 @@ import {
   buildStudentStats,
   classLabel,
   formLabel,
+  isCountedTowardAbsence,
 } from "@/lib/rules";
 import { AbsenceDetailFields } from "@/components/absence-detail-fields";
 import { DailyAbsenceReport } from "@/components/daily-absence-report";
@@ -131,7 +132,7 @@ export default function ReportsPage() {
   );
 
   const dailySchoolReport = buildDailySchoolReport(
-    visibleStudents,
+    filteredStudents,
     state.absences,
     reportDay,
     state.staffMembers,
@@ -203,9 +204,8 @@ export default function ReportsPage() {
 
     setMonthlyBusy(true);
     try {
-      const payload = buildMonthlyReport(state.students, state.absences, month);
       const result = await requestMonthlyReport({
-        payload,
+        payload: monthlyReport,
         sendEmail,
         recipients: sendEmail ? recipients : [],
       });
@@ -257,7 +257,7 @@ export default function ReportsPage() {
           documentLabels[item.documentType],
           item.documentSubmitted ? "已提交" : "未提交",
           reviewLabels[item.reviewStatus],
-          item.reviewStatus === "approved" ? "否" : "是",
+          isCountedTowardAbsence(item) ? "是" : "否",
         ];
       }),
     ]);

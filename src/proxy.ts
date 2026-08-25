@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { hasSiteAccess, SITE_ACCESS_COOKIE } from "@/lib/site-auth";
 
-const PUBLIC_PREFIXES = ["/site-login", "/api/site-auth"];
+const PUBLIC_PATHS = new Set(["/site-login", "/api/site-auth"]);
 
-export function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+  if (PUBLIC_PATHS.has(pathname)) {
     return NextResponse.next();
   }
 
   const access = request.cookies.get(SITE_ACCESS_COOKIE)?.value;
-  if (hasSiteAccess(access)) {
+  if (await hasSiteAccess(access)) {
     return NextResponse.next();
   }
 

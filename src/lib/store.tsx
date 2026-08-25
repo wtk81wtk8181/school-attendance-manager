@@ -22,7 +22,7 @@ import {
   sharedFromState,
   writeSession,
 } from "@/lib/db-client";
-import { emptyStaffDaily, staffDailyFor, staffLeaveKind, withToggledStaff } from "@/lib/staff";
+import { emptyStaffDaily, staffDailyFor, withToggledStaff } from "@/lib/staff";
 import type {
   AbsenceRecord,
   AppState,
@@ -39,6 +39,19 @@ import type {
   User,
   WarningLetter,
 } from "@/lib/types";
+
+const ADMIN_EDITABLE_SECTIONS = new Set([
+  "students",
+  "absences",
+  "warnings",
+  "notifications",
+  "clearedAttendance",
+  "staffMembers",
+  "staffDailyAbsences",
+  "staffLeaveRecords",
+  "digestRecipients",
+  "digestLogs",
+]);
 
 interface ReviewInput {
   documentType: DocumentType;
@@ -115,6 +128,7 @@ let remoteRevision = 0;
 let flushInFlight: Promise<boolean> | null = null;
 let dirty = false;
 let saveGeneration = 0;
+const pendingReplaceSections = new Set<string>();
 
 interface StateApiPayload {
   state: AppState;
@@ -188,7 +202,9 @@ async function flushPersist(): Promise<boolean> {
 
   const generation = saveGeneration;
   const payload = sharedFromState(memory);
+  const replaceSections = [...pendingReplaceSections];
   flushInFlight = (async () => {
+    let retryAfterFlight = false;
     if (persistTimer) {
       clearTimeout(persistTimer);
       persistTimer = null;
@@ -200,6 +216,7 @@ async function flushPersist(): Promise<boolean> {
         body: JSON.stringify({
           state: payload,
           baseRevision: remoteRevision,
+          replaceSections,
         }),
       });
       if (typeof data.revision === "number" || typeof data.revision === "string") {
@@ -209,9 +226,11 @@ async function flushPersist(): Promise<boolean> {
         if (saveGeneration === generation) {
           applyServerState(data.state);
           dirty = false;
+          for (const section of replaceSections) pendingReplaceSections.delete(section);
           emit();
         } else {
           applyServerState(data.state, memory);
+          retryAfterFlight = true;
         }
       } else if (saveGeneration === generation) {
         dirty = false;
@@ -221,11 +240,38 @@ async function flushPersist(): Promise<boolean> {
       return true;
     } catch (error) {
       const auth = error instanceof Error && error.message === "auth";
+      const conflict =
+        error instanceof Error && error.message.includes("資料已由其他使用者更新");
+      if (conflict) {
+        try {
+          const latest = await fetchStatePayload({ method: "GET" });
+          remoteRevision = Number(latest.revision ?? remoteRevision);
+          if (latest.state) {
+            for (const section of replaceSections) pendingReplaceSections.delete(section);
+            dirty = false;
+            applyServerState(latest.state);
+          }
+        } catch {
+          toast.error("資料同步衝突，而且暫時無法載入最新資料。");
+          return false;
+        }
+        toast.error("資料已由其他使用者更新；本次修改未儲存，已載入最新資料。");
+        return false;
+      }
       toast.error(auth ? "尚未通過網站密碼，無法寫入資料庫。" : "無法同步至資料庫，資料暫存於本機。");
       persistLocal(memory);
       return false;
     } finally {
       flushInFlight = null;
+      // A second edit can arrive while the first request is still in flight.
+      // Its debounce timer may have joined that old promise, so explicitly
+      // schedule another flush whenever a newer generation remains dirty.
+      if (retryAfterFlight && dirty && useDatabase && hydrated && !persistTimer) {
+        persistTimer = setTimeout(() => {
+          persistTimer = null;
+          void flushPersist();
+        }, 0);
+      }
     }
   })();
 
@@ -707,12 +753,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ? {
                 ...existing,
                 eclassStatus: status,
-                reason: defaultReason,
-                reviewStatus: "pending",
-                documentType: "none",
-                documentSubmitted: false,
-                reviewedBy: currentUser.id,
-                reviewedAt: nowIso(),
+                reason:
+                  !existing.reason || ["缺席", "遲到", "事假"].includes(existing.reason)
+                    ? defaultReason
+                    : existing.reason,
                 source: "office",
                 notes: "校務處於學生出勤頁更新當日狀態",
               }
@@ -773,19 +817,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         toast.error("只有校務處職員可以更新請假資料。");
         return;
       }
-      patch((prev) => ({
-        ...prev,
-        absences: prev.absences.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                reason: input.reason.trim() || item.reason,
-                calledBy: input.calledBy.trim() || undefined,
-                calledAt: input.calledAt.trim() || undefined,
-              }
-            : item
-        ),
-      }));
+      patch((prev) => {
+        const current = prev.absences.find((item) => item.id === id);
+        if (!current) return prev;
+        const student = prev.students.find((item) => item.id === current.studentId);
+        return withAudit(
+          {
+            ...prev,
+            absences: prev.absences.map((item) =>
+              item.id === id
+                ? {
+                    ...item,
+                    reason: input.reason.trim() || item.reason,
+                    calledBy: input.calledBy.trim() || undefined,
+                    calledAt: input.calledAt.trim() || undefined,
+                    reviewedBy: currentUser.id,
+                    reviewedAt: nowIso(),
+                  }
+                : item
+            ),
+          },
+          "更新缺席資料",
+          `${student?.name ?? current.studentId}　${current.date}`
+        );
+      });
     },
     [currentUser]
   );
@@ -839,20 +894,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         toast.error("只有校務處職員可以登記跟進。");
         return;
       }
-      patch((prev) => ({
-        ...prev,
-        warnings: prev.warnings.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                status: input.archive ? "archived" : "followed_up",
-                followedUpBy: currentUser.id,
-                followedUpAt: nowIso(),
-                followUpNotes: input.notes.trim(),
-              }
-            : item
-        ),
-      }));
+      patch((prev) => {
+        const current = prev.warnings.find((item) => item.id === id);
+        if (!current) return prev;
+        const student = prev.students.find((item) => item.id === current.studentId);
+        return withAudit(
+          {
+            ...prev,
+            warnings: prev.warnings.map((item) =>
+              item.id === id
+                ? {
+                    ...item,
+                    status: input.archive ? "archived" : "followed_up",
+                    followedUpBy: currentUser.id,
+                    followedUpAt: nowIso(),
+                    followUpNotes: input.notes.trim(),
+                  }
+                : item
+            ),
+          },
+          input.archive ? "封存警告信" : "登記警告信跟進",
+          student?.name ?? current.studentId
+        );
+      });
       toast.success("已登記警告信跟進。");
     },
     [currentUser]
@@ -875,50 +939,87 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveDigestSettings = useCallback((settings: Partial<DigestSettings>) => {
-    patch((prev) => ({
-      ...prev,
-      digestSettings: { ...prev.digestSettings, ...settings },
-    }));
-  }, []);
+    if (currentUser?.role !== "office") {
+      toast.error("只有校務處職員可以修改每日電郵設定。");
+      return;
+    }
+    patch((prev) =>
+      withAudit(
+        {
+          ...prev,
+          digestSettings: {
+            ...prev.digestSettings,
+            ...settings,
+            updatedAt: nowIso(),
+          },
+        },
+        "更新每日電郵設定",
+        settings.enabled === undefined
+          ? `發送時間：${settings.sendTime ?? prev.digestSettings.sendTime}`
+          : settings.enabled
+            ? "已啟用自動發送"
+            : "已停用自動發送"
+      )
+    );
+  }, [currentUser]);
 
   const upsertRecipient = useCallback((recipient: DigestRecipient) => {
+    if (currentUser?.role !== "office") {
+      toast.error("只有校務處職員可以修改電郵收件人。");
+      return;
+    }
     patch((prev) => {
       const next = { ...recipient, updatedAt: nowIso() };
-      return {
-        ...prev,
-        digestRecipients: mergeDigestRecipient(prev.digestRecipients, next),
-        removedRecipients: (prev.removedRecipients ?? []).filter(
-          (item) => item.email.toLowerCase() !== next.email.trim().toLowerCase()
-        ),
-      };
+      return withAudit(
+        {
+          ...prev,
+          digestRecipients: mergeDigestRecipient(prev.digestRecipients, next),
+          removedRecipients: (prev.removedRecipients ?? []).filter(
+            (item) => item.email.toLowerCase() !== next.email.trim().toLowerCase()
+          ),
+        },
+        "新增／更新電郵收件人",
+        `${next.name} <${next.email}>`
+      );
     });
-  }, []);
+  }, [currentUser]);
 
   const removeRecipient = useCallback((id: string) => {
+    if (currentUser?.role !== "office") {
+      toast.error("只有校務處職員可以刪除電郵收件人。");
+      return;
+    }
     patch((prev) => {
       const current = prev.digestRecipients.find((item) => item.id === id);
-      return {
-        ...prev,
-        digestRecipients: prev.digestRecipients.filter((item) => item.id !== id),
-        removedRecipients: current
-          ? [
-              {
-                id: current.id,
-                email: current.email,
-                removedAt: nowIso(),
-              },
-              ...(prev.removedRecipients ?? []).filter(
-                (item) =>
-                  item.id !== current.id &&
-                  item.email.toLowerCase() !== current.email.toLowerCase()
-              ),
-            ]
-          : prev.removedRecipients ?? [],
-      };
+      if (!current) return prev;
+      return withAudit(
+        {
+          ...prev,
+          digestRecipients: prev.digestRecipients.filter((item) => item.id !== id),
+          removedRecipients: [
+            {
+              id: current.id,
+              email: current.email,
+              removedAt: nowIso(),
+            },
+            ...(prev.removedRecipients ?? []).filter(
+              (item) =>
+                item.id !== current.id &&
+                item.email.toLowerCase() !== current.email.toLowerCase()
+            ),
+          ],
+        },
+        "刪除電郵收件人",
+        `${current.name} <${current.email}>`
+      );
     });
-  }, []);
+  }, [currentUser]);
 
   const addStaffMember = useCallback((name: string) => {
+    if (currentUser?.role !== "office") {
+      toast.error("只有校務處職員可以修改教職員名單。");
+      return false;
+    }
     const trimmed = name.trim();
     if (!trimmed) return false;
     let added = false;
@@ -943,9 +1044,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       );
     });
     return added;
-  }, []);
+  }, [currentUser]);
 
   const addStaffMembers = useCallback((names: string[]) => {
+    if (currentUser?.role !== "office") {
+      toast.error("只有校務處職員可以批量匯入教職員。");
+      return 0;
+    }
     const cleaned = [...new Set(names.map((item) => item.trim()).filter(Boolean))];
     if (cleaned.length === 0) return 0;
     let added = 0;
@@ -973,19 +1078,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       );
     });
     return added;
-  }, []);
+  }, [currentUser]);
 
   const removeStaffMember = useCallback((id: string) => {
+    if (currentUser?.role !== "office") {
+      toast.error("只有校務處職員可以刪除教職員。");
+      return;
+    }
     patch((prev) => {
       const current = (prev.staffMembers ?? []).find((item) => item.id === id);
       if (!current) return prev;
+      const removedAt = nowIso();
       const strip = (ids: string[]) => ids.filter((item) => item !== id);
+      const removedLeaves = (prev.staffLeaveRecords ?? []).filter(
+        (item) => item.staffId === id
+      );
       return withAudit(
         {
           ...prev,
           staffMembers: (prev.staffMembers ?? []).filter((item) => item.id !== id),
           staffRemovals: [
-            { id, removedAt: nowIso() },
+            { id, removedAt },
             ...(prev.staffRemovals ?? []).filter((item) => item.id !== id),
           ],
           staffDailyAbsences: (prev.staffDailyAbsences ?? []).map((item) => ({
@@ -994,16 +1107,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             personalIds: strip(item.personalIds),
             officialIds: strip(item.officialIds),
             earlyIds: strip(item.earlyIds),
+            selectionChanges: Object.fromEntries(
+              Object.entries(item.selectionChanges ?? {}).filter(
+                ([staffId]) => staffId !== id
+              )
+            ),
           })),
           staffLeaveRecords: (prev.staffLeaveRecords ?? []).filter(
             (item) => item.staffId !== id
           ),
+          staffLeaveRemovals: [
+            ...removedLeaves.map((item) => ({ id: item.id, removedAt })),
+            ...(prev.staffLeaveRemovals ?? []).filter(
+              (removal) => !removedLeaves.some((leave) => leave.id === removal.id)
+            ),
+          ],
         },
         "刪除教職員",
         current.name
       );
     });
-  }, []);
+  }, [currentUser]);
 
   const addStaffLeave = useCallback(
     (input: {
@@ -1014,17 +1138,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       note: string;
       activity: string;
     }) => {
+      if (currentUser?.role !== "office") {
+        toast.error("只有校務處職員可以登記教職員請假。");
+        return false;
+      }
       if (!input.staffId || !input.startDate) return false;
       let added = false;
+      let overlapping = false;
       patch((prev) => {
         const member = (prev.staffMembers ?? []).find((item) => item.id === input.staffId);
         if (!member) return prev;
-        added = true;
         const now = nowIso();
         const endDate =
           input.endDate && input.endDate >= input.startDate
             ? input.endDate
             : input.startDate;
+        overlapping = (prev.staffLeaveRecords ?? []).some(
+          (item) =>
+            item.staffId === input.staffId &&
+            item.startDate <= endDate &&
+            item.endDate >= input.startDate
+        );
+        if (overlapping) return prev;
+        added = true;
         const record = {
           id: `sleave-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           staffId: member.id,
@@ -1038,78 +1174,53 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           createdAt: now,
           updatedAt: now,
         };
-        const kind = staffLeaveKind(input.category);
-        const affectedDates: string[] = [];
-        const cursor = new Date(`${input.startDate}T00:00:00`);
-        const last = new Date(`${endDate}T00:00:00`);
-        let guard = 0;
-        while (cursor <= last && guard < 370) {
-          const year = cursor.getFullYear();
-          const month = String(cursor.getMonth() + 1).padStart(2, "0");
-          const day = String(cursor.getDate()).padStart(2, "0");
-          affectedDates.push(`${year}-${month}-${day}`);
-          cursor.setDate(cursor.getDate() + 1);
-          guard += 1;
-        }
-        let dailies = prev.staffDailyAbsences ?? [];
-        for (const date of affectedDates) {
-          const current = staffDailyFor(dailies, date);
-          const nextDaily = withToggledStaff(
-            current.updatedAt ? current : emptyStaffDaily(date),
-            kind,
-            member.id,
-            true,
-            now
-          );
-          dailies = [nextDaily, ...dailies.filter((item) => item.date !== date)];
-        }
         return withAudit(
           {
             ...prev,
             staffLeaveRecords: [record, ...(prev.staffLeaveRecords ?? [])],
-            staffDailyAbsences: dailies,
           },
           "提早登記教職員請假",
           `${member.name}　${input.startDate}${endDate !== input.startDate ? ` 至 ${endDate}` : ""}`
         );
       });
+      if (overlapping) {
+        toast.error("這位教職員在所選日期已有請假紀錄。");
+      }
       return added;
     },
-    []
+    [currentUser]
   );
 
   const removeStaffLeave = useCallback((id: string) => {
+    if (currentUser?.role !== "office") {
+      toast.error("只有校務處職員可以取消教職員請假。");
+      return;
+    }
     patch((prev) => {
       const current = (prev.staffLeaveRecords ?? []).find((item) => item.id === id);
       if (!current) return prev;
-      const strip = (ids: string[]) => ids.filter((item) => item !== current.staffId);
-      const inRange = (date: string) =>
-        date >= current.startDate && date <= current.endDate;
+      const removedAt = nowIso();
       return withAudit(
         {
           ...prev,
           staffLeaveRecords: (prev.staffLeaveRecords ?? []).filter((item) => item.id !== id),
-          staffDailyAbsences: (prev.staffDailyAbsences ?? []).map((item) =>
-            inRange(item.date)
-              ? {
-                  ...item,
-                  sickIds: strip(item.sickIds),
-                  personalIds: strip(item.personalIds),
-                  officialIds: strip(item.officialIds),
-                  earlyIds: strip(item.earlyIds),
-                  updatedAt: nowIso(),
-                }
-              : item
-          ),
+          staffLeaveRemovals: [
+            { id, removedAt },
+            ...(prev.staffLeaveRemovals ?? []).filter((item) => item.id !== id),
+          ],
         },
         "取消提早請假",
         `${current.staffName}　${current.startDate}`
       );
     });
-  }, []);
+  }, [currentUser]);
 
   const toggleStaffAbsence = useCallback(
     (date: string, kind: StaffAbsenceKind, staffId: string, selected: boolean) => {
+      if (currentUser?.role !== "office") {
+        toast.error("只有校務處職員可以修改教職員缺席。");
+        return;
+      }
       patch((prev) => {
         const current = staffDailyFor(prev.staffDailyAbsences, date);
         const next = withToggledStaff(
@@ -1119,19 +1230,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           selected,
           nowIso()
         );
-        return {
-          ...prev,
-          staffDailyAbsences: [
-            next,
-            ...(prev.staffDailyAbsences ?? []).filter((item) => item.date !== date),
-          ],
-        };
+        const member = (prev.staffMembers ?? []).find((item) => item.id === staffId);
+        return withAudit(
+          {
+            ...prev,
+            staffDailyAbsences: [
+              next,
+              ...(prev.staffDailyAbsences ?? []).filter((item) => item.date !== date),
+            ],
+          },
+          selected ? "登記教職員當日缺席" : "取消教職員當日缺席",
+          `${member?.name ?? staffId}　${date}`
+        );
       });
     },
-    []
+    [currentUser]
   );
 
   const recordDigestSend = useCallback((log: Omit<DigestLog, "id" | "createdAt">) => {
+    if (currentUser?.role !== "office") return;
     const createdAt = nowIso();
     patch((prev) => withAudit(
       {
@@ -1148,6 +1265,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ...prev.digestSettings,
         lastSentOn: hongKongToday(),
         lastSentSchoolDay: log.schoolDay,
+        updatedAt: createdAt,
       },
       notifications: [
         {
@@ -1164,7 +1282,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       "發送每日缺席電郵",
       `${log.schoolDay} → ${log.recipientEmails.join("、")}`
     ));
-  }, []);
+  }, [currentUser]);
 
   const refreshFromDatabaseNow = useCallback(async () => {
     const flushed = await flushPersist();
@@ -1211,6 +1329,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         toast.error("只有校務處職員可以使用後台管理。");
         return;
       }
+      if (!ADMIN_EDITABLE_SECTIONS.has(input.section)) {
+        toast.error("此資料表不可由後台直接修改。");
+        return;
+      }
+      const currentSection = memory[input.section as keyof AppState];
+      if (!Array.isArray(currentSection)) {
+        toast.error("此資料表不支援試算表方式修改。");
+        return;
+      }
+      pendingReplaceSections.add(input.section);
       patch((prev) =>
         withAudit(
           {

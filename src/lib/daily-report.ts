@@ -2,6 +2,7 @@ import { attendanceStatusLabel, classLabel, formLabel } from "@/lib/rules";
 import { formatSchoolReportDate } from "@/lib/format";
 import { allClassNames } from "@/lib/roster";
 import {
+  applyStaffLeavesToDaily,
   formatStaffLeaveLine,
   staffNamesForKind,
   staffDailyFor,
@@ -154,7 +155,7 @@ export function buildDailySchoolReport(
       lateCount,
       absentCount: notPresent.length,
       attendanceRate: rate(present, registered),
-      punctualityRate: rate(present - lateCount, present),
+      punctualityRate: rate(Math.max(0, present - lateCount), present),
       absenceLines: notPresent.map(formatDailyAbsenceLine),
     };
   });
@@ -176,8 +177,12 @@ export function buildDailySchoolReport(
   const totalRegistered = formStats.reduce((sum, item) => sum + item.registered, 0);
   const totalLate = classes.reduce((sum, item) => sum + item.lateCount, 0);
   const totalAbsent = classes.reduce((sum, item) => sum + item.absentCount, 0);
-  const staffRecord = staffDailyFor(staffDailyAbsences, schoolDay);
   const dayLeaves = staffLeavesForDate(staffLeaveRecords, schoolDay);
+  const staffRecord = applyStaffLeavesToDaily(
+    staffDailyFor(staffDailyAbsences, schoolDay),
+    dayLeaves,
+    ""
+  );
 
   return {
     schoolDay,
@@ -191,10 +196,10 @@ export function buildDailySchoolReport(
     totalAttendanceRate: rate(totalPresent, totalRegistered),
     totalAbsent,
     totalLate,
-    schoolPunctualityRate:
-      classes.length === 0
-        ? 1
-        : classes.reduce((sum, item) => sum + item.punctualityRate, 0) / classes.length,
+    schoolPunctualityRate: rate(
+      Math.max(0, totalPresent - totalLate),
+      totalPresent
+    ),
     staff: {
       sick: staffNamesForKind(staffMembers, staffRecord, "sick"),
       personal: staffNamesForKind(staffMembers, staffRecord, "personal"),

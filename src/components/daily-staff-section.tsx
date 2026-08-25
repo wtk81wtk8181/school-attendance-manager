@@ -25,6 +25,7 @@ import {
 import {
   STAFF_ABSENCE_ROWS,
   STAFF_LEAVE_CATEGORIES,
+  applyStaffLeavesToDaily,
   staffDailyFor,
   staffIdsForKind,
   staffLeaveCategoryLabel,
@@ -36,6 +37,7 @@ import { toast } from "sonner";
 
 export function DailyStaffSection({ date }: { date: string }) {
   const {
+    currentUser,
     state,
     addStaffMember,
     addStaffMembers,
@@ -44,6 +46,7 @@ export function DailyStaffSection({ date }: { date: string }) {
     removeStaffLeave,
     toggleStaffAbsence,
   } = useStore();
+  const canEdit = currentUser?.role === "office";
   const [open, setOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [name, setName] = useState("");
@@ -56,8 +59,12 @@ export function DailyStaffSection({ date }: { date: string }) {
   const [leaveActivity, setLeaveActivity] = useState("");
 
   const members = state.staffMembers ?? [];
-  const daily = staffDailyFor(state.staffDailyAbsences, date);
   const dayLeaves = staffLeavesForDate(state.staffLeaveRecords, date);
+  const daily = applyStaffLeavesToDaily(
+    staffDailyFor(state.staffDailyAbsences, date),
+    dayLeaves,
+    ""
+  );
   const upcomingLeaves = (state.staffLeaveRecords ?? [])
     .filter((item) => item.endDate >= date)
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
@@ -122,16 +129,18 @@ export function DailyStaffSection({ date }: { date: string }) {
             先在對話框填入教職員名稱（可批量匯入），再於病假、事假、公假、早退四行勾選當日缺席同事。同一人只會出現在其中一行。
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => setLeaveOpen(true)}>
-            <CalendarPlus className="size-4" />
-            提早登記請假
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-            <Users className="size-4" />
-            編輯教職員名單
-          </Button>
-        </div>
+        {canEdit ? (
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => setLeaveOpen(true)}>
+              <CalendarPlus className="size-4" />
+              提早登記請假
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+              <Users className="size-4" />
+              編輯教職員名單
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {dayLeaves.length > 0 && (
@@ -173,6 +182,7 @@ export function DailyStaffSection({ date }: { date: string }) {
                       <Checkbox
                         id={`staff-${row.kind}-${member.id}`}
                         checked={selected.has(member.id)}
+                        disabled={!canEdit}
                         onCheckedChange={(checked) =>
                           toggleStaffAbsence(date, row.kind, member.id, checked === true)
                         }

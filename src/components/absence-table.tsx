@@ -14,7 +14,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatShortDate } from "@/lib/format";
-import { attendanceStatusLabel, classLabel, formatDays } from "@/lib/rules";
+import {
+  attendanceStatusLabel,
+  classLabel,
+  formatDays,
+  isCountedTowardAbsence,
+} from "@/lib/rules";
 import { useStore } from "@/lib/store";
 import type { AbsenceRecord, Student } from "@/lib/types";
 import { EmptyState } from "@/components/empty-state";
@@ -74,7 +79,7 @@ export function AbsenceTable({
         <TableBody>
           {records.map((record) => {
             const student = studentMap.get(record.studentId);
-            const counted = record.reviewStatus !== "approved";
+            const counted = isCountedTowardAbsence(record);
             return (
               <TableRow key={record.id}>
                 <TableCell className="whitespace-nowrap">

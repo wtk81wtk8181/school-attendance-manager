@@ -1,4 +1,3 @@
-/* eslint-disable */
 // 自動產生：npm run import:roster
 import type { Student } from "@/lib/types";
 
@@ -4894,7 +4893,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "馮志成"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-01",
     "studentNo": "2201001",
     "name": "蔡子豪",
     "nameEn": "CAI TSZ HO",
@@ -4904,7 +4903,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-02",
     "studentNo": "2201002",
     "name": "陳詡宇",
     "nameEn": "CHAN HUI YU KAYDEN",
@@ -4914,7 +4913,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-03",
     "studentNo": "2201003",
     "name": "陳愉然",
     "nameEn": "CHAN YU YIN",
@@ -4924,7 +4923,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-04",
     "studentNo": "2201004",
     "name": "陳詩雅",
     "nameEn": "CHEN SZE NGA EMILY",
@@ -4934,7 +4933,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-05",
     "studentNo": "2201005",
     "name": "蔡天朗",
     "nameEn": "CHOI TIN LONG",
@@ -4944,7 +4943,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-06",
     "studentNo": "2201006",
     "name": "周焯瀅",
     "nameEn": "CHOW CHEUK YING",
@@ -4954,7 +4953,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-07",
     "studentNo": "2201007",
     "name": "鍾育航",
     "nameEn": "CHUNG YUK HONG",
@@ -4964,7 +4963,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-08",
     "studentNo": "2201008",
     "name": "何卓軒",
     "nameEn": "HO CHEUK HIN",
@@ -4974,7 +4973,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-09",
     "studentNo": "2201009",
     "name": "禤芷恩",
     "nameEn": "HUEN TSZ YAN",
@@ -4984,7 +4983,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-10",
     "studentNo": "2201010",
     "name": "葉澄宜",
     "nameEn": "IP CHING YI",
@@ -4994,7 +4993,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-11",
     "studentNo": "2201011",
     "name": "關洛瞳",
     "nameEn": "KWAN LOK TUNG",
@@ -5004,7 +5003,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-12",
     "studentNo": "2201012",
     "name": "郭韻兒",
     "nameEn": "KWOK WAN YI",
@@ -5014,7 +5013,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-13",
     "studentNo": "2201013",
     "name": "黎竣銘",
     "nameEn": "LAI CHUN MING",
@@ -5024,7 +5023,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-14",
     "studentNo": "2201014",
     "name": "黎紫珊",
     "nameEn": "LAI TSZ SHAN",
@@ -5034,7 +5033,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-15",
     "studentNo": "2201015",
     "name": "賴悦晴",
     "nameEn": "LAI YUET CHING",
@@ -5044,7 +5043,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-16",
     "studentNo": "2201016",
     "name": "李泳彤",
     "nameEn": "LEE WING TUNG",
@@ -5054,7 +5053,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-17",
     "studentNo": "2201017",
     "name": "梁雅雯",
     "nameEn": "LEUNG NGA MAN",
@@ -5064,7 +5063,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-18",
     "studentNo": "2201018",
     "name": "李宗聯",
     "nameEn": "LI CHUNG LUEN",
@@ -5074,7 +5073,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-19",
     "studentNo": "2201019",
     "name": "李若惜",
     "nameEn": "LI RUO XI",
@@ -5084,7 +5083,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-20",
     "studentNo": "2201020",
     "name": "林子傑",
     "nameEn": "LIN TSZ KIT",
@@ -5094,7 +5093,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-21",
     "studentNo": "2201021",
     "name": "廖子龍",
     "nameEn": "LIU TSZ LUNG",
@@ -5104,7 +5103,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-22",
     "studentNo": "2201022",
     "name": "盧桸竣",
     "nameEn": "LO HEI CHUN",
@@ -5114,7 +5113,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-23",
     "studentNo": "2201023",
     "name": "文樂淘",
     "nameEn": "MAN LOK TO",
@@ -5124,7 +5123,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-24",
     "studentNo": "2201024",
     "name": "吳玥霖",
     "nameEn": "NG YUET LAM",
@@ -5134,7 +5133,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-25",
     "studentNo": "2201025",
     "name": "鄧梓延",
     "nameEn": "TANG TAYLOR",
@@ -5144,7 +5143,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-26",
     "studentNo": "2201026",
     "name": "鄧紫瑤",
     "nameEn": "TANG TSZ YIU",
@@ -5154,7 +5153,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-27",
     "studentNo": "2201027",
     "name": "曾梓晴",
     "nameEn": "TSANG TSZ CHING",
@@ -5164,7 +5163,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-28",
     "studentNo": "2201028",
     "name": "韋芯姸",
     "nameEn": "WAI SUM YIN",
@@ -5174,7 +5173,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-29",
     "studentNo": "2201029",
     "name": "王梓晴",
     "nameEn": "WONG CHI CHING",
@@ -5184,7 +5183,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-30",
     "studentNo": "2201030",
     "name": "黃筱晴",
     "nameEn": "WONG SIU CHING",
@@ -5194,7 +5193,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-31",
     "studentNo": "2201031",
     "name": "黃梓盈",
     "nameEn": "WONG TSZ YING",
@@ -5204,7 +5203,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-32",
     "studentNo": "2201032",
     "name": "黃琬穎",
     "nameEn": "WONG YUEN WING",
@@ -5214,7 +5213,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-33",
     "studentNo": "2201033",
     "name": "胡晉豪",
     "nameEn": "WU CHUN HO",
@@ -5224,7 +5223,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-34",
     "studentNo": "2201034",
     "name": "徐晞敏",
     "nameEn": "XU HEI MAN",
@@ -5234,7 +5233,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4a-00",
+    "id": "s-4a-35",
     "studentNo": "2201035",
     "name": "姚越",
     "nameEn": "YAO BLINK",
@@ -5244,7 +5243,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "謝詠儀"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-01",
     "studentNo": "2202001",
     "name": "畢恩華",
     "nameEn": "BUTT AMRAH",
@@ -5254,7 +5253,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-02",
     "studentNo": "2202002",
     "name": "陳韻靜",
     "nameEn": "CHAN WAN CHING",
@@ -5264,7 +5263,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-03",
     "studentNo": "2202003",
     "name": "陳一言",
     "nameEn": "CHAN YAT YIN",
@@ -5274,7 +5273,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-04",
     "studentNo": "2202004",
     "name": "陳炫媛",
     "nameEn": "CHEN XUANYUAN",
@@ -5284,7 +5283,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-05",
     "studentNo": "2202005",
     "name": "鄭智聰",
     "nameEn": "CHENG CHI CHUNG",
@@ -5294,7 +5293,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-06",
     "studentNo": "2202006",
     "name": "張舜堯",
     "nameEn": "CHEUNG SHUN YIU TRISTAN",
@@ -5304,7 +5303,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-07",
     "studentNo": "2202007",
     "name": "蔡曉峰",
     "nameEn": "CHOI HIU FUNG",
@@ -5314,7 +5313,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-08",
     "studentNo": "2202008",
     "name": "蔡子浩",
     "nameEn": "CHOI TSZ HO",
@@ -5324,7 +5323,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-09",
     "studentNo": "2202009",
     "name": "周芷瑤",
     "nameEn": "CHOW TSZ YIU",
@@ -5334,7 +5333,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-10",
     "studentNo": "2202010",
     "name": "朱韋頲",
     "nameEn": "CHU WAI TING",
@@ -5344,7 +5343,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-11",
     "studentNo": "2202011",
     "name": "鍾欣靜",
     "nameEn": "CHUNG YAN CHING",
@@ -5354,7 +5353,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-12",
     "studentNo": "2202012",
     "name": "何俊熹",
     "nameEn": "HO CHUN HEI",
@@ -5364,7 +5363,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-13",
     "studentNo": "2202013",
     "name": "何銘浠",
     "nameEn": "HO MING HEI",
@@ -5374,7 +5373,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-14",
     "studentNo": "2202014",
     "name": "仇靖晞",
     "nameEn": "KAU CHING HEI",
@@ -5384,7 +5383,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-15",
     "studentNo": "2202015",
     "name": "高綽遙",
     "nameEn": "KO CHEUK YIU",
@@ -5394,7 +5393,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-16",
     "studentNo": "2202016",
     "name": "郭展熙",
     "nameEn": "KWOK CHIN HEI",
@@ -5404,7 +5403,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-17",
     "studentNo": "2202017",
     "name": "林澤衡",
     "nameEn": "LAM CHAK HANG ANGUS",
@@ -5414,7 +5413,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-18",
     "studentNo": "2202018",
     "name": "李隨風",
     "nameEn": "LEE CHUI FUNG",
@@ -5424,7 +5423,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-19",
     "studentNo": "2202019",
     "name": "廖珮伽",
     "nameEn": "LIU PUI KA",
@@ -5434,7 +5433,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-20",
     "studentNo": "2202020",
     "name": "馬恩琪",
     "nameEn": "MA YAN KI",
@@ -5444,7 +5443,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-21",
     "studentNo": "2202021",
     "name": "麥縉熙",
     "nameEn": "MAK CHUN HEI",
@@ -5454,7 +5453,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-22",
     "studentNo": "2202022",
     "name": "莫家韻",
     "nameEn": "MOK KA WAN",
@@ -5464,7 +5463,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-23",
     "studentNo": "2202023",
     "name": "李家昊",
     "nameEn": "SHAHZAD MUHAMMAD AHAD",
@@ -5474,7 +5473,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-24",
     "studentNo": "2202024",
     "name": "蘇廷謙",
     "nameEn": "SO TING HIM",
@@ -5484,7 +5483,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-25",
     "studentNo": "2202025",
     "name": "鄧晉宇",
     "nameEn": "TANG CHUN YU",
@@ -5494,7 +5493,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-26",
     "studentNo": "2202026",
     "name": "鄧子煬",
     "nameEn": "TANG TSZ YEUNG",
@@ -5504,7 +5503,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-27",
     "studentNo": "2202027",
     "name": "曾泯皓",
     "nameEn": "TSANG MAN HO",
@@ -5514,7 +5513,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-28",
     "studentNo": "2202028",
     "name": "黃津桃",
     "nameEn": "WONG CHUN TAO",
@@ -5524,7 +5523,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-29",
     "studentNo": "2202029",
     "name": "黃可喬",
     "nameEn": "WONG HO KIU",
@@ -5534,7 +5533,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-30",
     "studentNo": "2202030",
     "name": "黃浿喬",
     "nameEn": "WONG PUI KIU",
@@ -5544,7 +5543,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-31",
     "studentNo": "2202031",
     "name": "許再煜",
     "nameEn": "XU ZAIYU",
@@ -5554,7 +5553,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-32",
     "studentNo": "2202032",
     "name": "楊晞彤",
     "nameEn": "YEUNG HEI TUNG CARLY",
@@ -5564,7 +5563,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4b-00",
+    "id": "s-4b-33",
     "studentNo": "2202033",
     "name": "余承駿",
     "nameEn": "YU CHENGJUN",
@@ -5574,7 +5573,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "潘浩然"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-01",
     "studentNo": "2203001",
     "name": "曹殷",
     "nameEn": "CAO YIN",
@@ -5584,7 +5583,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-02",
     "studentNo": "2203002",
     "name": "陳泯澄",
     "nameEn": "CHAN MAN CHING",
@@ -5594,7 +5593,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-03",
     "studentNo": "2203003",
     "name": "陳思晴",
     "nameEn": "CHAN SZE CHING",
@@ -5604,7 +5603,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-04",
     "studentNo": "2203004",
     "name": "陳賢晋",
     "nameEn": "CHAN YIN CHUN",
@@ -5614,7 +5613,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-05",
     "studentNo": "2203005",
     "name": "鄭巧如",
     "nameEn": "CHANG TRINA",
@@ -5624,7 +5623,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-06",
     "studentNo": "2203006",
     "name": "趙寅智",
     "nameEn": "CHIU YAN CHI",
@@ -5634,7 +5633,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-07",
     "studentNo": "2203007",
     "name": "范子浩",
     "nameEn": "FAN TSZ HO",
@@ -5644,7 +5643,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-08",
     "studentNo": "2203008",
     "name": "何芷綾",
     "nameEn": "HO TSZ LING",
@@ -5654,7 +5653,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-09",
     "studentNo": "2203009",
     "name": "高弘翰",
     "nameEn": "KO KALEB LINUS",
@@ -5664,7 +5663,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-10",
     "studentNo": "2203010",
     "name": "孔銘灝",
     "nameEn": "KONG MING HO",
@@ -5674,7 +5673,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-11",
     "studentNo": "2203011",
     "name": "龔巧瑤",
     "nameEn": "KUNG HAU YIU",
@@ -5684,7 +5683,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-12",
     "studentNo": "2203012",
     "name": "藍駿浩",
     "nameEn": "LAM CHUN HO",
@@ -5694,7 +5693,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-13",
     "studentNo": "2203013",
     "name": "林洛豪",
     "nameEn": "LAM LOK HO",
@@ -5704,7 +5703,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-14",
     "studentNo": "2203014",
     "name": "李曦怡",
     "nameEn": "LEE HEY YI",
@@ -5714,7 +5713,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-15",
     "studentNo": "2203015",
     "name": "梁皓棓",
     "nameEn": "LEUNG HO PUI",
@@ -5724,7 +5723,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-16",
     "studentNo": "2203016",
     "name": "羅俊樂",
     "nameEn": "LO CHUN LOK",
@@ -5734,7 +5733,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-17",
     "studentNo": "2203017",
     "name": "吳曉君",
     "nameEn": "NG HIU KWAN",
@@ -5744,7 +5743,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-18",
     "studentNo": "2203018",
     "name": "沈懌騫",
     "nameEn": "SHUM YIK HIN",
@@ -5754,7 +5753,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-19",
     "studentNo": "2203019",
     "name": "蘇品誠",
     "nameEn": "SO BUN SHING",
@@ -5764,7 +5763,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-20",
     "studentNo": "2203020",
     "name": "蘇梓彥",
     "nameEn": "SO TSZ YIN JEFF",
@@ -5774,7 +5773,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-21",
     "studentNo": "2203021",
     "name": "孫焯蕎",
     "nameEn": "SUN CHEUK KIU",
@@ -5784,7 +5783,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-22",
     "studentNo": "2203022",
     "name": "鄧曉雯",
     "nameEn": "TANG HIU MAN",
@@ -5794,7 +5793,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-23",
     "studentNo": "2203023",
     "name": "鄧柏浩",
     "nameEn": "TANG PAK HO",
@@ -5804,7 +5803,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-24",
     "studentNo": "2203024",
     "name": "陶衍宏",
     "nameEn": "TO HIN WANG",
@@ -5814,7 +5813,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-25",
     "studentNo": "2203025",
     "name": "曾嘉熹",
     "nameEn": "TSANG KA HEI",
@@ -5824,7 +5823,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-26",
     "studentNo": "2203026",
     "name": "黃力恆",
     "nameEn": "WONG LIK HANG",
@@ -5834,7 +5833,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-27",
     "studentNo": "2203027",
     "name": "黃庭灝",
     "nameEn": "WONG TING HO",
@@ -5844,7 +5843,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-28",
     "studentNo": "2203028",
     "name": "胡倬浠",
     "nameEn": "WU CHEUK HEI",
@@ -5854,7 +5853,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-29",
     "studentNo": "2203029",
     "name": "巫俊霖",
     "nameEn": "WU JUN LIN",
@@ -5864,7 +5863,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-30",
     "studentNo": "2203030",
     "name": "許豪",
     "nameEn": "XU HO",
@@ -5874,7 +5873,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-31",
     "studentNo": "2203031",
     "name": "余正杰",
     "nameEn": "YU CHING KIT",
@@ -5884,7 +5883,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-32",
     "studentNo": "2203032",
     "name": "曾慶梓",
     "nameEn": "ZENG QINGZHI",
@@ -5894,7 +5893,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4c-00",
+    "id": "s-4c-33",
     "studentNo": "2203033",
     "name": "鄒建博",
     "nameEn": "ZOU JIANBO",
@@ -5904,7 +5903,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鄧麗萍"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-01",
     "studentNo": "2204001",
     "name": "陳昊天",
     "nameEn": "CHAN HO TIN",
@@ -5914,7 +5913,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-02",
     "studentNo": "2204002",
     "name": "陳朗言",
     "nameEn": "CHAN IVAN",
@@ -5924,7 +5923,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-03",
     "studentNo": "2204003",
     "name": "陳嘉博",
     "nameEn": "CHAN KA POK",
@@ -5934,7 +5933,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-04",
     "studentNo": "2204004",
     "name": "陳美嘉",
     "nameEn": "CHAN MEI KA",
@@ -5944,7 +5943,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-05",
     "studentNo": "2204005",
     "name": "陳珮茵",
     "nameEn": "CHAN PUI YAN",
@@ -5954,7 +5953,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-06",
     "studentNo": "2204006",
     "name": "張菁倩",
     "nameEn": "CHEUNG CHING SIN",
@@ -5964,7 +5963,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-07",
     "studentNo": "2204007",
     "name": "張羽洋",
     "nameEn": "CHEUNG YU YEUNG",
@@ -5974,7 +5973,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-08",
     "studentNo": "2204008",
     "name": "朱汶杰",
     "nameEn": "CHU MAN KIT",
@@ -5984,7 +5983,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-09",
     "studentNo": "2204009",
     "name": "郭志鏗",
     "nameEn": "KWOK CHI HANG",
@@ -5994,7 +5993,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-10",
     "studentNo": "2204010",
     "name": "劉宏",
     "nameEn": "LAU WANG",
@@ -6004,7 +6003,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-11",
     "studentNo": "2204011",
     "name": "林汶翹",
     "nameEn": "LAM MAN KIU MARCUS",
@@ -6014,7 +6013,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-12",
     "studentNo": "2204012",
     "name": "羅雋凱",
     "nameEn": "LAW KIERAN",
@@ -6024,7 +6023,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-13",
     "studentNo": "2204013",
     "name": "梁顥鏵",
     "nameEn": "LEUNG HO WAH",
@@ -6034,7 +6033,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-14",
     "studentNo": "2204014",
     "name": "梁庭綱",
     "nameEn": "LEUNG TING KONG",
@@ -6044,7 +6043,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-15",
     "studentNo": "2204015",
     "name": "梁峻熙",
     "nameEn": "LEUNG TSUN HEI",
@@ -6054,7 +6053,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-16",
     "studentNo": "2204016",
     "name": "盧樂熙",
     "nameEn": "LO LOK HEI",
@@ -6064,7 +6063,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-17",
     "studentNo": "2204017",
     "name": "吳家豪",
     "nameEn": "NG KA HO",
@@ -6074,7 +6073,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-18",
     "studentNo": "2204018",
     "name": "伍均晞",
     "nameEn": "NG KWAN HEI",
@@ -6084,7 +6083,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-19",
     "studentNo": "2204019",
     "name": "吳國培",
     "nameEn": "NG KWOK PUI",
@@ -6094,7 +6093,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-20",
     "studentNo": "2204020",
     "name": "吳苑曼",
     "nameEn": "NG YUEN MAN ASHLEY",
@@ -6104,7 +6103,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-21",
     "studentNo": "2204021",
     "name": "白嘉嘉",
     "nameEn": "PAI KA KA",
@@ -6114,7 +6113,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-22",
     "studentNo": "2204022",
     "name": "鄧靖祈",
     "nameEn": "TANG CHING KI",
@@ -6124,7 +6123,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-23",
     "studentNo": "2204023",
     "name": "鄧梓柔",
     "nameEn": "TANG VANESSA",
@@ -6134,7 +6133,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-24",
     "studentNo": "2204024",
     "name": "鄧煒祥",
     "nameEn": "TANG WAI CHEUNG",
@@ -6144,7 +6143,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-25",
     "studentNo": "2204025",
     "name": "王希朗",
     "nameEn": "UZOMA STANLEY CHINAEDU",
@@ -6154,7 +6153,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-26",
     "studentNo": "2204026",
     "name": "溫彥榮",
     "nameEn": "WAN YIN WING",
@@ -6164,7 +6163,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-27",
     "studentNo": "2204027",
     "name": "黃津泰",
     "nameEn": "WONG CHUN TAI",
@@ -6174,7 +6173,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-28",
     "studentNo": "2204028",
     "name": "黃穎柔",
     "nameEn": "WONG WING YAU",
@@ -6184,7 +6183,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-29",
     "studentNo": "2204029",
     "name": "楊焯麟",
     "nameEn": "YANG CHEUK LUN",
@@ -6194,7 +6193,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-30",
     "studentNo": "2204030",
     "name": "楊紫靖",
     "nameEn": "YEUNG TSZ CHING",
@@ -6204,7 +6203,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-31",
     "studentNo": "2204031",
     "name": "楊芷玲",
     "nameEn": "YEUNG TSZ LING",
@@ -6214,7 +6213,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4d-00",
+    "id": "s-4d-32",
     "studentNo": "2204032",
     "name": "姚柏瑋",
     "nameEn": "YIU PAK WAI",
@@ -6224,7 +6223,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "韓子健"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-01",
     "studentNo": "2205001",
     "name": "梁筠芝",
     "nameEn": "LEUNG KWAN CHI AALIYAH",
@@ -6234,7 +6233,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-02",
     "studentNo": "2205002",
     "name": "吳芷瑩",
     "nameEn": "NG TSZ YING",
@@ -6244,7 +6243,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-03",
     "studentNo": "2205003",
     "name": "陳雋皓",
     "nameEn": "CHAN CHUN HO",
@@ -6254,7 +6253,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-04",
     "studentNo": "2205004",
     "name": "蔡仲軒",
     "nameEn": "CHOI CHUNG HIN AIDEN",
@@ -6264,7 +6263,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-05",
     "studentNo": "2205005",
     "name": "鍾曉雪",
     "nameEn": "CHUNG HIU SUET",
@@ -6274,7 +6273,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-06",
     "studentNo": "2205006",
     "name": "符焯然",
     "nameEn": "FU CHEUK YIN",
@@ -6284,7 +6283,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-07",
     "studentNo": "2205007",
     "name": "韓心怡",
     "nameEn": "HON SUM YI",
@@ -6294,7 +6293,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-08",
     "studentNo": "2205008",
     "name": "胡煥伊",
     "nameEn": "HU WUN YI",
@@ -6304,7 +6303,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-09",
     "studentNo": "2205009",
     "name": "許焯澧",
     "nameEn": "HUI CHEUK LAI",
@@ -6314,7 +6313,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-10",
     "studentNo": "2205010",
     "name": "沙羅",
     "nameEn": "KARMACHARYA SWAROOP",
@@ -6324,7 +6323,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-11",
     "studentNo": "2205011",
     "name": "林洛為",
     "nameEn": "LAM LOK WAI",
@@ -6334,7 +6333,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-12",
     "studentNo": "2205012",
     "name": "劉嘉沂",
     "nameEn": "LAU KA YEE",
@@ -6344,7 +6343,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-13",
     "studentNo": "2205013",
     "name": "羅展豪",
     "nameEn": "LAW CHIN HO",
@@ -6354,7 +6353,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-14",
     "studentNo": "2205014",
     "name": "李梓羽",
     "nameEn": "LEE TSZ YU",
@@ -6364,7 +6363,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-15",
     "studentNo": "2205015",
     "name": "梁剴昊",
     "nameEn": "LEONG HOI HO",
@@ -6374,7 +6373,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-16",
     "studentNo": "2205016",
     "name": "梁亦彤",
     "nameEn": "LEUNG YIK TUNG",
@@ -6384,7 +6383,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-17",
     "studentNo": "2205017",
     "name": "李昊昇",
     "nameEn": "LI HO SING",
@@ -6394,7 +6393,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-18",
     "studentNo": "2205018",
     "name": "林姸彤",
     "nameEn": "LIN AMIEE",
@@ -6404,7 +6403,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-19",
     "studentNo": "2205019",
     "name": "馬力素霞",
     "nameEn": "MALIK SOHA",
@@ -6414,7 +6413,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-20",
     "studentNo": "2205020",
     "name": "莫曉芸",
     "nameEn": "MOK HIU WAN",
@@ -6424,7 +6423,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-21",
     "studentNo": "2205021",
     "name": "吳諾藍",
     "nameEn": "NG NOK LAM KINGSLEY",
@@ -6434,7 +6433,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-22",
     "studentNo": "2205022",
     "name": "布柏翹",
     "nameEn": "PO PAK KIU",
@@ -6444,7 +6443,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-23",
     "studentNo": "2205023",
     "name": "戴亦羲",
     "nameEn": "TAI JIK HEI HAZE",
@@ -6454,7 +6453,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-24",
     "studentNo": "2205024",
     "name": "鄧嘉寶",
     "nameEn": "TANG KA PO",
@@ -6464,7 +6463,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-25",
     "studentNo": "2205025",
     "name": "曾子健",
     "nameEn": "TSANG CHI KIN",
@@ -6474,7 +6473,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-26",
     "studentNo": "2205026",
     "name": "謝佩孜",
     "nameEn": "TSE PUI TSZ",
@@ -6484,7 +6483,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-27",
     "studentNo": "2205027",
     "name": "黃弘畤",
     "nameEn": "WONG WAN CHI",
@@ -6494,7 +6493,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-28",
     "studentNo": "2205028",
     "name": "姚淼",
     "nameEn": "YIU MIU",
@@ -6504,7 +6503,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-29",
     "studentNo": "2205029",
     "name": "余珈澄",
     "nameEn": "YU KA CHING",
@@ -6514,7 +6513,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-4e-00",
+    "id": "s-4e-30",
     "studentNo": "2205030",
     "name": "章峻溪",
     "nameEn": "ZHANG JUNXI",
@@ -6524,7 +6523,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "袁淑芬"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-01",
     "studentNo": "2101001",
     "name": "歐陽雪兒",
     "nameEn": "AU YEUNG SUET YEE",
@@ -6534,7 +6533,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-02",
     "studentNo": "2101002",
     "name": "陳峰",
     "nameEn": "CHAN FUNG",
@@ -6544,7 +6543,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-03",
     "studentNo": "2101003",
     "name": "陳藹詩",
     "nameEn": "CHAN OI SZE",
@@ -6554,7 +6553,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-04",
     "studentNo": "2101004",
     "name": "陳貝怡",
     "nameEn": "CHAN PUI YI",
@@ -6564,7 +6563,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-05",
     "studentNo": "2101005",
     "name": "陳浚瑋",
     "nameEn": "CHEN TSUN WAI",
@@ -6574,7 +6573,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-06",
     "studentNo": "2101006",
     "name": "陳雨彤",
     "nameEn": "CHEN YU TUNG VICTORIA",
@@ -6584,7 +6583,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-07",
     "studentNo": "2101007",
     "name": "張信謙",
     "nameEn": "CHEUNG SHUN HIM",
@@ -6594,7 +6593,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-08",
     "studentNo": "2101008",
     "name": "鍾念祖",
     "nameEn": "CHUNG NIM CHO",
@@ -6604,7 +6603,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-09",
     "studentNo": "2101009",
     "name": "何逸熹",
     "nameEn": "HO LEWIS",
@@ -6614,7 +6613,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-10",
     "studentNo": "2101010",
     "name": "何昕曈",
     "nameEn": "HO YAN TUNG",
@@ -6624,7 +6623,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-11",
     "studentNo": "2101011",
     "name": "胡君琦",
     "nameEn": "HU KWAN KEI",
@@ -6634,7 +6633,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-12",
     "studentNo": "2101012",
     "name": "黃麗華",
     "nameEn": "HUANG LAI WA",
@@ -6644,7 +6643,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-13",
     "studentNo": "2101013",
     "name": "黃梓儒",
     "nameEn": "HUANG TSZ YU",
@@ -6654,7 +6653,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-14",
     "studentNo": "2101014",
     "name": "黃伊琳",
     "nameEn": "HUANG YI LIN",
@@ -6664,7 +6663,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-15",
     "studentNo": "2101015",
     "name": "黃奕涵",
     "nameEn": "HUANG YIHAN",
@@ -6674,7 +6673,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-16",
     "studentNo": "2101016",
     "name": "高寶盈",
     "nameEn": "KO PO YING",
@@ -6684,7 +6683,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-17",
     "studentNo": "2101017",
     "name": "江炘翹",
     "nameEn": "KONG YAN KIU",
@@ -6694,7 +6693,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-18",
     "studentNo": "2101018",
     "name": "郭沛洵",
     "nameEn": "KWOK PUI SHUN",
@@ -6704,7 +6703,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-19",
     "studentNo": "2101019",
     "name": "郭逸聲",
     "nameEn": "KWOK YAT SING",
@@ -6714,7 +6713,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-20",
     "studentNo": "2101020",
     "name": "林駿軒",
     "nameEn": "LAM CHUN HIN REX",
@@ -6724,7 +6723,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-21",
     "studentNo": "2101021",
     "name": "林俊豪",
     "nameEn": "LAM CHUN HO",
@@ -6734,7 +6733,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-22",
     "studentNo": "2101022",
     "name": "李澔霆",
     "nameEn": "LEE HO TING JAVIS",
@@ -6744,7 +6743,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-23",
     "studentNo": "2101023",
     "name": "李瑾悦",
     "nameEn": "LEE KAN YUET",
@@ -6754,7 +6753,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-24",
     "studentNo": "2101024",
     "name": "李思澄",
     "nameEn": "LEE SZE CHING",
@@ -6764,7 +6763,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-25",
     "studentNo": "2101025",
     "name": "李思翰",
     "nameEn": "LEE TERENCE",
@@ -6774,7 +6773,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-26",
     "studentNo": "2101026",
     "name": "李樂童",
     "nameEn": "LI LOK TUNG JUN",
@@ -6784,7 +6783,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-27",
     "studentNo": "2101027",
     "name": "盧卓雯",
     "nameEn": "LU CHEUK MAN",
@@ -6794,7 +6793,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-28",
     "studentNo": "2101028",
     "name": "盧梓琪",
     "nameEn": "LU TSZ KI",
@@ -6804,7 +6803,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-29",
     "studentNo": "2101029",
     "name": "魏松澤",
     "nameEn": "WEI SONGZE",
@@ -6814,7 +6813,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-30",
     "studentNo": "2101030",
     "name": "王卓為",
     "nameEn": "WONG CHEUK WAI",
@@ -6824,7 +6823,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-31",
     "studentNo": "2101031",
     "name": "黃一恆",
     "nameEn": "WONG YAT HANG",
@@ -6834,7 +6833,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-32",
     "studentNo": "2101032",
     "name": "武藝雯",
     "nameEn": "WU YI WEN",
@@ -6844,7 +6843,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-33",
     "studentNo": "2101033",
     "name": "姚曉晴",
     "nameEn": "YAO HIU CHING",
@@ -6854,7 +6853,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-34",
     "studentNo": "2101034",
     "name": "袁紫曦",
     "nameEn": "YUAN TSZ HEI",
@@ -6864,7 +6863,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-35",
     "studentNo": "2101035",
     "name": "臧悅傳",
     "nameEn": "ZANG YUECHUAN",
@@ -6874,7 +6873,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5a-00",
+    "id": "s-5a-36",
     "studentNo": "2101036",
     "name": "周可峻",
     "nameEn": "ZHOU KE JUN",
@@ -6884,7 +6883,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "林佩儀"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-01",
     "studentNo": "2102001",
     "name": "林子沙",
     "nameEn": "ALI AFSAAL",
@@ -6894,7 +6893,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-02",
     "studentNo": "2102002",
     "name": "陳希琳",
     "nameEn": "CHAN HEI LAM",
@@ -6904,7 +6903,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-03",
     "studentNo": "2102003",
     "name": "陳梓灃",
     "nameEn": "CHAN TSZ FUNG",
@@ -6914,7 +6913,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-04",
     "studentNo": "2102004",
     "name": "陳芷悠",
     "nameEn": "CHAN TSZ YAU",
@@ -6924,7 +6923,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-05",
     "studentNo": "2102005",
     "name": "張家榮",
     "nameEn": "CHANG CHIA JUNG",
@@ -6934,7 +6933,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-06",
     "studentNo": "2102006",
     "name": "陳家亮",
     "nameEn": "CHEN KA LEONG",
@@ -6944,7 +6943,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-07",
     "studentNo": "2102007",
     "name": "趙泓傑",
     "nameEn": "CHIU WANG KIT",
@@ -6954,7 +6953,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-08",
     "studentNo": "2102008",
     "name": "徐靖欣",
     "nameEn": "CHUI CHING YAN",
@@ -6964,7 +6963,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-09",
     "studentNo": "2102009",
     "name": "陳天諾",
     "nameEn": "CHUN TIN LOK",
@@ -6974,7 +6973,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-10",
     "studentNo": "2102010",
     "name": "霍月朗",
     "nameEn": "FOK YUET LONG",
@@ -6984,7 +6983,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-11",
     "studentNo": "2102011",
     "name": "龔力睿",
     "nameEn": "GONG LIRUI",
@@ -6994,7 +6993,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-12",
     "studentNo": "2102012",
     "name": "何穎心",
     "nameEn": "HO WING SUM",
@@ -7004,7 +7003,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-13",
     "studentNo": "2102013",
     "name": "許珈悠",
     "nameEn": "HUI KA YAU",
@@ -7014,7 +7013,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-14",
     "studentNo": "2102014",
     "name": "孔文盈",
     "nameEn": "KONG WENYING",
@@ -7024,7 +7023,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-15",
     "studentNo": "2102015",
     "name": "古明正",
     "nameEn": "KU MING CHING",
@@ -7034,7 +7033,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-16",
     "studentNo": "2102016",
     "name": "關文裔",
     "nameEn": "KWAN MAN YUI RYAN",
@@ -7044,7 +7043,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-17",
     "studentNo": "2102017",
     "name": "林善童",
     "nameEn": "LAM SIN TUNG CLAYTON",
@@ -7054,7 +7053,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-18",
     "studentNo": "2102018",
     "name": "李鎧維",
     "nameEn": "LEE HOI WAI",
@@ -7064,7 +7063,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-19",
     "studentNo": "2102019",
     "name": "梁穎晞",
     "nameEn": "LEUNG WING HEI",
@@ -7074,7 +7073,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-20",
     "studentNo": "2102020",
     "name": "李曉琳",
     "nameEn": "LI HIU LAM",
@@ -7084,7 +7083,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-21",
     "studentNo": "2102021",
     "name": "李承憲",
     "nameEn": "LI SHING HIN",
@@ -7094,7 +7093,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-22",
     "studentNo": "2102022",
     "name": "林子銘",
     "nameEn": "LIN TSZ MING",
@@ -7104,7 +7103,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-23",
     "studentNo": "2102023",
     "name": "林偉豪",
     "nameEn": "LIN WEIHAO",
@@ -7114,7 +7113,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-24",
     "studentNo": "2102024",
     "name": "劉嘉琋",
     "nameEn": "LIU KA HEI",
@@ -7124,7 +7123,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-25",
     "studentNo": "2102025",
     "name": "廖穎頤",
     "nameEn": "LIU WING YEE RENEE",
@@ -7134,7 +7133,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-26",
     "studentNo": "2102026",
     "name": "劉一凡",
     "nameEn": "LIU YIFAN",
@@ -7144,7 +7143,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-27",
     "studentNo": "2102027",
     "name": "羅雅雯",
     "nameEn": "LO NGA MAN",
@@ -7154,7 +7153,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-28",
     "studentNo": "2102028",
     "name": "文樂兒",
     "nameEn": "MAN LOK YI",
@@ -7164,7 +7163,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-29",
     "studentNo": "2102029",
     "name": "莫杰謙",
     "nameEn": "MOK KIT HIM",
@@ -7174,7 +7173,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-30",
     "studentNo": "2102030",
     "name": "鄧曉晴",
     "nameEn": "TANG HIU CHING",
@@ -7184,7 +7183,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-31",
     "studentNo": "2102031",
     "name": "謝嘉瑤",
     "nameEn": "TSE KA YIU",
@@ -7194,7 +7193,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-32",
     "studentNo": "2102032",
     "name": "余梓僖",
     "nameEn": "YU TSZ HEI",
@@ -7204,7 +7203,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-33",
     "studentNo": "2102033",
     "name": "曾錦豪",
     "nameEn": "ZENG JINHAO",
@@ -7214,7 +7213,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-34",
     "studentNo": "2102034",
     "name": "張恬",
     "nameEn": "ZHANG TIAN",
@@ -7224,7 +7223,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5b-00",
+    "id": "s-5b-35",
     "studentNo": "2102035",
     "name": "鄭浩鐿",
     "nameEn": "ZHENG HAOYI",
@@ -7234,7 +7233,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "高俊宇"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-01",
     "studentNo": "2103001",
     "name": "歐梓樂",
     "nameEn": "AU TSZ LOK",
@@ -7244,7 +7243,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-02",
     "studentNo": "2103002",
     "name": "陳俊彦",
     "nameEn": "CHAN CHUN YIN",
@@ -7254,7 +7253,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-03",
     "studentNo": "2103003",
     "name": "陳孝溓",
     "nameEn": "CHAN HAU LIM",
@@ -7264,7 +7263,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-04",
     "studentNo": "2103004",
     "name": "陳保晴",
     "nameEn": "CHAN PO CHING",
@@ -7274,7 +7273,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-05",
     "studentNo": "2103005",
     "name": "張鎧鋑",
     "nameEn": "CHEUNG HOI CHUN",
@@ -7284,7 +7283,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-06",
     "studentNo": "2103006",
     "name": "張慧欣",
     "nameEn": "CHEUNG WAI YAN",
@@ -7294,7 +7293,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-07",
     "studentNo": "2103007",
     "name": "朱汶坤",
     "nameEn": "CHU MAN KWAN",
@@ -7304,7 +7303,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-08",
     "studentNo": "2103008",
     "name": "鍾卓錡",
     "nameEn": "CHUNG CHEUK KI",
@@ -7314,7 +7313,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-09",
     "studentNo": "2103009",
     "name": "鄧楚軒",
     "nameEn": "DENG CHO HIN",
@@ -7324,7 +7323,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-10",
     "studentNo": "2103010",
     "name": "馮祖祺",
     "nameEn": "FUNG CHO KI",
@@ -7334,7 +7333,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-11",
     "studentNo": "2103011",
     "name": "何鎧汝",
     "nameEn": "HO HOI YU EVIS",
@@ -7344,7 +7343,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-12",
     "studentNo": "2103012",
     "name": "何迦譽",
     "nameEn": "HO KA YU",
@@ -7354,7 +7353,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-13",
     "studentNo": "2103013",
     "name": "何心瑜",
     "nameEn": "HO SUM YU",
@@ -7364,7 +7363,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-14",
     "studentNo": "2103014",
     "name": "江一勤",
     "nameEn": "JIANG YIQIN",
@@ -7374,7 +7373,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-15",
     "studentNo": "2103015",
     "name": "郭祉言",
     "nameEn": "KWOK TSZ YIN MARCUS",
@@ -7384,7 +7383,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-16",
     "studentNo": "2103016",
     "name": "賴焯耀",
     "nameEn": "LAI CHEUK YIU",
@@ -7394,7 +7393,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-17",
     "studentNo": "2103017",
     "name": "黎澔能",
     "nameEn": "LAI HO NANG",
@@ -7404,7 +7403,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-18",
     "studentNo": "2103018",
     "name": "林家謙",
     "nameEn": "LAM KA HIM",
@@ -7414,7 +7413,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-19",
     "studentNo": "2103019",
     "name": "林偉婷",
     "nameEn": "LAM WAI TING",
@@ -7424,7 +7423,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-20",
     "studentNo": "2103020",
     "name": "林詠詩",
     "nameEn": "LAM WING SZE",
@@ -7434,7 +7433,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-21",
     "studentNo": "2103021",
     "name": "劉志軒",
     "nameEn": "LAU CHI HIN",
@@ -7444,7 +7443,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-22",
     "studentNo": "2103022",
     "name": "文蘄",
     "nameEn": "MAN KEI COSMO",
@@ -7454,7 +7453,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-23",
     "studentNo": "2103023",
     "name": "潘梓朗",
     "nameEn": "POON TSZ LONG",
@@ -7464,7 +7463,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-24",
     "studentNo": "2103024",
     "name": "冼鋭南",
     "nameEn": "SIN YUI NAM",
@@ -7474,7 +7473,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-25",
     "studentNo": "2103025",
     "name": "鄧卓樂",
     "nameEn": "TANG CHEUK LOK",
@@ -7484,7 +7483,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-26",
     "studentNo": "2103026",
     "name": "徐祉熙",
     "nameEn": "TSUI TSZ HEI",
@@ -7494,7 +7493,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-27",
     "studentNo": "2103027",
     "name": "王子源",
     "nameEn": "WONG TSZ YUEN",
@@ -7504,7 +7503,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-28",
     "studentNo": "2103028",
     "name": "王苑桐",
     "nameEn": "WONG YUEN TUNG",
@@ -7514,7 +7513,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-29",
     "studentNo": "2103029",
     "name": "胡鈞翔",
     "nameEn": "WU KWAN CHEUNG",
@@ -7524,7 +7523,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-30",
     "studentNo": "2103030",
     "name": "楊潔兒",
     "nameEn": "YANG KIT YI",
@@ -7534,7 +7533,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-31",
     "studentNo": "2103031",
     "name": "楊宗霖",
     "nameEn": "YEUNG CHUNG LAM",
@@ -7544,7 +7543,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-32",
     "studentNo": "2103032",
     "name": "楊信希",
     "nameEn": "YEUNG SHUN HEI",
@@ -7554,7 +7553,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-33",
     "studentNo": "2103033",
     "name": "余凱莉",
     "nameEn": "YU HOI LEE",
@@ -7564,7 +7563,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5c-00",
+    "id": "s-5c-34",
     "studentNo": "2103034",
     "name": "翁梓翔",
     "nameEn": "YUNG TSZ CHEUNG",
@@ -7574,7 +7573,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "鍾雅文"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-01",
     "studentNo": "2104001",
     "name": "陳希蕘",
     "nameEn": "CHAN HEI IU",
@@ -7584,7 +7583,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-02",
     "studentNo": "2104002",
     "name": "陳浩信",
     "nameEn": "CHAN HO SHUN",
@@ -7594,7 +7593,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-03",
     "studentNo": "2104003",
     "name": "陳泳僑",
     "nameEn": "CHAN WING KIU CHLOE",
@@ -7604,7 +7603,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-04",
     "studentNo": "2104004",
     "name": "周曉朗",
     "nameEn": "CHAU HIU LONG",
@@ -7614,7 +7613,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-05",
     "studentNo": "2104005",
     "name": "張曉鋒",
     "nameEn": "CHEUNG HIU FUNG",
@@ -7624,7 +7623,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-06",
     "studentNo": "2104006",
     "name": "朱家俊",
     "nameEn": "CHU KA CHUN",
@@ -7634,7 +7633,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-07",
     "studentNo": "2104007",
     "name": "方子濱",
     "nameEn": "FANG ZIBIN",
@@ -7644,7 +7643,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-08",
     "studentNo": "2104008",
     "name": "何卓鋒",
     "nameEn": "HO CHEUK FUNG",
@@ -7654,7 +7653,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-09",
     "studentNo": "2104009",
     "name": "江雨澤",
     "nameEn": "KONG YU CHAK",
@@ -7664,7 +7663,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-10",
     "studentNo": "2104010",
     "name": "關佑琪",
     "nameEn": "KWAN YAU KI",
@@ -7674,7 +7673,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-11",
     "studentNo": "2104011",
     "name": "林晉熙",
     "nameEn": "LAM CHUN HEI AAREN",
@@ -7684,7 +7683,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-12",
     "studentNo": "2104012",
     "name": "劉逸希",
     "nameEn": "LAU YAT HEI",
@@ -7694,7 +7693,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-13",
     "studentNo": "2104013",
     "name": "梁卓桁",
     "nameEn": "LEUNG CHEUK HAANG",
@@ -7704,7 +7703,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-14",
     "studentNo": "2104014",
     "name": "梁梓晴",
     "nameEn": "LEUNG TSZ CHING",
@@ -7714,7 +7713,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-15",
     "studentNo": "2104015",
     "name": "廖楗晞",
     "nameEn": "LIU KIN HEI",
@@ -7724,7 +7723,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-16",
     "studentNo": "2104016",
     "name": "呂境威",
     "nameEn": "LUI KING WAI",
@@ -7734,7 +7733,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-17",
     "studentNo": "2104017",
     "name": "羅智榮",
     "nameEn": "LUO ZHI RONG SIMON",
@@ -7744,7 +7743,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-18",
     "studentNo": "2104018",
     "name": "麥頌軒",
     "nameEn": "MAK CHUNG HIN",
@@ -7754,7 +7753,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-19",
     "studentNo": "2104019",
     "name": "裴華熙",
     "nameEn": "PEI ELIZABETH",
@@ -7764,7 +7763,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-20",
     "studentNo": "2104020",
     "name": "蘇紫晴",
     "nameEn": "SO TSZ CHING",
@@ -7774,7 +7773,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-21",
     "studentNo": "2104021",
     "name": "蘇紫情",
     "nameEn": "SO TSZ CHING",
@@ -7784,7 +7783,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-22",
     "studentNo": "2104022",
     "name": "鄧卓華",
     "nameEn": "TANG CHEUK WA",
@@ -7794,7 +7793,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-23",
     "studentNo": "2104023",
     "name": "鄧曉楊",
     "nameEn": "TANG HIU YEUNG",
@@ -7804,7 +7803,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-24",
     "studentNo": "2104024",
     "name": "曾凱晴",
     "nameEn": "TSANG HOI CHING",
@@ -7814,7 +7813,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-25",
     "studentNo": "2104025",
     "name": "文浩麟",
     "nameEn": "WEN HO LUN",
@@ -7824,7 +7823,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-26",
     "studentNo": "2104026",
     "name": "黃嘉熙",
     "nameEn": "WONG KA HEI",
@@ -7834,7 +7833,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-27",
     "studentNo": "2104027",
     "name": "王芷晴",
     "nameEn": "WONG TSZ CHING",
@@ -7844,7 +7843,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-28",
     "studentNo": "2104028",
     "name": "楊達熹",
     "nameEn": "YEUNG TAT HEI",
@@ -7854,7 +7853,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-29",
     "studentNo": "2104029",
     "name": "逸康",
     "nameEn": "YEUNG TERRIS",
@@ -7864,7 +7863,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-30",
     "studentNo": "2104030",
     "name": "余可盈",
     "nameEn": "YU HO YING",
@@ -7874,7 +7873,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-31",
     "studentNo": "2104031",
     "name": "鄭浩聰",
     "nameEn": "ZHENG HAOCONG",
@@ -7884,7 +7883,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5d-00",
+    "id": "s-5d-32",
     "studentNo": "2104032",
     "name": "周梓軒",
     "nameEn": "ZHOU ZIXUAN",
@@ -7894,7 +7893,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黎家樂"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-01",
     "studentNo": "2105001",
     "name": "陳俊熹",
     "nameEn": "CHAN CHUN HEI",
@@ -7904,7 +7903,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-02",
     "studentNo": "2105002",
     "name": "霍奕宇",
     "nameEn": "FOK YIK YU JASPER",
@@ -7914,7 +7913,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-03",
     "studentNo": "2105003",
     "name": "李泓杰",
     "nameEn": "LEE WANG KIT",
@@ -7924,7 +7923,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-04",
     "studentNo": "2105004",
     "name": "阿妮",
     "nameEn": "MAROOF ARISHA",
@@ -7934,7 +7933,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-05",
     "studentNo": "2105005",
     "name": "梅津貽",
     "nameEn": "MUI SONJIA",
@@ -7944,7 +7943,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-06",
     "studentNo": "2105006",
     "name": "吳曉璇",
     "nameEn": "NG HIU SHUEN",
@@ -7954,7 +7953,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-07",
     "studentNo": "2105007",
     "name": "李凱迪",
     "nameEn": "SHAHZAD MUHAMMAD HADI",
@@ -7964,7 +7963,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-08",
     "studentNo": "2105008",
     "name": "黃凱澄",
     "nameEn": "WONG HOI CHING",
@@ -7974,7 +7973,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-09",
     "studentNo": "2105009",
     "name": "黃優莉",
     "nameEn": "WONG YURI",
@@ -7984,7 +7983,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-10",
     "studentNo": "2105010",
     "name": "周卓信",
     "nameEn": "CHOW CHEUK SHUN CHADSON",
@@ -7994,7 +7993,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-11",
     "studentNo": "2105011",
     "name": "洪梓揚",
     "nameEn": "HUNG TSZ YEUNG",
@@ -8004,7 +8003,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-12",
     "studentNo": "2105012",
     "name": "林凱瑩",
     "nameEn": "LAM HOI YING",
@@ -8014,7 +8013,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-13",
     "studentNo": "2105013",
     "name": "林言熹",
     "nameEn": "LAM YIN HEI",
@@ -8024,7 +8023,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-14",
     "studentNo": "2105014",
     "name": "劉棨謙",
     "nameEn": "LAU KAI HIM",
@@ -8034,7 +8033,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-15",
     "studentNo": "2105015",
     "name": "李紫翹",
     "nameEn": "LEE TSZ KIU",
@@ -8044,7 +8043,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-16",
     "studentNo": "2105016",
     "name": "梁皓朗",
     "nameEn": "LEUNG HO LONG",
@@ -8054,7 +8053,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-17",
     "studentNo": "2105017",
     "name": "梁哲銘",
     "nameEn": "LIANG CHIT MING",
@@ -8064,7 +8063,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-18",
     "studentNo": "2105018",
     "name": "譚芷怡",
     "nameEn": "TAM TSZ YEE",
@@ -8074,7 +8073,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-19",
     "studentNo": "2105019",
     "name": "鄧晞浵",
     "nameEn": "TANG HEI TUNG TRIXIE",
@@ -8084,7 +8083,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-20",
     "studentNo": "2105020",
     "name": "鄧悅翹",
     "nameEn": "TANG YUET KIU",
@@ -8094,7 +8093,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-21",
     "studentNo": "2105021",
     "name": "曾曉一",
     "nameEn": "TSANG HIU YAT",
@@ -8104,7 +8103,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-22",
     "studentNo": "2105022",
     "name": "楊信祈",
     "nameEn": "YEUNG SHUN KI HELAMAN",
@@ -8114,7 +8113,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-23",
     "studentNo": "2105023",
     "name": "朱芷萱",
     "nameEn": "ZHU ZHIXUAN",
@@ -8124,7 +8123,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-5e-00",
+    "id": "s-5e-24",
     "studentNo": "2105024",
     "name": "陳恩琳",
     "nameEn": "CHAN YAN LAM PRISCILLA",
@@ -8134,7 +8133,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "溫曉琳"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-01",
     "studentNo": "2001001",
     "name": "陳可茵",
     "nameEn": "CHAN HO YAN",
@@ -8144,7 +8143,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-02",
     "studentNo": "2001002",
     "name": "陳海琪",
     "nameEn": "CHAN HOI KI",
@@ -8154,7 +8153,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-03",
     "studentNo": "2001003",
     "name": "陳珮嘉",
     "nameEn": "CHAN PUI GA",
@@ -8164,7 +8163,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-04",
     "studentNo": "2001004",
     "name": "陳奕中",
     "nameEn": "CHAN YIK CHUNG",
@@ -8174,7 +8173,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-05",
     "studentNo": "2001005",
     "name": "招凱泳",
     "nameEn": "CHIU HOI WING",
@@ -8184,7 +8183,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-06",
     "studentNo": "2001006",
     "name": "蔡匡哲",
     "nameEn": "CHOY HONG CHIT",
@@ -8194,7 +8193,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-07",
     "studentNo": "2001007",
     "name": "方錦浩",
     "nameEn": "FONG KAM HO",
@@ -8204,7 +8203,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-08",
     "studentNo": "2001008",
     "name": "符懋言",
     "nameEn": "FU MAU YIN",
@@ -8214,7 +8213,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-09",
     "studentNo": "2001009",
     "name": "馮日朗",
     "nameEn": "FUNG YAT LONG",
@@ -8224,7 +8223,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-10",
     "studentNo": "2001010",
     "name": "何善鎏",
     "nameEn": "HE SHANLIU",
@@ -8234,7 +8233,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-11",
     "studentNo": "2001011",
     "name": "黃恒𤋮",
     "nameEn": "HUANG HANG HEI",
@@ -8244,7 +8243,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-12",
     "studentNo": "2001012",
     "name": "高德翰",
     "nameEn": "KO KYLE LUCAS",
@@ -8254,7 +8253,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-13",
     "studentNo": "2001013",
     "name": "郭穎希",
     "nameEn": "KWOK WING HEI ANDY",
@@ -8264,7 +8263,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-14",
     "studentNo": "2001014",
     "name": "林君浩",
     "nameEn": "LAM KINGSLEY",
@@ -8274,7 +8273,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-15",
     "studentNo": "2001015",
     "name": "林芷晞",
     "nameEn": "LAM TSZ HEI",
@@ -8284,7 +8283,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-16",
     "studentNo": "2001016",
     "name": "羅蕙雯",
     "nameEn": "LAW WAI MAN",
@@ -8294,7 +8293,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-17",
     "studentNo": "2001017",
     "name": "李焯然",
     "nameEn": "LEE CHEUK YIN",
@@ -8304,7 +8303,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-18",
     "studentNo": "2001018",
     "name": "李沛軒",
     "nameEn": "LEE PUI HIN",
@@ -8314,7 +8313,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-19",
     "studentNo": "2001019",
     "name": "李尚真",
     "nameEn": "LEE SHEUNG CHUN",
@@ -8324,7 +8323,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-20",
     "studentNo": "2001020",
     "name": "梁讚修",
     "nameEn": "LEUNG JAN SAU DAVID",
@@ -8334,7 +8333,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-21",
     "studentNo": "2001021",
     "name": "李子悠",
     "nameEn": "LI TSZ YAU",
@@ -8344,7 +8343,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-22",
     "studentNo": "2001022",
     "name": "呂明豐",
     "nameEn": "LUI MING FUNG",
@@ -8354,7 +8353,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-23",
     "studentNo": "2001023",
     "name": "麥芷瑗",
     "nameEn": "MAK TSZ WUN",
@@ -8364,7 +8363,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-24",
     "studentNo": "2001024",
     "name": "莫茵滢",
     "nameEn": "MO YINYING",
@@ -8374,7 +8373,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-25",
     "studentNo": "2001025",
     "name": "吳梓鋒",
     "nameEn": "NG TSZ FUNG",
@@ -8384,7 +8383,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-26",
     "studentNo": "2001026",
     "name": "潘杰城",
     "nameEn": "PAN JIECHENG",
@@ -8394,7 +8393,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-27",
     "studentNo": "2001027",
     "name": "彭曼姍",
     "nameEn": "PENG MAN SHAN",
@@ -8404,7 +8403,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-28",
     "studentNo": "2001028",
     "name": "譚卓朗",
     "nameEn": "TAM CHEUK LONG",
@@ -8414,7 +8413,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-29",
     "studentNo": "2001029",
     "name": "譚晓穎",
     "nameEn": "TAN XIAOYING",
@@ -8424,7 +8423,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-30",
     "studentNo": "2001030",
     "name": "鄧卓游",
     "nameEn": "TANG CHEUK YAU",
@@ -8434,7 +8433,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-31",
     "studentNo": "2001031",
     "name": "鄧梓琳",
     "nameEn": "TANG TSZ LAM",
@@ -8444,7 +8443,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-32",
     "studentNo": "2001032",
     "name": "曾蓓汶",
     "nameEn": "TSANG PUI MAN",
@@ -8454,7 +8453,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-33",
     "studentNo": "2001033",
     "name": "王昱",
     "nameEn": "WANG SUNNY",
@@ -8464,7 +8463,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-34",
     "studentNo": "2001034",
     "name": "黃浠琳",
     "nameEn": "WONG HEI LAM",
@@ -8474,7 +8473,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-35",
     "studentNo": "2001035",
     "name": "謝月朗",
     "nameEn": "XIE YUE LONG",
@@ -8484,7 +8483,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6a-00",
+    "id": "s-6a-36",
     "studentNo": "2001036",
     "name": "朱義鳴",
     "nameEn": "ZHU YEE MING",
@@ -8494,7 +8493,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "黃詠詩"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-01",
     "studentNo": "2002001",
     "name": "歐梓桐",
     "nameEn": "AU TSZ TUNG",
@@ -8504,7 +8503,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-02",
     "studentNo": "2002002",
     "name": "畢詩薇",
     "nameEn": "BUTT BASMA",
@@ -8514,7 +8513,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-03",
     "studentNo": "2002003",
     "name": "陳樂錡",
     "nameEn": "CHAN LOK KI",
@@ -8524,7 +8523,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-04",
     "studentNo": "2002004",
     "name": "陳子軒",
     "nameEn": "CHAN TSZ HIN",
@@ -8534,7 +8533,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-05",
     "studentNo": "2002005",
     "name": "鄭弘靖",
     "nameEn": "CHENG WANG CHING",
@@ -8544,7 +8543,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-06",
     "studentNo": "2002006",
     "name": "張栢然",
     "nameEn": "CHEUNG PAK YIN",
@@ -8554,7 +8553,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-07",
     "studentNo": "2002007",
     "name": "張悠旎",
     "nameEn": "CHEUNG YAU NEI",
@@ -8564,7 +8563,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-08",
     "studentNo": "2002008",
     "name": "卓芷悠",
     "nameEn": "CHO TSZ YAU",
@@ -8574,7 +8573,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-09",
     "studentNo": "2002009",
     "name": "蔡芷欣",
     "nameEn": "CHOI TSZ YAN",
@@ -8584,7 +8583,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-10",
     "studentNo": "2002010",
     "name": "蔡梓朗",
     "nameEn": "CHOY TSZ LONG",
@@ -8594,7 +8593,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-11",
     "studentNo": "2002011",
     "name": "鍾穎林",
     "nameEn": "CHUNG WING LAM",
@@ -8604,7 +8603,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-12",
     "studentNo": "2002012",
     "name": "宗穎茵",
     "nameEn": "CHUNG WING YAN",
@@ -8614,7 +8613,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-13",
     "studentNo": "2002013",
     "name": "黃澤鍇",
     "nameEn": "HUANG ZEKAI",
@@ -8624,7 +8623,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-14",
     "studentNo": "2002014",
     "name": "江凱琳",
     "nameEn": "KONG HOI LAM",
@@ -8634,7 +8633,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-15",
     "studentNo": "2002015",
     "name": "郭鉦灝",
     "nameEn": "KWOK CHING HO",
@@ -8644,7 +8643,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-16",
     "studentNo": "2002016",
     "name": "鄺根源",
     "nameEn": "KWONG KAN YUEN",
@@ -8654,7 +8653,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-17",
     "studentNo": "2002017",
     "name": "林頌僑",
     "nameEn": "LAM CHUNG KIU",
@@ -8664,7 +8663,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-18",
     "studentNo": "2002018",
     "name": "劉嘉輝",
     "nameEn": "LAU KA FAI",
@@ -8674,7 +8673,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-19",
     "studentNo": "2002019",
     "name": "劉欣潼",
     "nameEn": "LAU YAN TUNG",
@@ -8684,7 +8683,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-20",
     "studentNo": "2002020",
     "name": "李菀珈",
     "nameEn": "LEE YUEN KA",
@@ -8694,7 +8693,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-21",
     "studentNo": "2002021",
     "name": "梁皓軒",
     "nameEn": "LEUNG HO HIN",
@@ -8704,7 +8703,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-22",
     "studentNo": "2002022",
     "name": "李華燁",
     "nameEn": "LI HUAYE",
@@ -8714,7 +8713,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-23",
     "studentNo": "2002023",
     "name": "李雨軒",
     "nameEn": "LI YUXUAN",
@@ -8724,7 +8723,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-24",
     "studentNo": "2002024",
     "name": "劉哲",
     "nameEn": "LIU ZHE",
@@ -8734,7 +8733,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-25",
     "studentNo": "2002025",
     "name": "麥楹婧",
     "nameEn": "MAI YING CHING",
@@ -8744,7 +8743,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-26",
     "studentNo": "2002026",
     "name": "吳瑋霖",
     "nameEn": "NG WAI LAM",
@@ -8754,7 +8753,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-27",
     "studentNo": "2002027",
     "name": "布凱晴",
     "nameEn": "PO HOI CHING",
@@ -8764,7 +8763,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-28",
     "studentNo": "2002028",
     "name": "鄧棨洛",
     "nameEn": "TANG KAI LOK JOPHY",
@@ -8774,7 +8773,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-29",
     "studentNo": "2002029",
     "name": "曾諾賢",
     "nameEn": "TSANG NOK YIN",
@@ -8784,7 +8783,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-30",
     "studentNo": "2002030",
     "name": "黃思朗",
     "nameEn": "WONG SZE LONG",
@@ -8794,7 +8793,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-31",
     "studentNo": "2002031",
     "name": "黃梓盛",
     "nameEn": "WONG TSZ SHING",
@@ -8804,7 +8803,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-32",
     "studentNo": "2002032",
     "name": "胡洛寧",
     "nameEn": "WU LOK NING",
@@ -8814,7 +8813,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-33",
     "studentNo": "2002033",
     "name": "楊晞桐",
     "nameEn": "YEUNG HEI TUNG",
@@ -8824,7 +8823,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-34",
     "studentNo": "2002034",
     "name": "殷樂寧",
     "nameEn": "YIN LE NIN",
@@ -8834,7 +8833,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-35",
     "studentNo": "2002035",
     "name": "葉豐榮",
     "nameEn": "YIP FUNG WING",
@@ -8844,7 +8843,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-36",
     "studentNo": "2002036",
     "name": "阮健和",
     "nameEn": "YUAN KIN WO",
@@ -8854,7 +8853,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6b-00",
+    "id": "s-6b-37",
     "studentNo": "2002037",
     "name": "鄭東旻",
     "nameEn": "ZHENG DONGMIN",
@@ -8864,7 +8863,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "蘇子朗"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-01",
     "studentNo": "2003001",
     "name": "陳昊希",
     "nameEn": "CHAN HO HEI",
@@ -8874,7 +8873,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-02",
     "studentNo": "2003002",
     "name": "陳凱彤",
     "nameEn": "CHAN HOI TUNG",
@@ -8884,7 +8883,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-03",
     "studentNo": "2003003",
     "name": "陳偉聰",
     "nameEn": "CHAN WAI CHUNG",
@@ -8894,7 +8893,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-04",
     "studentNo": "2003004",
     "name": "陳永琪",
     "nameEn": "CHEN YONGQI",
@@ -8904,7 +8903,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-05",
     "studentNo": "2003005",
     "name": "鄭枷妍",
     "nameEn": "CHENG KA YIN",
@@ -8914,7 +8913,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-06",
     "studentNo": "2003006",
     "name": "張鈞睿",
     "nameEn": "CHEUNG KWAN YUI",
@@ -8924,7 +8923,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-07",
     "studentNo": "2003007",
     "name": "周家禧",
     "nameEn": "CHOW KA HEI",
@@ -8934,7 +8933,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-08",
     "studentNo": "2003008",
     "name": "鄧佑麒",
     "nameEn": "DENG YOUQI",
@@ -8944,7 +8943,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-09",
     "studentNo": "2003009",
     "name": "董智康",
     "nameEn": "DONG CHI HONG",
@@ -8954,7 +8953,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-10",
     "studentNo": "2003010",
     "name": "范君宇",
     "nameEn": "FAN KWAN YU",
@@ -8964,7 +8963,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-11",
     "studentNo": "2003011",
     "name": "方詠琳",
     "nameEn": "FONG WING LAM",
@@ -8974,7 +8973,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-12",
     "studentNo": "2003012",
     "name": "馮國清",
     "nameEn": "FUNG KWOK CHING",
@@ -8984,7 +8983,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-13",
     "studentNo": "2003013",
     "name": "侯竣泰",
     "nameEn": "HOU CHUN TAI",
@@ -8994,7 +8993,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-14",
     "studentNo": "2003014",
     "name": "莢嘉",
     "nameEn": "JIA JIA",
@@ -9004,7 +9003,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-15",
     "studentNo": "2003015",
     "name": "鄺俊平",
     "nameEn": "KUANG CHUN PING",
@@ -9014,7 +9013,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-16",
     "studentNo": "2003016",
     "name": "郭芷瞳",
     "nameEn": "KWOK TSZ TUNG",
@@ -9024,7 +9023,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-17",
     "studentNo": "2003017",
     "name": "黎健熙",
     "nameEn": "LAI KIN HEI",
@@ -9034,7 +9033,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-18",
     "studentNo": "2003018",
     "name": "林賀晉",
     "nameEn": "LAM HO CHUN",
@@ -9044,7 +9043,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-19",
     "studentNo": "2003019",
     "name": "林家灝",
     "nameEn": "LAM KA HO",
@@ -9054,7 +9053,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-20",
     "studentNo": "2003020",
     "name": "林子淇",
     "nameEn": "LAM TSZ KI",
@@ -9064,7 +9063,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-21",
     "studentNo": "2003021",
     "name": "劉榤桁",
     "nameEn": "LAU KIT HANG",
@@ -9074,7 +9073,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-22",
     "studentNo": "2003022",
     "name": "梁愷遙",
     "nameEn": "LEUNG HOI YIU",
@@ -9084,7 +9083,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-23",
     "studentNo": "2003023",
     "name": "梁嘉敏",
     "nameEn": "LEUNG KA MAN",
@@ -9094,7 +9093,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-24",
     "studentNo": "2003024",
     "name": "梁恩滔",
     "nameEn": "LEUNG YAN TO",
@@ -9104,7 +9103,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-25",
     "studentNo": "2003025",
     "name": "李振翔",
     "nameEn": "LI CHUN CHEUNG",
@@ -9114,7 +9113,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-26",
     "studentNo": "2003026",
     "name": "李勇智",
     "nameEn": "LI YUNG CHI",
@@ -9124,7 +9123,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-27",
     "studentNo": "2003027",
     "name": "廖芷君",
     "nameEn": "LIU TSZ KWAN",
@@ -9134,7 +9133,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-28",
     "studentNo": "2003028",
     "name": "羅澤霖",
     "nameEn": "LUO ZELIN",
@@ -9144,7 +9143,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-29",
     "studentNo": "2003029",
     "name": "麥天陽",
     "nameEn": "MAK TIN YEUNG",
@@ -9154,7 +9153,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-30",
     "studentNo": "2003030",
     "name": "吳海晴",
     "nameEn": "NG HOI CHING",
@@ -9164,7 +9163,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-31",
     "studentNo": "2003031",
     "name": "蕭靖彤",
     "nameEn": "SIU CHING TUNG",
@@ -9174,7 +9173,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-32",
     "studentNo": "2003032",
     "name": "曾子睿",
     "nameEn": "TSANG TSZ YUI",
@@ -9184,7 +9183,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-33",
     "studentNo": "2003033",
     "name": "崔紫琪",
     "nameEn": "TSUI TSZ KI",
@@ -9194,7 +9193,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-34",
     "studentNo": "2003034",
     "name": "文卓迪",
     "nameEn": "WEN ZHUO DI",
@@ -9204,7 +9203,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-35",
     "studentNo": "2003035",
     "name": "吳梓熒",
     "nameEn": "WU TSZ YING",
@@ -9214,7 +9213,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6c-00",
+    "id": "s-6c-36",
     "studentNo": "2003036",
     "name": "解思盈",
     "nameEn": "XIE SIYING",
@@ -9224,7 +9223,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "莫凱婷"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-01",
     "studentNo": "2004001",
     "name": "陳喬一",
     "nameEn": "CHAN KIU YAT ZENOBIA",
@@ -9234,7 +9233,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-02",
     "studentNo": "2004002",
     "name": "鄭天珩",
     "nameEn": "CHENG TIN HANG",
@@ -9244,7 +9243,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-03",
     "studentNo": "2004003",
     "name": "鄭耀文",
     "nameEn": "CHENG YIU MAN",
@@ -9254,7 +9253,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-04",
     "studentNo": "2004004",
     "name": "蔡子洛",
     "nameEn": "CHOI TSZ LOK DANIEL",
@@ -9264,7 +9263,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-05",
     "studentNo": "2004005",
     "name": "蔡泳橦",
     "nameEn": "CHOI WING TUNG",
@@ -9274,7 +9273,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-06",
     "studentNo": "2004006",
     "name": "鍾梓暠",
     "nameEn": "CHUNG TSZ HO",
@@ -9284,7 +9283,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-07",
     "studentNo": "2004007",
     "name": "方子銘",
     "nameEn": "FONG TSZ MING",
@@ -9294,7 +9293,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-08",
     "studentNo": "2004008",
     "name": "方祐希",
     "nameEn": "FONG YAU HEI",
@@ -9304,7 +9303,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-09",
     "studentNo": "2004009",
     "name": "何卓軒",
     "nameEn": "HO CHEUK HIN",
@@ -9314,7 +9313,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-10",
     "studentNo": "2004010",
     "name": "何彥希",
     "nameEn": "HO YIN HEI",
@@ -9324,7 +9323,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-11",
     "studentNo": "2004011",
     "name": "黃衍睿",
     "nameEn": "HUANG HIN YUI MATTHEW",
@@ -9334,7 +9333,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-12",
     "studentNo": "2004012",
     "name": "葉承熙",
     "nameEn": "IP NATHAN",
@@ -9344,7 +9343,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-13",
     "studentNo": "2004013",
     "name": "高寶瑜",
     "nameEn": "KO PO YU",
@@ -9354,7 +9353,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-14",
     "studentNo": "2004014",
     "name": "江栢熙",
     "nameEn": "KONG PAK HEY MOSES",
@@ -9364,7 +9363,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-15",
     "studentNo": "2004015",
     "name": "郭柏堯",
     "nameEn": "KWOK PAK YIU",
@@ -9374,7 +9373,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-16",
     "studentNo": "2004016",
     "name": "黎俊騏",
     "nameEn": "LAI CHUN KI",
@@ -9384,7 +9383,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-17",
     "studentNo": "2004017",
     "name": "賴朗澄",
     "nameEn": "LAI LONG CHING",
@@ -9394,7 +9393,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-18",
     "studentNo": "2004018",
     "name": "林樂軒",
     "nameEn": "LAM LOK HIN",
@@ -9404,7 +9403,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-19",
     "studentNo": "2004019",
     "name": "林子健",
     "nameEn": "LAM TSZ KIN",
@@ -9414,7 +9413,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-20",
     "studentNo": "2004020",
     "name": "劉倬僑",
     "nameEn": "LAU CHEUK KIU",
@@ -9424,7 +9423,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-21",
     "studentNo": "2004021",
     "name": "劉嘉俊",
     "nameEn": "LAU KA CHUN",
@@ -9434,7 +9433,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-22",
     "studentNo": "2004022",
     "name": "李琛攸",
     "nameEn": "LEE SAM YAU",
@@ -9444,7 +9443,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-23",
     "studentNo": "2004023",
     "name": "李泆林",
     "nameEn": "LEE YAT LAM",
@@ -9454,7 +9453,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-24",
     "studentNo": "2004024",
     "name": "李灝一",
     "nameEn": "LI HO YAT",
@@ -9464,7 +9463,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-25",
     "studentNo": "2004025",
     "name": "李啟廉",
     "nameEn": "LI KAI LIM",
@@ -9474,7 +9473,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-26",
     "studentNo": "2004026",
     "name": "馬穎昕",
     "nameEn": "MA WING YAN",
@@ -9484,7 +9483,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-27",
     "studentNo": "2004027",
     "name": "梅竣喬",
     "nameEn": "MOY CHUN KIU",
@@ -9494,7 +9493,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-28",
     "studentNo": "2004028",
     "name": "鄧孝賢",
     "nameEn": "TANG HAU YIN",
@@ -9504,7 +9503,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-29",
     "studentNo": "2004029",
     "name": "鄧凱淇",
     "nameEn": "TANG HOI KI",
@@ -9514,7 +9513,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-30",
     "studentNo": "2004030",
     "name": "鄧一心",
     "nameEn": "TANG YAT SUM",
@@ -9524,7 +9523,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-31",
     "studentNo": "2004031",
     "name": "黃柏泓",
     "nameEn": "WONG MACK",
@@ -9534,7 +9533,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-32",
     "studentNo": "2004032",
     "name": "吳思琪",
     "nameEn": "WU SZE KI",
@@ -9544,7 +9543,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-33",
     "studentNo": "2004033",
     "name": "嚴文廸",
     "nameEn": "YAN WEN DI",
@@ -9554,7 +9553,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6d-00",
+    "id": "s-6d-34",
     "studentNo": "2004034",
     "name": "周靜熙",
     "nameEn": "ZHOU CHING HEI",
@@ -9564,7 +9563,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "錢偉文"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-01",
     "studentNo": "2005001",
     "name": "白雅嫦",
     "nameEn": "BUTT ASHEL",
@@ -9574,7 +9573,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-02",
     "studentNo": "2005002",
     "name": "鄭倩芯",
     "nameEn": "CHENG SIN SUM",
@@ -9584,7 +9583,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-03",
     "studentNo": "2005003",
     "name": "賴曉澄",
     "nameEn": "LAI HIU CHING RILEY",
@@ -9594,7 +9593,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-04",
     "studentNo": "2005004",
     "name": "鄧煒信",
     "nameEn": "TANG WINSON",
@@ -9604,7 +9603,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-05",
     "studentNo": "2005005",
     "name": "汪煦曜",
     "nameEn": "WANG XUYAO",
@@ -9614,7 +9613,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-06",
     "studentNo": "2005006",
     "name": "陳晞桓",
     "nameEn": "CHAN HEI WUN",
@@ -9624,7 +9623,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-07",
     "studentNo": "2005007",
     "name": "陳鎧淇",
     "nameEn": "CHAN HOI KI",
@@ -9634,7 +9633,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-08",
     "studentNo": "2005008",
     "name": "陳家熙",
     "nameEn": "CHAN KA HEI",
@@ -9644,7 +9643,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-09",
     "studentNo": "2005009",
     "name": "陳建霖",
     "nameEn": "CHAN KIN LAM",
@@ -9654,7 +9653,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-10",
     "studentNo": "2005010",
     "name": "陳煒翹",
     "nameEn": "CHAN WAI KIU",
@@ -9664,7 +9663,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-11",
     "studentNo": "2005011",
     "name": "陳奕初",
     "nameEn": "CHAN YIK CHO",
@@ -9674,7 +9673,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-12",
     "studentNo": "2005012",
     "name": "張芷林",
     "nameEn": "CHEUNG TSZ LAM",
@@ -9684,7 +9683,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-13",
     "studentNo": "2005013",
     "name": "周進謙",
     "nameEn": "CHOW CHUN HIM",
@@ -9694,7 +9693,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-14",
     "studentNo": "2005014",
     "name": "鍾曉澄",
     "nameEn": "CHUNG HIU CHING",
@@ -9704,7 +9703,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-15",
     "studentNo": "2005015",
     "name": "鍾雨晴",
     "nameEn": "CHUNG YU CHING",
@@ -9714,7 +9713,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-16",
     "studentNo": "2005016",
     "name": "袁止柔",
     "nameEn": "KAUFMANN SABRINA",
@@ -9724,7 +9723,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-17",
     "studentNo": "2005017",
     "name": "林詩桐",
     "nameEn": "LIN ABBIE",
@@ -9734,7 +9733,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-18",
     "studentNo": "2005018",
     "name": "莫子熙",
     "nameEn": "MOK TSZ HEI",
@@ -9744,7 +9743,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "方曉晴"
   },
   {
-    "id": "s-6e-00",
+    "id": "s-6e-19",
     "studentNo": "2005019",
     "name": "張义琳",
     "nameEn": "ZHANG YILIN",

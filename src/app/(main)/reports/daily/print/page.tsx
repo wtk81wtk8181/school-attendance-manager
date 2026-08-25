@@ -5,7 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { DailyAbsenceReport } from "@/components/daily-absence-report";
 import { buildDailySchoolReport } from "@/lib/daily-report";
 import { hongKongToday } from "@/lib/digest";
+import { classLabel, formLabel } from "@/lib/rules";
 import { useStore } from "@/lib/store";
+import type { FormLevel } from "@/lib/types";
 
 export default function DailyAbsencePrintPage() {
   return (
@@ -23,25 +25,43 @@ function DailyAbsencePrintBody() {
   const { state, visibleStudents } = useStore();
   const searchParams = useSearchParams();
   const schoolDay = searchParams.get("date") ?? hongKongToday();
+  const form = searchParams.get("form") ?? "all";
+  const klass = searchParams.get("klass") ?? "all";
+  const filteredStudents = useMemo(
+    () =>
+      visibleStudents.filter(
+        (student) =>
+          (form === "all" || String(student.form) === form) &&
+          (klass === "all" || student.className === klass)
+      ),
+    [form, klass, visibleStudents]
+  );
+  const scope =
+    klass !== "all"
+      ? classLabel(klass)
+      : form !== "all"
+        ? formLabel(Number(form) as FormLevel)
+        : "全校";
 
   const payload = useMemo(
     () =>
       buildDailySchoolReport(
-        visibleStudents,
+        filteredStudents,
         state.absences,
         schoolDay,
         state.staffMembers,
         state.staffDailyAbsences,
-        "全校",
+        scope,
         state.staffLeaveRecords
       ),
     [
       schoolDay,
+      filteredStudents,
+      scope,
       state.absences,
       state.staffDailyAbsences,
       state.staffLeaveRecords,
       state.staffMembers,
-      visibleStudents,
     ]
   );
 

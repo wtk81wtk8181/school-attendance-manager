@@ -51,11 +51,12 @@ export { allClassNames, CLASS_STREAMS, FORMS } from "@/lib/roster";
 
 export function countedAbsenceDays(records: AbsenceRecord[]): number {
   return records
-    .filter(
-      (record) =>
-        record.reviewStatus !== "approved" && record.eclassStatus !== "late"
-    )
+    .filter(isCountedTowardAbsence)
     .reduce((sum, record) => sum + record.days, 0);
+}
+
+export function isCountedTowardAbsence(record: AbsenceRecord): boolean {
+  return record.reviewStatus !== "approved" && record.eclassStatus !== "late";
 }
 
 export function approvedLeaveDays(records: AbsenceRecord[]): number {

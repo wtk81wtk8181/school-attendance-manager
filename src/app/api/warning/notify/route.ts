@@ -3,6 +3,7 @@ import { FREQUENT_LIMIT } from "@/lib/rules";
 import { SCHOOL_NAME } from "@/lib/seed";
 import { sendMail } from "@/lib/mailer";
 import type { WarningType } from "@/lib/types";
+import { isSiteRequestAuthorized } from "@/lib/site-auth";
 
 interface WarningNotice {
   type: WarningType;
@@ -34,6 +35,9 @@ const typeLabels: Record<WarningType, string> = {
 };
 
 export async function POST(request: Request) {
+  if (!(await isSiteRequestAuthorized(request))) {
+    return NextResponse.json({ error: "未獲授權。" }, { status: 401 });
+  }
   const body = (await request.json()) as SendBody;
   if (!body?.student?.name || !Array.isArray(body.warnings)) {
     return NextResponse.json({ error: "缺少警告資料。" }, { status: 400 });

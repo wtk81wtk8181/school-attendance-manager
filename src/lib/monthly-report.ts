@@ -1,4 +1,8 @@
-import { attendanceStatusLabel, classLabel } from "@/lib/rules";
+import {
+  attendanceStatusLabel,
+  classLabel,
+  isCountedTowardAbsence,
+} from "@/lib/rules";
 import type { AbsenceRecord, Student } from "@/lib/types";
 
 const documentLabels = {
@@ -108,9 +112,7 @@ export function buildMonthlyReport(
     const classRecords = inRange.filter((item) =>
       classStudents.some((student) => student.id === item.studentId)
     );
-    const nonApproved = classRecords.filter(
-      (item) => item.reviewStatus !== "approved" && item.eclassStatus !== "late"
-    );
+    const nonApproved = classRecords.filter(isCountedTowardAbsence);
     const countedAbsenceDays = nonApproved.reduce((sum, item) => sum + item.days, 0);
     const absentees = new Set(nonApproved.map((item) => item.studentId));
     // 全班平均出席率（獲批請假不計入）
@@ -120,9 +122,7 @@ export function buildMonthlyReport(
         : classStudents.reduce((sum, student) => {
             const records = classRecords.filter((item) => item.studentId === student.id);
             const days = records
-              .filter(
-                (item) => item.reviewStatus !== "approved" && item.eclassStatus !== "late"
-              )
+              .filter(isCountedTowardAbsence)
               .reduce((total, item) => total + item.days, 0);
             return (
               sum + (schoolDaysInMonth > 0 ? ((schoolDaysInMonth - days) / schoolDaysInMonth) * 100 : 100)
@@ -140,7 +140,10 @@ export function buildMonthlyReport(
       leaveCount: classRecords.filter((item) => item.eclassStatus === "leave").length,
       countedAbsenceDays,
       approvedLeaveDays: classRecords
-        .filter((item) => item.reviewStatus === "approved")
+        .filter(
+          (item) =>
+            item.reviewStatus === "approved" && item.eclassStatus === "leave"
+        )
         .reduce((sum, item) => sum + item.days, 0),
       pendingDays: classRecords
         .filter((item) => item.reviewStatus === "pending" && item.eclassStatus !== "late")
@@ -169,7 +172,7 @@ export function buildMonthlyReport(
       documentType: documentLabels[record.documentType],
       documentSubmitted: record.documentSubmitted ? "已提交" : "未提交",
       reviewStatus: reviewLabels[record.reviewStatus],
-      counted: record.reviewStatus === "approved" ? "否" : "是",
+      counted: isCountedTowardAbsence(record) ? "是" : "否",
     });
   }
   rows.sort(

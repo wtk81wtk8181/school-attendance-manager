@@ -1,4 +1,8 @@
-import { attendanceStatusLabel, classLabel } from "@/lib/rules";
+import {
+  attendanceStatusLabel,
+  classLabel,
+  isCountedTowardAbsence,
+} from "@/lib/rules";
 import type { AbsenceRecord, Student } from "@/lib/types";
 
 const documentLabels = {
@@ -55,7 +59,9 @@ export function latestSchoolDay(absences: AbsenceRecord[]): string | null {
 }
 
 export function absenceDates(absences: AbsenceRecord[]): string[] {
-  return [...new Set(absences.map((item) => item.date))].sort().reverse();
+  return [...new Set([hongKongToday(), ...absences.map((item) => item.date)])]
+    .sort()
+    .reverse();
 }
 
 export function hongKongToday(): string {
@@ -114,8 +120,10 @@ export function buildDigest(
       late,
       leave,
       pending: classRecords.filter((item) => item.reviewStatus === "pending").length,
-      counted: classRecords.filter((item) => item.reviewStatus !== "approved").length,
-      presentImplied: Math.max(0, classStudents.length - classRecords.length),
+      counted: classRecords
+        .filter(isCountedTowardAbsence)
+        .reduce((sum, item) => sum + item.days, 0),
+      presentImplied: Math.max(0, classStudents.length - absent - leave),
     };
   });
 
@@ -137,7 +145,7 @@ export function buildDigest(
       documentType: documentLabels[record.documentType],
       documentSubmitted: record.documentSubmitted ? "已提交" : "未提交",
       reviewStatus: reviewLabels[record.reviewStatus],
-      counted: record.reviewStatus === "approved" ? "否" : "是",
+      counted: isCountedTowardAbsence(record) ? "是" : "否",
     });
   }
   rows.sort(

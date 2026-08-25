@@ -6,5 +6,9 @@ export default async function SiteLoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const params = await searchParams;
-  return <SiteLoginForm nextPath={params.next || "/"} />;
+  const nextPath =
+    params.next?.startsWith("/") && !params.next.startsWith("//")
+      ? params.next
+      : "/";
+  return <SiteLoginForm nextPath={nextPath} />;
 }

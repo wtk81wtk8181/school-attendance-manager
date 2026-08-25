@@ -5,6 +5,7 @@ import { buildDailySchoolWorkbook } from "@/lib/excel-daily";
 import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
 import type { DailySchoolReportPayload } from "@/lib/daily-report";
 import { SCHOOL_NAME } from "@/lib/seed";
+import { isSiteRequestAuthorized } from "@/lib/site-auth";
 
 interface SendBody {
   payload: DailySchoolReportPayload;
@@ -13,6 +14,9 @@ interface SendBody {
 }
 
 export async function POST(request: Request) {
+  if (!(await isSiteRequestAuthorized(request))) {
+    return NextResponse.json({ error: "未獲授權。" }, { status: 401 });
+  }
   const body = (await request.json()) as SendBody;
   if (!body?.payload?.schoolDay || !Array.isArray(body.payload.classes)) {
     return NextResponse.json({ error: "缺少每日缺席報告資料。" }, { status: 400 });

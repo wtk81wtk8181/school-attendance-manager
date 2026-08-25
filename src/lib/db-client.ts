@@ -9,8 +9,10 @@ import type {
   DigestSettings,
   NotificationItem,
   RecipientRemoval,
+  StaffAbsenceKind,
   StaffDailyAbsence,
   StaffLeaveRecord,
+  StaffLeaveRemoval,
   StaffMember,
   StaffRemoval,
   Student,
@@ -28,11 +30,17 @@ export function sharedFromState(
     users: _users,
     ...shared
   } = state;
+  void _user;
+  void _class;
+  void _users;
   return shared;
 }
 
 function isLegacyMockRoster(students: Student[]) {
   if (students.length < 500) return true;
+  if (new Set(students.map((student) => student.id)).size !== students.length) {
+    return true;
+  }
   return students.some((student) => /^s[1-6][a-e]\d{2}$/i.test(student.id));
 }
 
@@ -95,6 +103,7 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     staffRemovals: shared.staffRemovals ?? seed.staffRemovals,
     staffDailyAbsences: shared.staffDailyAbsences ?? seed.staffDailyAbsences,
     staffLeaveRecords: shared.staffLeaveRecords ?? seed.staffLeaveRecords,
+    staffLeaveRemovals: shared.staffLeaveRemovals ?? seed.staffLeaveRemovals,
     auditLogs: shared.auditLogs ?? seed.auditLogs,
     dataVersion: OPERATIONAL_DATA_VERSION,
   };
@@ -268,11 +277,18 @@ function mergeAllDigestRecipients(
 }
 
 function mergeDigestSettings(current: DigestSettings, incoming: DigestSettings): DigestSettings {
+  const currentUpdated = Date.parse(current.updatedAt ?? "");
+  const incomingUpdated = Date.parse(incoming.updatedAt ?? "");
+  const preferIncoming =
+    Number.isNaN(currentUpdated) ||
+    (!Number.isNaN(incomingUpdated) && incomingUpdated >= currentUpdated);
+  const latest = preferIncoming ? incoming : current;
   return {
-    enabled: incoming.enabled,
-    sendTime: incoming.sendTime || current.sendTime,
+    enabled: latest.enabled,
+    sendTime: latest.sendTime || current.sendTime,
     lastSentOn: pickLaterDate(current.lastSentOn, incoming.lastSentOn),
     lastSentSchoolDay: pickLaterDate(current.lastSentSchoolDay, incoming.lastSentSchoolDay),
+    updatedAt: latest.updatedAt ?? current.updatedAt ?? incoming.updatedAt,
   };
 }
 
@@ -318,19 +334,79 @@ function mergeStaffDailyAbsences(
   current: StaffDailyAbsence[] | undefined,
   incoming: StaffDailyAbsence[] | undefined
 ): StaffDailyAbsence[] {
-  const map = new Map<string, StaffDailyAbsence>();
+  const map = new Map<
+    string,
+    {
+      updatedAt: string;
+      changes: Record<string, { kind: StaffAbsenceKind | null; updatedAt: string }>;
+    }
+  >();
   for (const item of [...(current ?? []), ...(incoming ?? [])]) {
-    const existing = map.get(item.date);
-    if (!existing || item.updatedAt >= existing.updatedAt) {
-      map.set(item.date, item);
+    const existing = map.get(item.date) ?? { updatedAt: "", changes: {} };
+    const legacyChanges: Record<
+      string,
+      { kind: StaffAbsenceKind | null; updatedAt: string }
+    > = {};
+    const addLegacy = (ids: string[], kind: StaffAbsenceKind) => {
+      for (const id of ids) {
+        legacyChanges[id] = { kind, updatedAt: item.updatedAt };
+      }
+    };
+    addLegacy(item.sickIds, "sick");
+    addLegacy(item.personalIds, "personal");
+    addLegacy(item.officialIds, "official");
+    addLegacy(item.earlyIds, "early");
+
+    for (const [staffId, change] of Object.entries({
+      ...legacyChanges,
+      ...(item.selectionChanges ?? {}),
+    })) {
+      const previous = existing.changes[staffId];
+      if (!previous || change.updatedAt >= previous.updatedAt) {
+        existing.changes[staffId] = change;
+      }
+    }
+    existing.updatedAt =
+      item.updatedAt >= existing.updatedAt ? item.updatedAt : existing.updatedAt;
+    map.set(item.date, existing);
+  }
+  return [...map.entries()]
+    .map(([date, value]) => {
+      const idsFor = (kind: StaffAbsenceKind) =>
+        Object.entries(value.changes)
+          .filter(([, change]) => change.kind === kind)
+          .map(([staffId]) => staffId);
+      return {
+        date,
+        sickIds: idsFor("sick"),
+        personalIds: idsFor("personal"),
+        officialIds: idsFor("official"),
+        earlyIds: idsFor("early"),
+        selectionChanges: value.changes,
+        updatedAt: value.updatedAt,
+      };
+    })
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function mergeStaffLeaveRemovals(
+  current: StaffLeaveRemoval[] | undefined,
+  incoming: StaffLeaveRemoval[] | undefined
+): StaffLeaveRemoval[] {
+  const map = new Map<string, StaffLeaveRemoval>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.id);
+    if (!existing || item.removedAt >= existing.removedAt) {
+      map.set(item.id, item);
     }
   }
-  return [...map.values()].sort((a, b) => b.date.localeCompare(a.date));
+  return [...map.values()];
 }
 
 function mergeStaffLeaveRecords(
   current: StaffLeaveRecord[] | undefined,
-  incoming: StaffLeaveRecord[] | undefined
+  incoming: StaffLeaveRecord[] | undefined,
+  removals: StaffLeaveRemoval[]
 ): StaffLeaveRecord[] {
   const map = new Map<string, StaffLeaveRecord>();
   for (const item of [...(current ?? []), ...(incoming ?? [])]) {
@@ -339,7 +415,13 @@ function mergeStaffLeaveRecords(
       map.set(item.id, item);
     }
   }
-  return [...map.values()].sort((a, b) => b.startDate.localeCompare(a.startDate));
+  return [...map.values()]
+    .filter((item) => {
+      const removal = removals.find((row) => row.id === item.id);
+      if (!removal) return true;
+      return item.updatedAt > removal.removedAt;
+    })
+    .sort((a, b) => b.startDate.localeCompare(a.startDate));
 }
 
 const AUDIT_LOG_LIMIT = 500;
@@ -368,6 +450,10 @@ export function mergeSharedStates(
   const clearedAttendance = mergeClears(base.clearedAttendance, next.clearedAttendance);
   const removedRecipients = mergeRemovals(base.removedRecipients, next.removedRecipients);
   const staffRemovals = mergeStaffRemovals(base.staffRemovals, next.staffRemovals);
+  const staffLeaveRemovals = mergeStaffLeaveRemovals(
+    base.staffLeaveRemovals,
+    next.staffLeaveRemovals
+  );
 
   return {
     ...base,
@@ -393,8 +479,10 @@ export function mergeSharedStates(
     ),
     staffLeaveRecords: mergeStaffLeaveRecords(
       base.staffLeaveRecords,
-      next.staffLeaveRecords
+      next.staffLeaveRecords,
+      staffLeaveRemovals
     ),
+    staffLeaveRemovals,
     auditLogs: mergeAuditLogs(base.auditLogs, next.auditLogs),
     dataVersion: OPERATIONAL_DATA_VERSION,
     users: seed.users,
@@ -424,6 +512,14 @@ export function mergeDigestRecipient(
     (item) => item.email.toLowerCase() === next.email.toLowerCase()
   );
   if (index === -1) return [...recipients, next];
+  const currentUpdated = Date.parse(recipients[index].updatedAt ?? "");
+  const nextUpdated = Date.parse(next.updatedAt ?? "");
+  if (
+    !Number.isNaN(currentUpdated) &&
+    (Number.isNaN(nextUpdated) || nextUpdated < currentUpdated)
+  ) {
+    return recipients;
+  }
   const merged = [...recipients];
   merged[index] = { ...merged[index], ...next, id: next.id };
   return merged;

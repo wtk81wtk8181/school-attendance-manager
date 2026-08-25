@@ -43,10 +43,12 @@ function parseSheet(worksheet, form) {
 
     const className = classCode.toUpperCase();
     const year = String(26 - form).padStart(2, "0");
-    const studentNo = `${year}${String(streamIndex(className)).padStart(2, "0")}${String(classNo || students.filter((item) => item.className === className).length + 1).padStart(3, "0")}`;
+    const serial =
+      classNo || students.filter((item) => item.className === className).length + 1;
+    const studentNo = `${year}${String(streamIndex(className)).padStart(2, "0")}${String(serial).padStart(3, "0")}`;
     const teacher = CLASS_TEACHERS[className] ?? "班主任";
     students.push({
-      id: `s-${className.toLowerCase()}-${String(classNo || 0).padStart(2, "0")}`,
+      id: `s-${className.toLowerCase()}-${String(serial).padStart(2, "0")}`,
       studentNo,
       name,
       nameEn,
@@ -87,8 +89,21 @@ allStudents.sort(
     left.studentNo.localeCompare(right.studentNo)
 );
 
-const output = `/* eslint-disable */
-// 自動產生：npm run import:roster
+for (const key of ["id", "studentNo"]) {
+  const seen = new Set();
+  const duplicates = new Set();
+  for (const student of allStudents) {
+    if (seen.has(student[key])) duplicates.add(student[key]);
+    seen.add(student[key]);
+  }
+  if (duplicates.size > 0) {
+    throw new Error(
+      `匯入中止：學生 ${key} 重複：${[...duplicates].slice(0, 10).join("、")}`
+    );
+  }
+}
+
+const output = `// 自動產生：npm run import:roster
 import type { Student } from "@/lib/types";
 
 export const ROSTER_STUDENTS: Student[] = ${JSON.stringify(allStudents, null, 2)};

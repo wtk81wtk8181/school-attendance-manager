@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   AlertTriangle,
+  CalendarDays,
   CheckCircle2,
   ClipboardList,
   FileText,
@@ -24,6 +25,15 @@ import {
 } from "@/lib/rules";
 import { formatDate, formatPercent, formatShortDate } from "@/lib/format";
 import { useStore } from "@/lib/store";
+import { hongKongToday } from "@/lib/digest";
+import {
+  STAFF_ABSENCE_ROWS,
+  applyStaffLeavesToDaily,
+  formatStaffLeaveLine,
+  staffDailyFor,
+  staffLeavesForDate,
+  staffNamesForKind,
+} from "@/lib/staff";
 
 export default function DashboardPage() {
   const { state, visibleStudents, currentUser } = useStore();
@@ -58,6 +68,13 @@ export default function DashboardPage() {
   const watchList = [...stats]
     .filter((item) => item.level !== "ok")
     .sort((a, b) => b.countedDays - a.countedDays);
+  const today = hongKongToday();
+  const todayStaffLeaves = staffLeavesForDate(state.staffLeaveRecords, today);
+  const todayStaff = applyStaffLeavesToDaily(
+    staffDailyFor(state.staffDailyAbsences, today),
+    todayStaffLeaves,
+    ""
+  );
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -69,6 +86,45 @@ export default function DashboardPage() {
             : `正在檢閱 ${currentUser?.title} 負責班級，僅供查閱。`}
         </p>
       </div>
+
+      {currentUser?.role === "office" ? (
+        <Card className="shadow-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CalendarDays className="size-4" />
+              今日教職員缺席／請假
+            </CardTitle>
+            <CardDescription>
+              {formatShortDate(today)}；預先登記的複診、手術、白事及活動會自動在此顯示。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2 text-sm md:grid-cols-2">
+            {STAFF_ABSENCE_ROWS.map((row) => {
+              const names = staffNamesForKind(
+                state.staffMembers,
+                todayStaff,
+                row.kind
+              );
+              return (
+                <p key={row.kind} className="rounded-md border px-3 py-2">
+                  <span className="font-medium">{row.label}：</span>
+                  {names.length > 0 ? names.join("、") : "—"}
+                </p>
+              );
+            })}
+            {todayStaffLeaves.length > 0 ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 md:col-span-2">
+                <p className="font-medium text-amber-900">提早登記資料</p>
+                {todayStaffLeaves.map((leave) => (
+                  <p key={leave.id} className="mt-1 text-amber-900">
+                    {formatStaffLeaveLine(leave)}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="shadow-none sm:col-span-2 xl:col-span-4">

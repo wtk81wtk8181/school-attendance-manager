@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Database, Lock, Plus, Save, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Database,
+  Lock,
+  Plus,
+  Save,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,6 +26,7 @@ import type { AppState } from "@/lib/types";
 import { toast } from "sonner";
 
 type Row = Record<string, unknown>;
+const PAGE_SIZE = 50;
 
 const SECTIONS: Array<{ key: keyof AppState; label: string }> = [
   { key: "students", label: "學生名單" },
@@ -29,7 +38,6 @@ const SECTIONS: Array<{ key: keyof AppState; label: string }> = [
   { key: "staffMembers", label: "教職員名單" },
   { key: "staffDailyAbsences", label: "教職員每日缺席" },
   { key: "staffLeaveRecords", label: "教職員提早請假" },
-  { key: "auditLogs", label: "最近變更" },
 ];
 
 function cellText(value: unknown): string {
@@ -65,6 +73,7 @@ export default function AdminPage() {
   const { currentUser, state, adminPatchState } = useStore();
   const [sectionKey, setSectionKey] = useState<keyof AppState>("students");
   const [draft, setDraft] = useState<Row[] | null>(null);
+  const [page, setPage] = useState(0);
 
   const sectionRows = useMemo(() => {
     const value: unknown = state[sectionKey];
@@ -72,6 +81,10 @@ export default function AdminPage() {
   }, [state, sectionKey]);
 
   const rows = draft ?? sectionRows;
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageStart = safePage * PAGE_SIZE;
+  const visibleRows = rows.slice(pageStart, pageStart + PAGE_SIZE);
   const columns = useMemo(() => {
     const keys = new Set<string>();
     for (const row of rows.slice(0, 50)) {
@@ -96,15 +109,21 @@ export default function AdminPage() {
       return;
     }
     setSectionKey(key);
+    setPage(0);
   }
 
   function updateCell(rowIndex: number, column: string, text: string) {
-    const base = draft ?? sectionRows.map((row) => ({ ...row }));
-    base[rowIndex] = {
-      ...base[rowIndex],
-      [column]: parseCell(text, base[rowIndex][column]),
-    };
-    setDraft(base);
+    const base = draft ?? sectionRows;
+    setDraft(
+      base.map((row, index) =>
+        index === rowIndex
+          ? {
+              ...row,
+              [column]: parseCell(text, row[column]),
+            }
+          : { ...row }
+      )
+    );
   }
 
   function addRow() {
@@ -150,7 +169,9 @@ export default function AdminPage() {
             <div className="flex flex-wrap items-center gap-2">
               <Select
                 value={sectionKey}
-                onValueChange={(value) => selectSection(value as keyof AppState)}
+                onValueChange={(value) => {
+                  if (value) selectSection(value as keyof AppState);
+                }}
               >
                 <SelectTrigger className="w-56">
                   <SelectValue />
@@ -201,7 +222,9 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row, rowIndex) => (
+                  {visibleRows.map((row, visibleIndex) => {
+                    const rowIndex = pageStart + visibleIndex;
+                    return (
                     <tr key={`${rowIndex}-${String(row.id ?? "")}`}>
                       <td className="border px-2 py-1 text-muted-foreground">{rowIndex + 1}</td>
                       {columns.map((column) => (
@@ -225,11 +248,45 @@ export default function AdminPage() {
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
+          {rows.length > PAGE_SIZE ? (
+            <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+              <p className="text-muted-foreground">
+                顯示第 {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, rows.length)} 列，
+                共 {rows.length} 列
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={safePage === 0}
+                  onClick={() => setPage((current) => Math.max(0, current - 1))}
+                >
+                  <ChevronLeft className="size-4" />
+                  上一頁
+                </Button>
+                <span>
+                  {safePage + 1} / {pageCount}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={safePage >= pageCount - 1}
+                  onClick={() =>
+                    setPage((current) => Math.min(pageCount - 1, current + 1))
+                  }
+                >
+                  下一頁
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>

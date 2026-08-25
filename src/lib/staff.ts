@@ -145,6 +145,10 @@ export function withToggledStaff(
     personalIds: record.personalIds.filter((id) => id !== staffId),
     officialIds: record.officialIds.filter((id) => id !== staffId),
     earlyIds: record.earlyIds.filter((id) => id !== staffId),
+    selectionChanges: {
+      ...(record.selectionChanges ?? {}),
+      [staffId]: { kind: selected ? kind : null, updatedAt },
+    },
     updatedAt,
   };
   if (selected) {

@@ -9,6 +9,59 @@ import {
 import type { AppState } from "@/lib/types";
 
 const SNAPSHOT_ID = "default";
+const REPLACEABLE_ARRAY_SECTIONS = new Set([
+  "students",
+  "absences",
+  "warnings",
+  "notifications",
+  "digestRecipients",
+  "digestLogs",
+  "staffMembers",
+  "staffDailyAbsences",
+  "staffLeaveRecords",
+] as const);
+
+export type ReplaceableArraySection =
+  (typeof REPLACEABLE_ARRAY_SECTIONS extends Set<infer Key> ? Key : never);
+
+export class RevisionConflictError extends Error {}
+
+function validateReplacementSection(section: ReplaceableArraySection, rows: unknown[]) {
+  if (!rows.every((row) => row !== null && typeof row === "object" && !Array.isArray(row))) {
+    throw new Error(`${section} 包含無效資料列。`);
+  }
+
+  if (section === "staffDailyAbsences") {
+    const dates = rows.map((row) => String((row as { date?: unknown }).date ?? ""));
+    if (dates.some((date) => !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
+      throw new Error("教職員每日缺席包含無效日期。");
+    }
+    if (new Set(dates).size !== dates.length) {
+      throw new Error("教職員每日缺席包含重複日期。");
+    }
+    return;
+  }
+
+  const ids = rows.map((row) => String((row as { id?: unknown }).id ?? "").trim());
+  if (ids.some((id) => !id)) {
+    throw new Error(`${section} 包含缺少 id 的資料列。`);
+  }
+  if (new Set(ids).size !== ids.length) {
+    throw new Error(`${section} 包含重複 id。`);
+  }
+
+  if (section === "students") {
+    const studentNumbers = rows.map((row) =>
+      String((row as { studentNo?: unknown }).studentNo ?? "").trim()
+    );
+    if (studentNumbers.some((studentNo) => !studentNo)) {
+      throw new Error("學生名單包含缺少學號的資料列。");
+    }
+    if (new Set(studentNumbers).size !== studentNumbers.length) {
+      throw new Error("學生名單包含重複學號。");
+    }
+  }
+}
 
 export interface SharedSnapshot {
   state: AppState;
@@ -122,7 +175,9 @@ export async function saveSharedState(state: AppState): Promise<SharedSnapshot> 
 
 /** 將 client 送出的資料與資料庫現有資料合併後再寫入。 */
 export async function saveMergedSharedState(
-  incoming: Partial<AppState>
+  incoming: Partial<AppState>,
+  replaceSections: string[] = [],
+  expectedRevision?: number
 ): Promise<SharedSnapshot> {
   if (!hasDatabase()) {
     throw new Error("Missing DATABASE_URL or POSTGRES_URL");
@@ -134,7 +189,24 @@ export async function saveMergedSharedState(
   for (let attempt = 0; attempt < 4; attempt++) {
     const current = await loadSharedSnapshot();
     const currentRevision = asRevision(current.revision);
+    if (
+      replaceSections.length > 0 &&
+      (!Number.isInteger(expectedRevision) || expectedRevision !== currentRevision)
+    ) {
+      throw new RevisionConflictError("資料已由其他使用者更新，請重新整理後再修改。");
+    }
     const merged = mergeSharedStates(current.state, incoming);
+    for (const section of replaceSections) {
+      if (!REPLACEABLE_ARRAY_SECTIONS.has(section as ReplaceableArraySection)) continue;
+      const replacement = incoming[section as ReplaceableArraySection];
+      if (Array.isArray(replacement)) {
+        validateReplacementSection(
+          section as ReplaceableArraySection,
+          replacement
+        );
+        Object.assign(merged, { [section]: replacement });
+      }
+    }
     const payload = sharedFromState(merged);
     const nextRevision = currentRevision + 1;
     const rows = await db`

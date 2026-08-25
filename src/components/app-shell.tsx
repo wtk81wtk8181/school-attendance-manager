@@ -110,7 +110,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [saving, setSaving] = useState(false);
 
   const nav = currentUser?.role === "office" ? officeNav : homeroomNav;
-  const unread = state.notifications.filter((item) => !item.read);
   const visibleNotes =
     currentUser?.role === "office"
       ? state.notifications
@@ -119,6 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           const student = state.students.find((row) => row.id === item.studentId);
           return student?.className === state.selectedClassName;
         });
+  const unread = visibleNotes.filter((item) => !item.read);
 
   const userInitial = currentUser?.name.slice(0, 1) ?? "";
 
