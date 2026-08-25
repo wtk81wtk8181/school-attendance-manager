@@ -149,6 +149,29 @@ export interface StaffLeaveRemoval {
   removedAt: string;
 }
 
+export type StudentLeaveCategory = StaffLeaveCategory;
+
+export interface StudentLeaveRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  className: string;
+  category: StudentLeaveCategory;
+  status: Exclude<EclassStatus, "present" | "late">;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  activity: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StudentLeaveRemoval {
+  id: string;
+  removedAt: string;
+}
+
 export interface AuditLog {
   id: string;
   at: string;
@@ -205,6 +228,8 @@ export interface AppState {
   staffDailyAbsences: StaffDailyAbsence[];
   staffLeaveRecords: StaffLeaveRecord[];
   staffLeaveRemovals: StaffLeaveRemoval[];
+  studentLeaveRecords: StudentLeaveRecord[];
+  studentLeaveRemovals: StudentLeaveRemoval[];
   auditLogs: AuditLog[];
   dataVersion: number;
 }

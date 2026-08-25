@@ -3,11 +3,10 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
+import { AuthLandingShell } from "@/components/auth-landing-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SchoolLogo } from "@/components/school-logo";
 import { rehydrateStore } from "@/lib/store";
 
 export function SiteLoginForm({ nextPath }: { nextPath: string }) {
@@ -45,52 +44,48 @@ export function SiteLoginForm({ nextPath }: { nextPath: string }) {
   }
 
   return (
-    <div className="relative flex min-h-full flex-1 flex-col bg-[var(--school-navy)]">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 20% 20%, #c4a35a33, transparent 40%), radial-gradient(circle at 80% 0%, #ffffff14, transparent 35%)",
-        }}
-      />
-      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
-        <header className="mb-8 text-center text-white">
-          <div className="mx-auto mb-5 w-fit max-w-full rounded-2xl bg-white px-4 py-3 shadow-lg">
-            <SchoolLogo className="h-auto w-full max-w-sm min-w-[220px]" />
-          </div>
-          <p className="text-sm text-white/75">此平台僅供授權人士使用</p>
-        </header>
+    <AuthLandingShell subtitle="此平台僅供授權人士使用">
+      <div className="space-y-6">
+        <div className="space-y-1.5">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-[var(--school-navy)]">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-[#ede9fe] text-[#6d28d9]">
+              <LockKeyhole className="size-4" />
+            </span>
+            進入密碼
+          </h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            請輸入存取密碼後，才能進入出勤管理系統。
+          </p>
+        </div>
 
-        <Card className="border-0 shadow-xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <LockKeyhole className="size-5" />
-              進入密碼
-            </CardTitle>
-            <CardDescription>請輸入存取密碼後，才能進入出勤管理系統。</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="site-password">密碼</Label>
-                <Input
-                  id="site-password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="請輸入密碼"
-                  required
-                />
-              </div>
-              {error ? <p className="text-sm text-destructive">{error}</p> : null}
-              <Button className="w-full" type="submit" disabled={loading}>
-                {loading ? "驗證中……" : "進入系統"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <Label htmlFor="site-password">密碼</Label>
+            <Input
+              id="site-password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="請輸入密碼"
+              className="h-11 border-[#e8e2ef] bg-[#faf9fc] focus-visible:border-[#7c3aed]/40 focus-visible:ring-[#7c3aed]/20"
+              required
+            />
+          </div>
+          {error ? (
+            <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+          <Button
+            className="h-11 w-full bg-[var(--school-navy)] text-base shadow-md hover:bg-[#152a47]"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? "驗證中……" : "進入系統"}
+          </Button>
+        </form>
       </div>
-    </div>
+    </AuthLandingShell>
   );
 }

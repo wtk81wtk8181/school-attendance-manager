@@ -35,6 +35,8 @@ import type {
   ReviewStatus,
   StaffAbsenceKind,
   StaffLeaveCategory,
+  StaffLeaveRecord,
+  StudentLeaveCategory,
   Student,
   User,
   WarningLetter,
@@ -49,6 +51,7 @@ const ADMIN_EDITABLE_SECTIONS = new Set([
   "staffMembers",
   "staffDailyAbsences",
   "staffLeaveRecords",
+  "studentLeaveRecords",
   "digestRecipients",
   "digestLogs",
 ]);
@@ -101,6 +104,16 @@ interface StoreValue {
     activity: string;
   }) => boolean;
   removeStaffLeave: (id: string) => void;
+  addStudentLeave: (input: {
+    studentId: string;
+    category: StudentLeaveCategory;
+    status: "leave" | "absent";
+    startDate: string;
+    endDate: string;
+    reason: string;
+    activity: string;
+  }) => boolean;
+  removeStudentLeave: (id: string) => void;
   toggleStaffAbsence: (
     date: string,
     kind: StaffAbsenceKind,
@@ -1013,6 +1026,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         `${current.name} <${current.email}>`
       );
     });
+    toast.success("已移除收件人。");
   }, [currentUser]);
 
   const addStaffMember = useCallback((name: string) => {
@@ -1215,6 +1229,103 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, [currentUser]);
 
+  const addStudentLeave = useCallback(
+    (input: {
+      studentId: string;
+      category: StudentLeaveCategory;
+      status: "leave" | "absent";
+      startDate: string;
+      endDate: string;
+      reason: string;
+      activity: string;
+    }) => {
+      if (currentUser?.role !== "office") {
+        toast.error("只有校務處職員可以登記學生請假。");
+        return false;
+      }
+      if (!input.studentId || !input.startDate) return false;
+      let added = false;
+      let overlapping = false;
+      patch((prev) => {
+        const student = prev.students.find((item) => item.id === input.studentId);
+        if (!student) return prev;
+        const now = nowIso();
+        const endDate =
+          input.endDate && input.endDate >= input.startDate
+            ? input.endDate
+            : input.startDate;
+        overlapping = (prev.studentLeaveRecords ?? []).some(
+          (item) =>
+            item.studentId === input.studentId &&
+            item.startDate <= endDate &&
+            item.endDate >= input.startDate
+        );
+        if (overlapping) return prev;
+        added = true;
+        const record = {
+          id: `pleave-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          studentId: student.id,
+          studentName: student.name,
+          className: student.className,
+          category: input.category,
+          status: input.status,
+          startDate: input.startDate,
+          endDate,
+          reason: input.reason.trim(),
+          activity: input.activity.trim(),
+          createdBy: prev.currentUserId ?? "",
+          createdAt: now,
+          updatedAt: now,
+        };
+        return withAudit(
+          {
+            ...prev,
+            studentLeaveRecords: [record, ...(prev.studentLeaveRecords ?? [])],
+          },
+          "提早登記學生請假",
+          `${student.name}（${student.className}）${input.startDate}${
+            endDate !== input.startDate ? ` 至 ${endDate}` : ""
+          }`
+        );
+      });
+      if (overlapping) {
+        toast.error("這位學生在所選日期已有預先請假紀錄。");
+      }
+      return added;
+    },
+    [currentUser]
+  );
+
+  const removeStudentLeave = useCallback(
+    (id: string) => {
+      if (currentUser?.role !== "office") {
+        toast.error("只有校務處職員可以取消學生請假。");
+        return;
+      }
+      patch((prev) => {
+        const current = (prev.studentLeaveRecords ?? []).find((item) => item.id === id);
+        if (!current) return prev;
+        const removedAt = nowIso();
+        return withAudit(
+          {
+            ...prev,
+            studentLeaveRecords: (prev.studentLeaveRecords ?? []).filter(
+              (item) => item.id !== id
+            ),
+            studentLeaveRemovals: [
+              { id, removedAt },
+              ...(prev.studentLeaveRemovals ?? []).filter((item) => item.id !== id),
+            ],
+          },
+          "取消學生預先請假",
+          `${current.studentName}　${current.startDate}`
+        );
+      });
+      toast.success("已取消學生預先請假。");
+    },
+    [currentUser]
+  );
+
   const toggleStaffAbsence = useCallback(
     (date: string, kind: StaffAbsenceKind, staffId: string, selected: boolean) => {
       if (currentUser?.role !== "office") {
@@ -1377,6 +1488,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeStaffMember,
       addStaffLeave,
       removeStaffLeave,
+      addStudentLeave,
+      removeStudentLeave,
       toggleStaffAbsence,
       recordDigestSend,
       adminPatchState,
@@ -1408,6 +1521,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeStaffMember,
       addStaffLeave,
       removeStaffLeave,
+      addStudentLeave,
+      removeStudentLeave,
       toggleStaffAbsence,
       recordDigestSend,
       adminPatchState,

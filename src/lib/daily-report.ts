@@ -8,6 +8,11 @@ import {
   staffDailyFor,
   staffLeavesForDate,
 } from "@/lib/staff";
+import {
+  effectiveAbsencesForDay,
+  formatStudentLeaveLine,
+  studentLeavesForDate,
+} from "@/lib/student-leave";
 import type {
   AbsenceRecord,
   FormLevel,
@@ -16,6 +21,7 @@ import type {
   StaffLeaveRecord,
   StaffMember,
   Student,
+  StudentLeaveRecord,
 } from "@/lib/types";
 
 export interface DailyAbsenceRow {
@@ -72,6 +78,7 @@ export interface DailySchoolReportPayload {
   schoolPunctualityRate: number;
   staff: Record<StaffAbsenceKind, string[]>;
   staffLeaveLines: string[];
+  studentLeaveLines: string[];
 }
 
 /** @deprecated 使用 DailySchoolReportPayload */
@@ -80,10 +87,16 @@ export type DailyReportPayload = DailySchoolReportPayload;
 export function buildDailyAbsenceRows(
   students: Student[],
   absences: AbsenceRecord[],
-  schoolDay: string
+  schoolDay: string,
+  studentLeaveRecords: StudentLeaveRecord[] = []
 ): DailyAbsenceRow[] {
-  return absences
-    .filter((item) => item.date === schoolDay)
+  const dayAbsences = effectiveAbsencesForDay(
+    absences,
+    studentLeaveRecords,
+    students,
+    schoolDay
+  );
+  return dayAbsences
     .map((item) => {
       const student = students.find((row) => row.id === item.studentId);
       return {
@@ -131,9 +144,16 @@ export function buildDailySchoolReport(
   staffMembers: StaffMember[] = [],
   staffDailyAbsences: StaffDailyAbsence[] = [],
   scope = "全校",
-  staffLeaveRecords: StaffLeaveRecord[] = []
+  staffLeaveRecords: StaffLeaveRecord[] = [],
+  studentLeaveRecords: StudentLeaveRecord[] = []
 ): DailySchoolReportPayload {
-  const rows = buildDailyAbsenceRows(students, absences, schoolDay);
+  const rows = buildDailyAbsenceRows(
+    students,
+    absences,
+    schoolDay,
+    studentLeaveRecords
+  );
+  const dayStudentLeaves = studentLeavesForDate(studentLeaveRecords, schoolDay);
   const classNames = allClassNames();
   const classes: DailyClassBlock[] = classNames.map((className) => {
     const classStudents = students.filter((item) => item.className === className);
@@ -207,5 +227,6 @@ export function buildDailySchoolReport(
       early: staffNamesForKind(staffMembers, staffRecord, "early"),
     },
     staffLeaveLines: dayLeaves.map(formatStaffLeaveLine),
+    studentLeaveLines: dayStudentLeaves.map(formatStudentLeaveLine),
   };
 }

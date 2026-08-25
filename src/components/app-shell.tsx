@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
+  BarChart3,
   Bell,
+  CalendarClock,
   Check,
   ClipboardList,
   Database,
@@ -17,8 +19,6 @@ import {
   RefreshCw,
   School,
   Users,
-  BarChart3,
-  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,12 +29,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ClassPicker } from "@/components/class-picker";
 import { cn } from "@/lib/utils";
 import { SCHOOL_NAME } from "@/lib/seed";
 import { useStore } from "@/lib/store";
 import { formatDateTime } from "@/lib/format";
-import { DigestScheduler } from "@/components/digest-scheduler";
-import { ClassPicker } from "@/components/class-picker";
 import { classLabel } from "@/lib/rules";
 
 const officeNav = [
@@ -43,7 +42,7 @@ const officeNav = [
   { href: "/reviews", label: "文件審核", icon: ClipboardList },
   { href: "/warnings", label: "警告信", icon: FileWarning },
   { href: "/reports", label: "報表導出", icon: BarChart3 },
-  { href: "/digest", label: "每日缺席電郵", icon: Mail },
+  { href: "/pre-leave", label: "預先請假", icon: CalendarClock },
   { href: "/changes", label: "最近變更", icon: History },
   { href: "/admin", label: "後台管理", icon: Database },
 ];
@@ -124,7 +123,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-full bg-[var(--school-paper)]">
-      <DigestScheduler />
       <aside className="no-print hidden w-60 shrink-0 flex-col bg-[var(--school-navy)] text-white md:flex">
         <div className="border-b border-white/10 py-4">
           <Link href="/dashboard" className="flex items-center gap-2.5 px-3 py-1">

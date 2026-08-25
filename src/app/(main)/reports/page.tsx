@@ -128,7 +128,8 @@ export default function ReportsPage() {
   const dailyRows = buildDailyAbsenceRows(
     filteredStudents,
     state.absences,
-    reportDay
+    reportDay,
+    state.studentLeaveRecords
   );
 
   const dailySchoolReport = buildDailySchoolReport(
@@ -138,7 +139,8 @@ export default function ReportsPage() {
     state.staffMembers,
     state.staffDailyAbsences,
     dailyScope,
-    state.staffLeaveRecords
+    state.staffLeaveRecords,
+    state.studentLeaveRecords
   );
 
   const monthlyReport = buildMonthlyReport(visibleStudents, state.absences, month);

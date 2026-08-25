@@ -43,8 +43,16 @@ export function DailyAbsenceReport({
             ))}
             {payload.staffLeaveLines.length > 0 && (
               <div className="mt-2 border-t border-dashed border-zinc-300 pt-1.5">
-                <p className="font-medium">提早登記請假：</p>
+                <p className="font-medium">教職員提早請假：</p>
                 {payload.staffLeaveLines.map((line) => (
+                  <p key={line} className="text-zinc-700">{line}</p>
+                ))}
+              </div>
+            )}
+            {payload.studentLeaveLines.length > 0 && (
+              <div className="mt-2 border-t border-dashed border-zinc-300 pt-1.5">
+                <p className="font-medium">學生預先請假：</p>
+                {payload.studentLeaveLines.map((line) => (
                   <p key={line} className="text-zinc-700">{line}</p>
                 ))}
               </div>

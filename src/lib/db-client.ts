@@ -16,6 +16,8 @@ import type {
   StaffMember,
   StaffRemoval,
   Student,
+  StudentLeaveRecord,
+  StudentLeaveRemoval,
   WarningLetter,
 } from "@/lib/types";
 
@@ -104,6 +106,8 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     staffDailyAbsences: shared.staffDailyAbsences ?? seed.staffDailyAbsences,
     staffLeaveRecords: shared.staffLeaveRecords ?? seed.staffLeaveRecords,
     staffLeaveRemovals: shared.staffLeaveRemovals ?? seed.staffLeaveRemovals,
+    studentLeaveRecords: shared.studentLeaveRecords ?? seed.studentLeaveRecords,
+    studentLeaveRemovals: shared.studentLeaveRemovals ?? seed.studentLeaveRemovals,
     auditLogs: shared.auditLogs ?? seed.auditLogs,
     dataVersion: OPERATIONAL_DATA_VERSION,
   };
@@ -424,6 +428,41 @@ function mergeStaffLeaveRecords(
     .sort((a, b) => b.startDate.localeCompare(a.startDate));
 }
 
+function mergeStudentLeaveRemovals(
+  current: StudentLeaveRemoval[] | undefined,
+  incoming: StudentLeaveRemoval[] | undefined
+): StudentLeaveRemoval[] {
+  const map = new Map<string, StudentLeaveRemoval>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.id);
+    if (!existing || item.removedAt >= existing.removedAt) {
+      map.set(item.id, item);
+    }
+  }
+  return [...map.values()];
+}
+
+function mergeStudentLeaveRecords(
+  current: StudentLeaveRecord[] | undefined,
+  incoming: StudentLeaveRecord[] | undefined,
+  removals: StudentLeaveRemoval[]
+): StudentLeaveRecord[] {
+  const map = new Map<string, StudentLeaveRecord>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.id);
+    if (!existing || item.updatedAt >= existing.updatedAt) {
+      map.set(item.id, item);
+    }
+  }
+  return [...map.values()]
+    .filter((item) => {
+      const removal = removals.find((row) => row.id === item.id);
+      if (!removal) return true;
+      return item.updatedAt > removal.removedAt;
+    })
+    .sort((a, b) => b.startDate.localeCompare(a.startDate));
+}
+
 const AUDIT_LOG_LIMIT = 500;
 
 function mergeAuditLogs(
@@ -454,6 +493,10 @@ export function mergeSharedStates(
     base.staffLeaveRemovals,
     next.staffLeaveRemovals
   );
+  const studentLeaveRemovals = mergeStudentLeaveRemovals(
+    base.studentLeaveRemovals,
+    next.studentLeaveRemovals
+  );
 
   return {
     ...base,
@@ -483,6 +526,12 @@ export function mergeSharedStates(
       staffLeaveRemovals
     ),
     staffLeaveRemovals,
+    studentLeaveRecords: mergeStudentLeaveRecords(
+      base.studentLeaveRecords,
+      next.studentLeaveRecords,
+      studentLeaveRemovals
+    ),
+    studentLeaveRemovals,
     auditLogs: mergeAuditLogs(base.auditLogs, next.auditLogs),
     dataVersion: OPERATIONAL_DATA_VERSION,
     users: seed.users,

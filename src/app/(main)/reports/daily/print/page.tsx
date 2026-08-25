@@ -52,7 +52,8 @@ function DailyAbsencePrintBody() {
         state.staffMembers,
         state.staffDailyAbsences,
         scope,
-        state.staffLeaveRecords
+        state.staffLeaveRecords,
+        state.studentLeaveRecords
       ),
     [
       schoolDay,
@@ -61,6 +62,7 @@ function DailyAbsencePrintBody() {
       state.absences,
       state.staffDailyAbsences,
       state.staffLeaveRecords,
+      state.studentLeaveRecords,
       state.staffMembers,
     ]
   );

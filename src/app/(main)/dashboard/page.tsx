@@ -3,12 +3,12 @@
 import Link from "next/link";
 import {
   AlertTriangle,
+  CalendarClock,
   CalendarDays,
   CheckCircle2,
   ClipboardList,
   FileText,
   FileWarning,
-  Mail,
   Percent,
   Users,
 } from "lucide-react";
@@ -34,6 +34,10 @@ import {
   staffLeavesForDate,
   staffNamesForKind,
 } from "@/lib/staff";
+import {
+  formatStudentLeaveLine,
+  studentLeavesForDate,
+} from "@/lib/student-leave";
 
 export default function DashboardPage() {
   const { state, visibleStudents, currentUser } = useStore();
@@ -70,6 +74,7 @@ export default function DashboardPage() {
     .sort((a, b) => b.countedDays - a.countedDays);
   const today = hongKongToday();
   const todayStaffLeaves = staffLeavesForDate(state.staffLeaveRecords, today);
+  const todayStudentLeaves = studentLeavesForDate(state.studentLeaveRecords, today);
   const todayStaff = applyStaffLeavesToDaily(
     staffDailyFor(state.staffDailyAbsences, today),
     todayStaffLeaves,
@@ -97,6 +102,11 @@ export default function DashboardPage() {
             <CardDescription>
               {formatShortDate(today)}；預先登記的複診、手術、白事及活動會自動在此顯示。
             </CardDescription>
+            <div className="pt-1">
+            <Button variant="outline" size="sm" render={<Link href="/pre-leave" />}>
+              登記／管理預先請假
+            </Button>
+            </div>
           </CardHeader>
           <CardContent className="grid gap-2 text-sm md:grid-cols-2">
             {STAFF_ABSENCE_ROWS.map((row) => {
@@ -112,6 +122,16 @@ export default function DashboardPage() {
                 </p>
               );
             })}
+            {todayStudentLeaves.length > 0 ? (
+              <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 md:col-span-2">
+                <p className="font-medium text-sky-950">學生預先請假</p>
+                {todayStudentLeaves.map((leave) => (
+                  <p key={leave.id} className="mt-1 text-sky-950">
+                    {formatStudentLeaveLine(leave)}
+                  </p>
+                ))}
+              </div>
+            ) : null}
             {todayStaffLeaves.length > 0 ? (
               <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 md:col-span-2">
                 <p className="font-medium text-amber-900">提早登記資料</p>
@@ -262,7 +282,7 @@ export default function DashboardPage() {
             <CardDescription>
               {currentUser?.role === "office"
                 ? "校務處跟進事項會通知職員"
-                : "本班警告信可在此查看，文件審核與每日電郵由校務處處理"}
+                : "本班警告信可在此查看，文件審核與預先請假由校務處處理"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
@@ -279,17 +299,15 @@ export default function DashboardPage() {
                   </Button>
                 </div>
                 <div className="flex items-start gap-3 rounded-lg border p-3">
-                  <Mail className="mt-0.5 size-4 text-[var(--school-navy)]" />
+                  <CalendarClock className="mt-0.5 size-4 text-[var(--school-navy)]" />
                   <div className="flex-1">
-                    <p className="font-medium">每日缺席 Excel 電郵</p>
+                    <p className="font-medium">預先請假</p>
                     <p className="text-xs text-muted-foreground">
-                      {state.digestSettings.lastSentSchoolDay
-                        ? `上次：${formatShortDate(state.digestSettings.lastSentSchoolDay)}　${state.digestRecipients.filter((item) => item.enabled).length} 位收件人`
-                        : "尚未寄出全校各班缺席名單"}
+                      學生及教職員可提早登記請假，到日自動顯示於缺席報告
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" render={<Link href="/digest" />}>
-                    名單
+                  <Button size="sm" variant="outline" render={<Link href="/pre-leave" />}>
+                    登記
                   </Button>
                 </div>
               </>

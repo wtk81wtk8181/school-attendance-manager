@@ -38,6 +38,7 @@ const SECTIONS: Array<{ key: keyof AppState; label: string }> = [
   { key: "staffMembers", label: "教職員名單" },
   { key: "staffDailyAbsences", label: "教職員每日缺席" },
   { key: "staffLeaveRecords", label: "教職員提早請假" },
+  { key: "studentLeaveRecords", label: "學生預先請假" },
 ];
 
 function cellText(value: unknown): string {

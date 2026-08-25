@@ -58,6 +58,8 @@ export function createSeed(): AppState {
     staffDailyAbsences: [],
     staffLeaveRecords: [],
     staffLeaveRemovals: [],
+    studentLeaveRecords: [],
+    studentLeaveRemovals: [],
     auditLogs: [],
     dataVersion: OPERATIONAL_DATA_VERSION,
   };
