@@ -153,3 +153,39 @@ export function generatedClassStudents(): Student[] {
   }
   return students;
 }
+
+export function homeroomTeacherIdForClass(className: string): string {
+  return `u-${className.toLowerCase()}`;
+}
+
+/** Keep stored students aligned with the official class-teacher roster. */
+export function syncHomeroomTeachers(students: Student[]): Student[] {
+  return students.map((student) => {
+    const teacherName = CLASS_TEACHERS[student.className];
+    if (!teacherName) return student;
+    const teacherId = homeroomTeacherIdForClass(student.className);
+    if (
+      student.homeroomTeacherName === teacherName &&
+      student.homeroomTeacherId === teacherId
+    ) {
+      return student;
+    }
+    return {
+      ...student,
+      homeroomTeacherId: teacherId,
+      homeroomTeacherName: teacherName,
+    };
+  });
+}
+
+export function studentsHomeroomTeachersChanged(
+  before: Student[],
+  after: Student[]
+): boolean {
+  if (before.length !== after.length) return false;
+  return before.some(
+    (student, index) =>
+      student.homeroomTeacherName !== after[index]?.homeroomTeacherName ||
+      student.homeroomTeacherId !== after[index]?.homeroomTeacherId
+  );
+}

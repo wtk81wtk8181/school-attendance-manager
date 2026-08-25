@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Users, Check } from "lucide-react";
 import { AttendanceMark } from "@/components/attendance-mark";
 import { EmptyState } from "@/components/empty-state";
@@ -30,6 +30,7 @@ import { CLASS_STREAMS, CLASS_TEACHERS } from "@/lib/roster";
 import {
   buildStudentStats,
   classLabel,
+  filterClassNames,
   formatDays,
   formLabel,
   getDayAttendance,
@@ -60,10 +61,16 @@ export default function StudentsPage() {
   const [schoolDay, setSchoolDay] = useState(() => hongKongToday());
   const [saving, setSaving] = useState(false);
 
-  const classes = useMemo(
-    () => [...new Set(visibleStudents.map((item) => item.className))].sort(),
-    [visibleStudents]
-  );
+  const classes = useMemo(() => {
+    const all = [...new Set(visibleStudents.map((item) => item.className))].sort();
+    return filterClassNames(all, form);
+  }, [visibleStudents, form]);
+
+  useEffect(() => {
+    if (form !== "all" && klass !== "all" && !classes.includes(klass)) {
+      setKlass("all");
+    }
+  }, [form, klass, classes]);
 
   const rows = visibleStudents
     .map((student) =>
@@ -259,7 +266,16 @@ export default function StudentsPage() {
         </div>
         {isOffice ? null : (
           <>
-            <Select value={form} onValueChange={(value) => setForm(value ?? "all")}>
+            <Select
+              value={form}
+              onValueChange={(value) => {
+                const nextForm = value ?? "all";
+                setForm(nextForm);
+                if (nextForm !== "all" && klass !== "all" && klass[0] !== nextForm) {
+                  setKlass("all");
+                }
+              }}
+            >
               <SelectTrigger className="w-full md:w-36">
                 <SelectValue placeholder="年級" />
               </SelectTrigger>

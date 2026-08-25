@@ -1,5 +1,6 @@
 import { createSeed, OPERATIONAL_DATA_VERSION } from "@/lib/seed";
 import { normalizeAbsenceRecord } from "@/lib/attendance-extras";
+import { syncHomeroomTeachers } from "@/lib/roster";
 import { applyOfficialStaffRoster } from "@/lib/staff";
 import type {
   AbsenceRecord,
@@ -101,6 +102,10 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     seed.staffMembers
   );
 
+  const students = syncHomeroomTeachers(
+    replaceRoster ? seed.students : (shared.students ?? seed.students)
+  );
+
   return {
     ...seed,
     ...shared,
@@ -109,7 +114,7 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     users: seed.users,
     currentUserId: null,
     selectedClassName: null,
-    students: replaceRoster ? seed.students : (shared.students ?? seed.students),
+    students,
     digestRecipients: shared.digestRecipients ?? seed.digestRecipients,
     staffMembers: staffApplied.members,
     staffRemovals: mergeStaffRemovals(shared.staffRemovals, staffApplied.extraRemovals),
@@ -559,7 +564,7 @@ export function mergeSharedStates(
   return {
     ...base,
     academicYear: seed.academicYear,
-    students: pickStudents(base.students, next.students, seed.students),
+    students: syncHomeroomTeachers(pickStudents(base.students, next.students, seed.students)),
     absences: mergeAbsences(base.absences, next.absences, clearedAttendance),
     warnings: mergeWarnings(base.warnings, next.warnings),
     notifications: mergeNotifications(base.notifications, next.notifications),

@@ -11,6 +11,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, frequentOccurrences, neededWarningTypes } from "@/lib/rules";
+import { studentsHomeroomTeachersChanged } from "@/lib/roster";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
 import { isGenericAttendanceReason } from "@/lib/attendance-extras";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
@@ -378,7 +379,8 @@ function loadLocalState(): AppState {
     if (
       needsOperationalDataReset(parsed) ||
       parsedIds !== mergedIds ||
-      parsedRemovalIds !== mergedRemovalIds
+      parsedRemovalIds !== mergedRemovalIds ||
+      studentsHomeroomTeachersChanged(parsed.students ?? [], merged.students)
     ) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
     }
@@ -495,11 +497,16 @@ async function hydrateFromStorage() {
         dirty = true;
       } else {
         dirty = false;
+        const merged = mergeSharedState(data.state);
         memory = {
-          ...mergeSharedState(data.state),
+          ...merged,
           currentUserId: session.currentUserId,
           selectedClassName: session.selectedClassName,
         };
+        if (studentsHomeroomTeachersChanged(data.state.students ?? [], merged.students)) {
+          dirty = true;
+          persistShared(memory);
+        }
       }
       clearStaleLocalCache();
     } else {

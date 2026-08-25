@@ -44,6 +44,15 @@ export function classLabel(className: string): string {
   return `${form}${stream}`;
 }
 
+export function classMatchesForm(className: string, form: string): boolean {
+  return form === "all" || String(Number(className[0])) === form;
+}
+
+export function filterClassNames(classNames: string[], form: string): string[] {
+  if (form === "all") return classNames;
+  return classNames.filter((name) => classMatchesForm(name, form));
+}
+
 export function listClasses(students: Student[]): string[] {
   const names = new Set(students.map((item) => item.className));
   return allClassNames().filter((name) => names.has(name));

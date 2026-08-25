@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, FileText, FileWarning, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,7 @@ import {
   attendanceStatusLabel,
   buildStudentStats,
   classLabel,
+  filterClassNames,
   formLabel,
   isCountedTowardAbsence,
 } from "@/lib/rules";
@@ -80,10 +81,16 @@ export default function ReportsPage() {
         ? formLabel(Number(form) as FormLevel)
         : "全校";
 
-  const classes = useMemo(
-    () => [...new Set(visibleStudents.map((item) => item.className))].sort(),
-    [visibleStudents]
-  );
+  const classes = useMemo(() => {
+    const all = [...new Set(visibleStudents.map((item) => item.className))].sort();
+    return filterClassNames(all, form);
+  }, [visibleStudents, form]);
+
+  useEffect(() => {
+    if (form !== "all" && klass !== "all" && !classes.includes(klass)) {
+      setKlass("all");
+    }
+  }, [form, klass, classes]);
 
   const filteredStudents = visibleStudents.filter((student) => {
     const matchForm = form === "all" || String(student.form) === form;
@@ -301,7 +308,16 @@ export default function ReportsPage() {
         <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="grid gap-1.5">
             <Label>年級</Label>
-            <Select value={form} onValueChange={(value) => setForm(value ?? "all")}>
+            <Select
+              value={form}
+              onValueChange={(value) => {
+                const nextForm = value ?? "all";
+                setForm(nextForm);
+                if (nextForm !== "all" && klass !== "all" && klass[0] !== nextForm) {
+                  setKlass("all");
+                }
+              }}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>

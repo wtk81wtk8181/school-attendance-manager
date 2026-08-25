@@ -226,28 +226,25 @@ export function DailyStaffSection({ date }: { date: string }) {
         </div>
       )}
 
-      {members.length > 0 ? (
-        <div className="relative max-w-sm">
-          <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="搜尋教職員姓名"
-            className="pl-8"
-          />
-        </div>
-      ) : null}
-
       {members.length === 0 ? (
         <p className="rounded-md border border-dashed px-3 py-4 text-sm text-muted-foreground">
           尚未有教職員名稱。請先開啟對話框新增，例如校長、主任或當日缺席的同事。
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 rounded-xl border bg-white p-3">
+          <div className="relative max-w-sm">
+            <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="搜尋教職員姓名"
+              className="pl-8"
+            />
+          </div>
           {STAFF_ABSENCE_ROWS.map((row) => {
             const selected = new Set(staffIdsForKind(daily, row.kind));
             return (
-              <div key={row.kind} className="rounded-lg border bg-white p-3">
+              <div key={row.kind} className="rounded-lg border bg-[var(--school-paper)]/50 p-3">
                 <p className="text-sm font-medium">{row.label}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {filteredMembers.length === 0 ? (
