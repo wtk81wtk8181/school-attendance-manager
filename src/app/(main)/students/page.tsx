@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/table";
 import { hongKongToday } from "@/lib/digest";
 import { formatPercent } from "@/lib/format";
-import { CLASS_STREAMS, CLASS_TEACHERS, FORMS } from "@/lib/roster";
+import { CLASS_STREAMS, CLASS_TEACHERS } from "@/lib/roster";
 import {
   buildStudentStats,
   classLabel,
@@ -189,43 +189,57 @@ export default function StudentsPage() {
               />
             </div>
           </div>
-          <div className="space-y-1">
-            {FORMS.map((item) => (
-              <div key={item} className="flex items-center gap-2">
-                <p className="w-9 shrink-0 text-[11px] font-medium text-[var(--school-navy)]">
-                  {formLabel(item)}
+          <div className="space-y-3">
+            {(
+              [
+                { label: "初中", forms: [1, 2, 3] as FormLevel[] },
+                { label: "高中", forms: [4, 5, 6] as FormLevel[] },
+              ] as const
+            ).map((group) => (
+              <div key={group.label} className="space-y-1.5">
+                <p className="text-xs font-semibold tracking-wide text-[var(--school-navy)]">
+                  {group.label}
                 </p>
-                <div className="grid min-w-0 flex-1 grid-cols-5 gap-1">
-                  {CLASS_STREAMS.map((stream) => {
-                    const className = `${item}${stream}`;
-                    const selected = klass === className;
-                    const count = state.students.filter(
-                      (student) => student.className === className
-                    ).length;
-                    return (
-                      <button
-                        key={className}
-                        type="button"
-                        onClick={() => setKlass(className)}
-                        className={cn(
-                          "rounded-md border px-1.5 py-0.5 text-center leading-tight transition-colors",
-                          selected
-                            ? "border-[var(--school-navy)] bg-[var(--school-navy)] text-white"
-                            : "bg-[var(--school-paper)] hover:bg-muted"
-                        )}
-                      >
-                        <span className="text-xs font-semibold">{classLabel(className)}</span>
-                        <span
-                          className={cn(
-                            "ml-1 text-[10px]",
-                            selected ? "text-white/75" : "text-muted-foreground"
-                          )}
-                        >
-                          {count}
-                        </span>
-                      </button>
-                    );
-                  })}
+                <div className="space-y-1">
+                  {group.forms.map((item) => (
+                    <div key={item} className="flex items-center gap-2">
+                      <p className="w-9 shrink-0 text-[11px] font-medium text-[var(--school-navy)]">
+                        {formLabel(item)}
+                      </p>
+                      <div className="grid min-w-0 flex-1 grid-cols-5 gap-1">
+                        {CLASS_STREAMS.map((stream) => {
+                          const className = `${item}${stream}`;
+                          const selected = klass === className;
+                          const count = state.students.filter(
+                            (student) => student.className === className
+                          ).length;
+                          return (
+                            <button
+                              key={className}
+                              type="button"
+                              onClick={() => setKlass(className)}
+                              className={cn(
+                                "rounded-md border px-1.5 py-0.5 text-center leading-tight transition-colors",
+                                selected
+                                  ? "border-[var(--school-navy)] bg-[var(--school-navy)] text-white"
+                                  : "bg-[var(--school-paper)] hover:bg-muted"
+                              )}
+                            >
+                              <span className="text-xs font-semibold">{classLabel(className)}</span>
+                              <span
+                                className={cn(
+                                  "ml-1 text-[10px]",
+                                  selected ? "text-white/75" : "text-muted-foreground"
+                                )}
+                              >
+                                {count}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

@@ -91,6 +91,19 @@
   }
   body {
     @apply bg-background text-foreground;
+    position: relative;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url("/school-background-light.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.5;
   }
   html {
     @apply font-sans;
@@ -121,6 +134,10 @@
   html,
   body {
     background: white !important;
+  }
+
+  body::before {
+    display: none !important;
   }
 
   .no-print {
