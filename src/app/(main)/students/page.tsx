@@ -41,6 +41,10 @@ import { isStudentHidden, nextSchoolDate, previousSchoolDate } from "@/lib/hidde
 import type { FormLevel, StudentStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+function laterIso(a: string, b: string): string {
+  return a >= b ? a : b;
+}
+
 export default function StudentsPage() {
   const {
     state,
@@ -130,13 +134,9 @@ export default function StudentsPage() {
     (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "early"
   ).length;
   const today = hongKongToday();
-  const minSchoolDay =
-    state.academicYear.start <= today ? state.academicYear.start : today;
-  const maxSchoolDay =
-    state.academicYear.end >= today ? state.academicYear.end : today;
+  const maxSchoolDay = laterIso(state.academicYear.end, today);
   const previousDay = previousSchoolDate(schoolDay);
   const nextDay = nextSchoolDate(schoolDay);
-  const canGoPrevious = previousDay >= minSchoolDay;
   const canGoNext = nextDay <= maxSchoolDay;
 
   async function changeSchoolDay(next: string) {
@@ -160,7 +160,7 @@ export default function StudentsPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {isOffice
-            ? "請先選班，再為該班每位學生標記當日出席、缺席、遲到、事假、半日缺席或早退。標記後請按「確定儲存」，另一部裝置才會看到。"
+            ? "請先選班，再選擇上課日（包括已過去的日子），為該班標記出席、缺席、遲到、事假、半日缺席或早退。過往日子的更改同樣會寫入平台，標記後請按「確定儲存」。"
             : "點選學生可查看缺席日期、文件與審核狀態。老師帳號為唯讀，可更換班別。"}
         </p>
       </div>
@@ -202,18 +202,17 @@ export default function StudentsPage() {
             <p className="text-sm font-medium">
               按班點名
               <span className="ml-2 text-xs font-normal text-muted-foreground">
-                選班及上課日後可編輯該班出勤；過往日子亦可修改
+                選班後可標記該班出勤。已過去的上課日仍可改選並補記，按「確定儲存」寫入平台。
               </span>
             </p>
             <div className="flex items-center gap-2">
               <Label htmlFor="school-day" className="text-xs">
                 上課日
               </Label>
-              <Input
+              <input
                 id="school-day"
                 type="date"
-                className="h-8 w-40"
-                min={minSchoolDay}
+                className="h-8 w-40 rounded-lg border border-input bg-white px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 max={maxSchoolDay}
                 value={schoolDay}
                 onChange={(event) => void changeSchoolDay(event.target.value)}
@@ -329,10 +328,9 @@ export default function StudentsPage() {
         )}
         {isOffice ? null : (
           <div className="grid gap-1.5">
-            <Input
+            <input
               type="date"
-              className="w-full md:w-44"
-              min={minSchoolDay}
+              className="h-8 w-full rounded-lg border border-input bg-white px-2.5 text-sm outline-none md:w-44 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               max={maxSchoolDay}
               value={schoolDay}
               onChange={(event) => void changeSchoolDay(event.target.value)}
@@ -380,17 +378,15 @@ export default function StudentsPage() {
               variant="outline"
               size="icon"
               className="size-8"
-              disabled={!canGoPrevious}
               onClick={() => void changeSchoolDay(previousDay)}
               aria-label="上一個上課日"
             >
               <ChevronLeft className="size-4" />
             </Button>
-            <Input
+            <input
               id="school-day-record"
               type="date"
-              className="h-8 w-40"
-              min={minSchoolDay}
+              className="h-8 w-40 rounded-lg border border-input bg-white px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               max={maxSchoolDay}
               value={schoolDay}
               onChange={(event) => void changeSchoolDay(event.target.value)}
