@@ -1,6 +1,7 @@
 import { createSeed, OPERATIONAL_DATA_VERSION } from "@/lib/seed";
 import { normalizeAbsenceRecord } from "@/lib/attendance-extras";
 import { syncHomeroomTeachers } from "@/lib/roster";
+import { syncFormAHiddenStudents } from "@/lib/hidden-students";
 import { applyOfficialStaffRoster } from "@/lib/staff";
 import type {
   AbsenceRecord,
@@ -123,7 +124,12 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     staffLeaveRemovals: shared.staffLeaveRemovals ?? seed.staffLeaveRemovals,
     studentLeaveRecords: shared.studentLeaveRecords ?? seed.studentLeaveRecords,
     studentLeaveRemovals: shared.studentLeaveRemovals ?? seed.studentLeaveRemovals,
-    hiddenStudents: shared.hiddenStudents ?? seed.hiddenStudents,
+    hiddenStudents: syncFormAHiddenStudents(
+      students,
+      operational.absences,
+      shared.hiddenStudents ?? seed.hiddenStudents,
+      shared.hiddenStudentRemovals ?? seed.hiddenStudentRemovals
+    ),
     hiddenStudentRemovals: shared.hiddenStudentRemovals ?? seed.hiddenStudentRemovals,
     auditLogs: shared.auditLogs ?? seed.auditLogs,
     dataVersion: OPERATIONAL_DATA_VERSION,
@@ -561,11 +567,19 @@ export function mergeSharedStates(
     next.hiddenStudentRemovals
   );
 
+  const students = syncHomeroomTeachers(pickStudents(base.students, next.students, seed.students));
+  const absences = mergeAbsences(base.absences, next.absences, clearedAttendance);
+  const hiddenMerged = mergeHiddenStudents(
+    base.hiddenStudents,
+    next.hiddenStudents,
+    hiddenStudentRemovals
+  );
+
   return {
     ...base,
     academicYear: seed.academicYear,
-    students: syncHomeroomTeachers(pickStudents(base.students, next.students, seed.students)),
-    absences: mergeAbsences(base.absences, next.absences, clearedAttendance),
+    students,
+    absences,
     warnings: mergeWarnings(base.warnings, next.warnings),
     notifications: mergeNotifications(base.notifications, next.notifications),
     digestLogs: mergeDigestLogs(base.digestLogs, next.digestLogs),
@@ -595,9 +609,10 @@ export function mergeSharedStates(
       studentLeaveRemovals
     ),
     studentLeaveRemovals,
-    hiddenStudents: mergeHiddenStudents(
-      base.hiddenStudents,
-      next.hiddenStudents,
+    hiddenStudents: syncFormAHiddenStudents(
+      students,
+      absences,
+      hiddenMerged,
       hiddenStudentRemovals
     ),
     hiddenStudentRemovals,

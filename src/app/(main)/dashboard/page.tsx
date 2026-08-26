@@ -24,7 +24,7 @@ import {
 } from "@/lib/rules";
 import { formatDate, formatPercent, formatShortDate } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import { formAHiddenStudents } from "@/lib/hidden-students";
+import { formACases } from "@/lib/hidden-students";
 
 export default function DashboardPage() {
   const { state, visibleStudents, currentUser } = useStore();
@@ -59,14 +59,16 @@ export default function DashboardPage() {
   const watchList = [...stats]
     .filter((item) => item.level !== "ok")
     .sort((a, b) => b.countedDays - a.countedDays);
-  const hiddenStudents = formAHiddenStudents(
+  const formAStudents = formACases(
+    state.students,
+    state.absences,
     state.hiddenStudents,
     state.hiddenStudentRemovals
   );
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      {currentUser?.role === "office" && hiddenStudents.length > 0 ? (
+      {currentUser?.role === "office" ? (
         <Card className="border-rose-300 bg-rose-50 shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base text-rose-950">
@@ -74,16 +76,20 @@ export default function DashboardPage() {
               教育局 Form A 申報提醒
             </CardTitle>
             <CardDescription className="text-rose-900/80">
-              以下學生已連續七個上課日缺席（不計算星期六、日），請校務處盡快向教育局申報 Form A。該生已從班別名單隱藏，每日缺席報告的「學生總人數」亦已扣減。
+              連續七個上課日缺席（不計算星期六、日）須向教育局申報 Form A。達標學生會從班別名單隱藏，每日缺席報告的「學生總人數」亦會扣減。
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-rose-950">
-            {hiddenStudents.map((item) => (
-              <p key={item.studentId}>
-                {classLabel(item.className)}　{item.studentName}同學已連續 {item.streak} 個上課日缺席
-                {item.lastAbsentDate ? `（至 ${item.lastAbsentDate}）` : ""}
-              </p>
-            ))}
+            {formAStudents.length === 0 ? (
+              <p>目前沒有學生達到連續七個上課日缺席。</p>
+            ) : (
+              formAStudents.map((item) => (
+                <p key={item.studentId}>
+                  {classLabel(item.className)}　{item.studentName}同學已連續 {item.streak} 個上課日缺席
+                  {item.lastAbsentDate ? `（至 ${item.lastAbsentDate}）` : ""}
+                </p>
+              ))
+            )}
             <div className="pt-1">
               <Button size="sm" variant="outline" render={<Link href="/students" />}>
                 前往學生出勤跟進

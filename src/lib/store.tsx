@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, frequentOccurrences, neededWarningTypes } from "@/lib/rules";
 import { studentsHomeroomTeachersChanged } from "@/lib/roster";
+import { formAHiddenStudentsChanged } from "@/lib/hidden-students";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
 import { isGenericAttendanceReason } from "@/lib/attendance-extras";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
@@ -30,6 +31,7 @@ import {
   CONSECUTIVE_ABSENT_LIMIT,
   consecutiveAbsentStreak,
   isStudentHidden,
+  lastAbsentWeekday,
   visibleRosterStudents,
 } from "@/lib/hidden-students";
 import {
@@ -380,7 +382,8 @@ function loadLocalState(): AppState {
       needsOperationalDataReset(parsed) ||
       parsedIds !== mergedIds ||
       parsedRemovalIds !== mergedRemovalIds ||
-      studentsHomeroomTeachersChanged(parsed.students ?? [], merged.students)
+      studentsHomeroomTeachersChanged(parsed.students ?? [], merged.students) ||
+      formAHiddenStudentsChanged(parsed.hiddenStudents, merged.hiddenStudents)
     ) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
     }
@@ -503,7 +506,10 @@ async function hydrateFromStorage() {
           currentUserId: session.currentUserId,
           selectedClassName: session.selectedClassName,
         };
-        if (studentsHomeroomTeachersChanged(data.state.students ?? [], merged.students)) {
+        if (
+          studentsHomeroomTeachersChanged(data.state.students ?? [], merged.students) ||
+          formAHiddenStudentsChanged(data.state.hiddenStudents, merged.hiddenStudents)
+        ) {
           dirty = true;
           persistShared(memory);
         }
@@ -557,12 +563,7 @@ function applyLongAbsenceHide(state: AppState, student: Student): AppState {
   const streak = consecutiveAbsentStreak(state.absences, student.id);
   if (streak < CONSECUTIVE_ABSENT_LIMIT) return state;
 
-  const lastAbsentDate =
-    state.absences
-      .filter((item) => item.studentId === student.id && item.eclassStatus === "absent")
-      .map((item) => item.date)
-      .sort()
-      .at(-1) ?? "";
+  const lastAbsentDate = lastAbsentWeekday(state.absences, student.id);
 
   return {
     ...state,

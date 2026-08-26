@@ -31,22 +31,33 @@ function isWeekday(isoDate: string): boolean {
   return weekday >= 1 && weekday <= 5;
 }
 
-export function consecutiveAbsentStreak(
+function isFullDayAbsence(status: AbsenceRecord["eclassStatus"]): boolean {
+  return status === "absent" || status === "leave";
+}
+
+export function consecutiveAbsentDates(
   absences: AbsenceRecord[],
   studentId: string
-): number {
-  const dates = [
+): string[] {
+  return [
     ...new Set(
       absences
         .filter(
           (item) =>
             item.studentId === studentId &&
-            item.eclassStatus === "absent" &&
+            isFullDayAbsence(item.eclassStatus) &&
             isWeekday(item.date)
         )
         .map((item) => item.date)
     ),
   ].sort();
+}
+
+export function consecutiveAbsentStreak(
+  absences: AbsenceRecord[],
+  studentId: string
+): number {
+  const dates = consecutiveAbsentDates(absences, studentId);
   if (dates.length === 0) return 0;
 
   const dateSet = new Set(dates);
@@ -63,6 +74,13 @@ export function consecutiveAbsentStreak(
   }
 
   return longest;
+}
+
+export function lastAbsentWeekday(
+  absences: AbsenceRecord[],
+  studentId: string
+): string {
+  return consecutiveAbsentDates(absences, studentId).at(-1) ?? "";
 }
 
 export function hasConsecutiveAbsences(
@@ -112,4 +130,67 @@ export function formAHiddenStudents(
   return (hiddenStudents ?? []).filter((item) =>
     isStudentHidden(hiddenStudents, removals, item.studentId)
   );
+}
+
+export function formACases(
+  students: Student[],
+  absences: AbsenceRecord[],
+  hiddenStudents: HiddenStudent[] | undefined,
+  removals: HiddenStudentRemoval[] | undefined
+): HiddenStudent[] {
+  const byId = new Map<string, HiddenStudent>();
+
+  for (const hidden of formAHiddenStudents(hiddenStudents, removals)) {
+    const streak = consecutiveAbsentStreak(absences, hidden.studentId);
+    byId.set(hidden.studentId, {
+      ...hidden,
+      streak: Math.max(hidden.streak, streak),
+      lastAbsentDate:
+        lastAbsentWeekday(absences, hidden.studentId) || hidden.lastAbsentDate,
+    });
+  }
+
+  for (const student of students) {
+    if (byId.has(student.id)) continue;
+    if ((removals ?? []).some((item) => item.id === student.id)) continue;
+    const streak = consecutiveAbsentStreak(absences, student.id);
+    if (streak < CONSECUTIVE_ABSENT_LIMIT) continue;
+    byId.set(student.id, {
+      id: student.id,
+      studentId: student.id,
+      studentName: student.name,
+      className: student.className,
+      hiddenAt: "",
+      lastAbsentDate: lastAbsentWeekday(absences, student.id),
+      streak,
+    });
+  }
+
+  return [...byId.values()].sort(
+    (a, b) =>
+      a.className.localeCompare(b.className) || a.studentName.localeCompare(b.studentName)
+  );
+}
+
+export function syncFormAHiddenStudents(
+  students: Student[],
+  absences: AbsenceRecord[],
+  hiddenStudents: HiddenStudent[] | undefined,
+  removals: HiddenStudentRemoval[] | undefined
+): HiddenStudent[] {
+  const current = hiddenStudents ?? [];
+  const extra = formACases(students, absences, current, removals).filter(
+    (item) => !isStudentHidden(current, removals, item.studentId)
+  );
+  if (extra.length === 0) return current;
+  return [...extra, ...current.filter((item) => !extra.some((row) => row.studentId === item.studentId))];
+}
+
+export function formAHiddenStudentsChanged(
+  before: HiddenStudent[] | undefined,
+  after: HiddenStudent[] | undefined
+): boolean {
+  const a = (before ?? []).map((item) => item.studentId).sort().join("|");
+  const b = (after ?? []).map((item) => item.studentId).sort().join("|");
+  return a !== b;
 }
