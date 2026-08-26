@@ -1,6 +1,11 @@
 import ExcelJS from "exceljs";
 import { SCHOOL_NAME } from "@/lib/seed";
-import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
+import {
+  formatDailyAbsenceLine,
+  type DailyClassBlock,
+  type DailyAbsenceRow,
+  type DailySchoolReportPayload,
+} from "@/lib/daily-report";
 
 const MING = "新細明體";
 const TIMES = "Times New Roman";
@@ -30,52 +35,11 @@ const MEDIUM_BORDER: Partial<ExcelJS.Borders> = {
   bottom: { style: MEDIUM, color: BLACK },
 };
 
-/**
- * 欄寬貼近學校原版：左欄缺席名單加寬以便影印；
- * 右欄略收，以免底部級別統計被拉得過闊。
- */
-const COLUMN_WIDTHS: Record<number, number> = {
-  1: 7.2,
-  2: 5.2,
-  3: 5.8,
-  4: 4.8,
-  5: 14,
-  6: 14,
-  7: 14,
-  8: 14,
-  9: 14,
-  10: 14,
-  11: 11,
-  12: 11,
-  13: 7.2,
-  14: 5.2,
-  15: 5.8,
-  16: 4.8,
-  17: 9,
-  18: 9,
-  19: 9,
-  20: 9,
-  21: 9,
-  22: 9,
-  23: 11,
-  24: 11,
-};
+/** 每日約 40 人缺席，列印頁最少預留行數（含空白行供手寫） */
+const PRINT_LIST_MIN_ROWS = 40;
 
-const ROWS_PER_CLASS = 5;
-const CLASS_START_ROW = 5;
-const LEFT_COLS = { class: 1, cap: 2, present: 3, early: 4, absences: 5, absencesEnd: 10, enroll: 11, withdraw: 12 };
-const RIGHT_COLS = { class: 13, cap: 14, present: 15, early: 16, absences: 17, absencesEnd: 22, enroll: 23, withdraw: 24 };
-const FORM_COLS = [
-  { start: 17, end: 20 },
-  { start: 21, end: 24 },
-  { start: 25, end: 28 },
-  { start: 29, end: 32 },
-  { start: 33, end: 36 },
-  { start: 37, end: 40 },
-];
-const TOTAL_START = 41;
-const TOTAL_END = 47;
-const CLASS_CODE_START = 16;
+const LEFT_COLS = { class: 1, cap: 2, present: 3, early: 4, absent: 5, note: 6 };
+const RIGHT_COLS = { class: 8, cap: 9, present: 10, early: 11, absent: 12, note: 13 };
 
 export async function buildDailySchoolWorkbook(
   payload: DailySchoolReportPayload
@@ -84,320 +48,360 @@ export async function buildDailySchoolWorkbook(
   workbook.creator = SCHOOL_NAME;
   workbook.created = new Date();
 
-  const sheet = workbook.addWorksheet("每日缺席報告", {
-    views: [{ showGridLines: false }],
-    pageSetup: {
-      paperSize: 9,
-      orientation: "portrait",
-      // 與學校原版相同：固定縮放，避免 fit 成一頁把字壓得看不清
-      fitToPage: false,
-      scale: 61,
-      fitToWidth: 1,
-      fitToHeight: 1,
-      horizontalCentered: true,
-      verticalCentered: true,
-      printArea: "A1:AU90",
-      pageOrder: "downThenOver",
-      blackAndWhite: false,
-      draft: false,
-      showGridLines: false,
-      margins: {
-        left: 0.43,
-        right: 0.31,
-        top: 0.47,
-        bottom: 0.24,
-        header: 0.31,
-        footer: 0.2,
-      },
-    },
-  });
-
-  for (let col = 1; col <= 47; col += 1) {
-    sheet.getColumn(col).width = COLUMN_WIDTHS[col] ?? 4.2;
-  }
-
-  writeTitle(sheet, payload);
-  writeClassHeaders(sheet);
-  writeClassBlocks(sheet, payload.classes.slice(0, 15), LEFT_COLS, CLASS_START_ROW);
-  writeClassBlocks(sheet, payload.classes.slice(15, 30), RIGHT_COLS, CLASS_START_ROW);
-  writeStaffFooter(sheet, payload);
-  writeStatsFooter(sheet, payload);
+  writePrintListSheet(workbook, payload);
+  writeOverviewSheet(workbook, payload);
 
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
 
-function writeTitle(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload) {
-  mergeValue(sheet, 1, 1, 1, 47, `${SCHOOL_NAME}　學生缺席每日報告表`, {
+/** 第 1 頁：缺席明細列印用（預留約 40 行，字大線清） */
+function writePrintListSheet(
+  workbook: ExcelJS.Workbook,
+  payload: DailySchoolReportPayload
+) {
+  const sheet = workbook.addWorksheet("缺席名單（列印）", {
+    views: [{ showGridLines: false }],
+    pageSetup: {
+      paperSize: 9,
+      orientation: "portrait",
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0,
+      horizontalCentered: true,
+      verticalCentered: false,
+      pageOrder: "downThenOver",
+      draft: false,
+      showGridLines: false,
+      margins: {
+        left: 0.5,
+        right: 0.5,
+        top: 0.5,
+        bottom: 0.5,
+        header: 0.25,
+        footer: 0.25,
+      },
+    },
+  });
+
+  const widths = [5, 8, 10, 14, 10, 36, 14, 12];
+  widths.forEach((width, index) => {
+    sheet.getColumn(index + 1).width = width;
+  });
+
+  mergeCells(sheet, 1, 1, 1, 8, `${SCHOOL_NAME}　每日缺席名單（列印用）`, {
     font: { bold: true, size: 16, name: MING, color: { argb: "FFFFFFFF" } },
     alignment: { horizontal: "center", vertical: "middle" },
     fill: TITLE_FILL,
-    border: THIN_BORDER,
+    border: MEDIUM_BORDER,
   });
-  sheet.getRow(1).height = 22;
+  sheet.getRow(1).height = 26;
 
-  mergeValue(sheet, 2, 1, 2, 47, payload.dateLabel, {
-    font: { bold: true, size: 14, name: MING },
+  mergeCells(
+    sheet,
+    2,
+    1,
+    2,
+    8,
+    `${payload.dateLabel}　共 ${payload.rows.length} 人　預留 ${PRINT_LIST_MIN_ROWS} 行`,
+    {
+      font: { bold: true, size: 12, name: MING },
+      alignment: { horizontal: "center", vertical: "middle" },
+      border: THIN_BORDER,
+    }
+  );
+  sheet.getRow(2).height = 20;
+
+  const headers = ["序", "班別", "學號", "姓名", "狀況", "原因／備註", "致電人士", "致電時間"];
+  headers.forEach((text, index) => {
+    styleCell(sheet.getCell(3, index + 1), text, {
+      font: { bold: true, size: 11, name: MING },
+      alignment: { horizontal: "center", vertical: "middle", wrapText: true },
+      fill: HEADER_FILL,
+      border: MEDIUM_BORDER,
+    });
+  });
+  sheet.getRow(3).height = 22;
+  sheet.autoFilter = {
+    from: { row: 3, column: 1 },
+    to: { row: 3, column: 8 },
+  };
+  sheet.views = [{ state: "frozen", ySplit: 3, showGridLines: false }];
+
+  const sorted = [...payload.rows].sort(
+    (a, b) =>
+      a.className.localeCompare(b.className) ||
+      a.studentNo.localeCompare(b.studentNo)
+  );
+  const totalRows = Math.max(PRINT_LIST_MIN_ROWS, sorted.length);
+
+  for (let i = 0; i < totalRows; i += 1) {
+    const rowIndex = 4 + i;
+    const row = sorted[i];
+    const values = row
+      ? [
+          i + 1,
+          row.classLabel || row.className,
+          row.studentNo,
+          row.name,
+          row.status,
+          detailReason(row),
+          row.calledBy && row.calledBy !== "尚未致電" ? row.calledBy : "",
+          row.calledAt && row.calledAt !== "—" ? row.calledAt : "",
+        ]
+      : [i + 1, "", "", "", "", "", "", ""];
+
+    values.forEach((value, col) => {
+      styleCell(sheet.getCell(rowIndex, col + 1), value, {
+        font: { size: 11, name: col === 0 || col === 2 ? TIMES : MING },
+        alignment: {
+          horizontal: col === 5 ? "left" : "center",
+          vertical: "middle",
+          wrapText: true,
+        },
+        border: THIN_BORDER,
+      });
+    });
+    sheet.getRow(rowIndex).height = 22;
+  }
+
+  const endRow = 3 + totalRows;
+  sheet.pageSetup.printArea = `A1:H${endRow}`;
+  sheet.pageSetup.printTitlesRow = "1:3";
+
+  const noteRow = endRow + 2;
+  mergeCells(
+    sheet,
+    noteRow,
+    1,
+    noteRow,
+    8,
+    "註：空白行可供當日補記。列印時請選「適合頁寬」或本工作表預設版面。班別統計見「班別總覽」。",
+    {
+      font: { size: 9, name: MING, italic: true },
+      alignment: { horizontal: "left", vertical: "middle", wrapText: true },
+    }
+  );
+  sheet.getRow(noteRow).height = 18;
+}
+
+function detailReason(row: DailyAbsenceRow): string {
+  if (row.statusKey === "half_absent" || row.statusKey === "early") {
+    return formatDailyAbsenceLine(row).replace(`${row.name}：`, "");
+  }
+  const reason = row.reason.trim() || row.status;
+  const half = row.days === 0.5 ? "（半日）" : "";
+  return `${reason}${half}`;
+}
+
+/** 第 2 頁：班別總覽（人數清楚，缺席只顯示人數，避免擠字） */
+function writeOverviewSheet(
+  workbook: ExcelJS.Workbook,
+  payload: DailySchoolReportPayload
+) {
+  const sheet = workbook.addWorksheet("班別總覽", {
+    views: [{ showGridLines: false }],
+    pageSetup: {
+      paperSize: 9,
+      orientation: "landscape",
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 1,
+      horizontalCentered: true,
+      verticalCentered: true,
+      draft: false,
+      showGridLines: false,
+      margins: {
+        left: 0.4,
+        right: 0.4,
+        top: 0.4,
+        bottom: 0.4,
+        header: 0.2,
+        footer: 0.2,
+      },
+    },
+  });
+
+  const widths = [8, 8, 7, 7, 8, 28, 3, 8, 8, 7, 7, 8, 28];
+  widths.forEach((width, index) => {
+    sheet.getColumn(index + 1).width = width;
+  });
+
+  mergeCells(sheet, 1, 1, 1, 13, `${SCHOOL_NAME}　學生缺席每日報告表（班別總覽）`, {
+    font: { bold: true, size: 16, name: MING, color: { argb: "FFFFFFFF" } },
+    alignment: { horizontal: "center", vertical: "middle" },
+    fill: TITLE_FILL,
+    border: MEDIUM_BORDER,
+  });
+  sheet.getRow(1).height = 24;
+
+  mergeCells(sheet, 2, 1, 2, 13, payload.dateLabel, {
+    font: { bold: true, size: 13, name: MING },
     alignment: { horizontal: "center", vertical: "middle" },
     border: THIN_BORDER,
   });
   sheet.getRow(2).height = 20;
 
-  mergeValue(sheet, 3, 1, 3, 12, "中一至中三", {
+  mergeCells(sheet, 3, 1, 3, 6, "中一至中三", {
     font: { bold: true, size: 12, name: MING },
     alignment: { horizontal: "center", vertical: "middle" },
     fill: HEADER_FILL,
     border: MEDIUM_BORDER,
   });
-  mergeValue(sheet, 3, 13, 3, 24, "中四至中六", {
+  mergeCells(sheet, 3, 8, 3, 13, "中四至中六", {
     font: { bold: true, size: 12, name: MING },
     alignment: { horizontal: "center", vertical: "middle" },
     fill: HEADER_FILL,
     border: MEDIUM_BORDER,
   });
   sheet.getRow(3).height = 18;
+
+  writeOverviewHeaders(sheet, 4, LEFT_COLS);
+  writeOverviewHeaders(sheet, 4, RIGHT_COLS);
+  sheet.getRow(4).height = 24;
+
+  writeOverviewBlocks(sheet, payload.classes.slice(0, 15), LEFT_COLS, 5);
+  writeOverviewBlocks(sheet, payload.classes.slice(15, 30), RIGHT_COLS, 5);
+
+  const summaryStart = 21;
+  writeOverviewSummary(sheet, payload, summaryStart);
+  sheet.pageSetup.printArea = `A1:M${summaryStart + 8}`;
 }
 
-function writeClassHeaders(sheet: ExcelJS.Worksheet) {
-  const headers: Array<[number, number, string]> = [
-    [1, 1, "班別代碼"],
-    [2, 2, "學生總人數"],
-    [3, 3, "出席"],
-    [4, 4, "早退"],
-    [5, 10, "缺席名單及原因"],
-    [11, 11, "新生插班名單"],
-    [12, 12, "退學名單"],
-    [13, 13, "班別代碼"],
-    [14, 14, "學生總人數"],
-    [15, 15, "出席"],
-    [16, 16, "早退"],
-    [17, 22, "缺席名單及原因"],
-    [23, 23, "新生插班名單"],
-    [24, 24, "退學名單"],
+function writeOverviewHeaders(
+  sheet: ExcelJS.Worksheet,
+  row: number,
+  cols: typeof LEFT_COLS
+) {
+  const headers: Array<[number, string]> = [
+    [cols.class, "班別"],
+    [cols.cap, "總人數"],
+    [cols.present, "出席"],
+    [cols.early, "早退"],
+    [cols.absent, "缺席人數"],
+    [cols.note, "缺席摘要（詳見列印名單）"],
   ];
-  for (const [start, end, text] of headers) {
-    mergeValue(sheet, 4, start, 4, end, text, {
+  for (const [col, text] of headers) {
+    styleCell(sheet.getCell(row, col), text, {
       font: { bold: true, size: 11, name: MING },
       alignment: { horizontal: "center", vertical: "middle", wrapText: true },
       fill: HEADER_FILL,
       border: MEDIUM_BORDER,
     });
   }
-  sheet.getRow(4).height = 28;
 }
 
-function writeClassBlocks(
+function writeOverviewBlocks(
   sheet: ExcelJS.Worksheet,
   blocks: DailyClassBlock[],
   cols: typeof LEFT_COLS,
   startRow: number
 ) {
   blocks.forEach((block, index) => {
-    const row = startRow + index * ROWS_PER_CLASS;
-    const end = row + ROWS_PER_CLASS - 1;
-    const center = {
-      font: { size: 11, name: MING },
-      alignment: { horizontal: "center" as const, vertical: "middle" as const, wrapText: true },
-      border: MEDIUM_BORDER,
-    };
+    const row = startRow + index;
+    const summary =
+      block.absenceLines.length === 0
+        ? ""
+        : block.absenceLines.length <= 2
+          ? block.absenceLines.join("；")
+          : `${block.absenceLines.slice(0, 2).join("；")}…共${block.absenceLines.length}人`;
 
-    mergeValue(sheet, row, cols.class, end, cols.class, block.className, {
-      ...center,
-      font: { bold: true, size: 12, name: TIMES },
-    });
-    mergeValue(sheet, row, cols.cap, end, cols.cap, block.registered || "", center);
-    mergeValue(sheet, row, cols.present, end, cols.present, block.present, center);
-    mergeValue(sheet, row, cols.early, end, cols.early, block.earlyLeave || "", center);
+    const cells: Array<[number, ExcelJS.CellValue, Partial<ExcelJS.Font>?]> = [
+      [cols.class, block.className, { bold: true, size: 12, name: TIMES }],
+      [cols.cap, block.registered || "", { size: 11, name: MING }],
+      [cols.present, block.present, { size: 11, name: MING }],
+      [cols.early, block.earlyLeave || "", { size: 11, name: MING }],
+      [cols.absent, block.absentCount || "", { bold: true, size: 11, name: MING }],
+      [cols.note, summary, { size: 10, name: MING }],
+    ];
 
-    // 每列一條缺席，避免合併格換行影印後模糊
-    const lines = block.absenceLines.length > 0 ? block.absenceLines : [""];
-    for (let offset = 0; offset < ROWS_PER_CLASS; offset += 1) {
-      const r = row + offset;
-      const isLast = offset === ROWS_PER_CLASS - 1;
-      const remaining = lines.length - (ROWS_PER_CLASS - 1);
-      const text =
-        isLast && remaining > 1
-          ? lines.slice(ROWS_PER_CLASS - 1).join("；")
-          : (lines[offset] ?? "");
-      mergeValue(sheet, r, cols.absences, r, cols.absencesEnd, text, {
-        font: { size: 11, name: MING },
-        alignment: { horizontal: "left", vertical: "middle", wrapText: true, shrinkToFit: true },
-        border: {
-          left: { style: MEDIUM, color: BLACK },
-          right: { style: MEDIUM, color: BLACK },
-          top: { style: offset === 0 ? MEDIUM : THIN, color: BLACK },
-          bottom: { style: isLast ? MEDIUM : THIN, color: BLACK },
+    for (const [col, value, font] of cells) {
+      styleCell(sheet.getCell(row, col), value, {
+        font: font ?? { size: 11, name: MING },
+        alignment: {
+          horizontal: col === cols.note ? "left" : "center",
+          vertical: "middle",
+          wrapText: true,
         },
+        border: THIN_BORDER,
       });
-      sheet.getRow(r).height = 16;
     }
-
-    mergeValue(sheet, row, cols.enroll, end, cols.enroll, "", center);
-    mergeValue(sheet, row, cols.withdraw, end, cols.withdraw, "", center);
+    sheet.getRow(row).height = 20;
   });
 }
 
-function writeStaffFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload) {
-  mergeValue(sheet, 81, 1, 81, 12, "教職員缺席情況：", {
+function writeOverviewSummary(
+  sheet: ExcelJS.Worksheet,
+  payload: DailySchoolReportPayload,
+  startRow: number
+) {
+  mergeCells(sheet, startRow, 1, startRow, 6, "教職員缺席情況", {
     font: { bold: true, size: 12, name: MING },
-    alignment: { vertical: "middle" },
+    alignment: { horizontal: "left", vertical: "middle" },
+    fill: HEADER_FILL,
+    border: MEDIUM_BORDER,
   });
-  const rows: Array<[number, string, string[]]> = [
-    [83, "病假：", payload.staff.sick],
-    [85, "事假：", payload.staff.personal],
-    [87, "公假：", payload.staff.official],
-    [89, "早退：", payload.staff.early],
-  ];
-  for (const [row, label, names] of rows) {
-    mergeValue(sheet, row, 1, row, 2, label, {
+
+  const staffLines = [
+    ["病假", payload.staff.sick],
+    ["事假", payload.staff.personal],
+    ["公假", payload.staff.official],
+    ["早退", payload.staff.early],
+  ] as const;
+
+  staffLines.forEach(([label, names], index) => {
+    const row = startRow + 1 + index;
+    styleCell(sheet.getCell(row, 1), `${label}：`, {
       font: { bold: true, size: 11, name: MING },
       alignment: { vertical: "middle" },
+      border: THIN_BORDER,
     });
-    mergeValue(sheet, row, 3, row, 12, names.join("、"), {
+    mergeCells(sheet, row, 2, row, 6, names.join("、") || "—", {
       font: { size: 11, name: MING },
       alignment: { vertical: "middle", wrapText: true },
+      border: THIN_BORDER,
     });
     sheet.getRow(row).height = 18;
-  }
-  if (payload.staffLeaveLines.length > 0) {
-    mergeValue(sheet, 82, 1, 82, 2, "預假：", {
-      font: { bold: true, size: 10, name: MING },
-      alignment: { vertical: "middle" },
-    });
-    mergeValue(sheet, 82, 3, 82, 12, payload.staffLeaveLines.join("；"), {
-      font: { size: 10, name: MING },
-      alignment: { vertical: "middle", wrapText: true },
-    });
-    sheet.getRow(82).height = 16;
-  }
-  if (payload.studentLeaveLines.length > 0) {
-    mergeValue(sheet, 80, 1, 80, 2, "學生預假：", {
-      font: { bold: true, size: 10, name: MING },
-      alignment: { vertical: "middle" },
-    });
-    mergeValue(sheet, 80, 3, 80, 12, payload.studentLeaveLines.join("；"), {
-      font: { size: 10, name: MING },
-      alignment: { vertical: "middle", wrapText: true },
-    });
-    sheet.getRow(80).height = 16;
-  }
-}
-
-function writeStatsFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload) {
-  mergeValue(sheet, 81, 13, 81, 16, "級別", headerStyle());
-  payload.formStats.forEach((stat, index) => {
-    const cols = FORM_COLS[index];
-    mergeValue(sheet, 81, cols.start, 81, cols.end, stat.label, headerStyle());
-  });
-  mergeValue(sheet, 81, TOTAL_START, 81, TOTAL_END, "總數", headerStyle());
-
-  writeFormMetric(sheet, 82, "學生出席人數 :", payload.formStats.map((item) => item.present), payload.totalPresent, false);
-  writeFormMetric(sheet, 83, "學生註冊人數 :", payload.formStats.map((item) => item.registered), payload.totalRegistered, false);
-  writeFormMetric(
-    sheet,
-    84,
-    "學生出席百分比% :",
-    payload.formStats.map((item) => item.attendanceRate),
-    payload.totalAttendanceRate,
-    true
-  );
-
-  mergeValue(sheet, 86, 13, 86, 15, "", headerStyle());
-  payload.classes.forEach((block, index) => {
-    const col = CLASS_CODE_START + index;
-    mergeValue(sheet, 86, col, 86, col, block.className, headerStyle(10));
-  });
-  mergeValue(sheet, 86, 46, 86, 47, "TOTAL", headerStyle());
-
-  mergeValue(sheet, 88, 13, 88, 15, "出席百分比 :", labelStyle());
-  payload.classes.forEach((block, index) => {
-    const col = CLASS_CODE_START + index;
-    mergeValue(sheet, 87, col, 87, col, block.absentCount || "", centerStyle());
-    mergeValue(sheet, 88, col, 88, col, block.attendanceRate, {
-      ...centerStyle(),
-      numFmt: "0.00%",
-    });
-  });
-  mergeValue(sheet, 87, 46, 87, 47, payload.totalAbsent, centerStyle());
-  mergeValue(sheet, 88, 46, 88, 47, payload.totalAttendanceRate, {
-    ...centerStyle(),
-    numFmt: "0.00%",
   });
 
-  mergeValue(sheet, 89, 13, 89, 15, "學生遲到人數：", labelStyle());
-  mergeValue(sheet, 90, 13, 90, 15, "守時百分比 :", labelStyle());
-  payload.classes.forEach((block, index) => {
-    const col = CLASS_CODE_START + index;
-    mergeValue(sheet, 89, col, 89, col, block.lateCount || 0, centerStyle());
-    mergeValue(sheet, 90, col, 90, col, block.punctualityRate, {
-      ...centerStyle(),
-      numFmt: "0.00%",
-    });
-  });
-  mergeValue(sheet, 89, 46, 89, 47, payload.totalLate, centerStyle());
-  mergeValue(sheet, 90, 46, 90, 47, payload.schoolPunctualityRate, {
-    ...centerStyle(),
-    numFmt: "0.00%",
-  });
-}
-
-function writeFormMetric(
-  sheet: ExcelJS.Worksheet,
-  row: number,
-  label: string,
-  values: number[],
-  total: number,
-  percent: boolean
-) {
-  mergeValue(sheet, row, 13, row, 16, label, labelStyle());
-  values.forEach((value, index) => {
-    const cols = FORM_COLS[index];
-    mergeValue(sheet, row, cols.start, row, cols.end, value, {
-      ...centerStyle(),
-      numFmt: percent ? "0.00%" : undefined,
-    });
-  });
-  mergeValue(sheet, row, TOTAL_START, row, TOTAL_END, total, {
-    ...centerStyle(),
-    font: { bold: true, size: 10, name: MING },
-    numFmt: percent ? "0.00%" : undefined,
-  });
-}
-
-function headerStyle(size = 10): CellStyle {
-  return {
-    font: { bold: true, size, name: MING },
-    alignment: { horizontal: "center", vertical: "middle", wrapText: true },
-    fill: HEADER_FILL,
-    border: THIN_BORDER,
-  };
-}
-
-function labelStyle(): CellStyle {
-  return {
-    font: { size: 10, name: MING },
-    alignment: { horizontal: "right", vertical: "middle", wrapText: true },
-    border: THIN_BORDER,
-  };
-}
-
-function centerStyle(): CellStyle {
-  return {
-    font: { size: 9, name: TIMES },
+  const right = startRow;
+  mergeCells(sheet, right, 8, right, 13, "全校統計", {
+    font: { bold: true, size: 12, name: MING },
     alignment: { horizontal: "center", vertical: "middle" },
-    border: THIN_BORDER,
-  };
+    fill: HEADER_FILL,
+    border: MEDIUM_BORDER,
+  });
+
+  const stats: Array<[string, string]> = [
+    ["註冊人數", String(payload.totalRegistered)],
+    ["出席人數", String(payload.totalPresent)],
+    ["缺席／請假", String(payload.totalAbsent)],
+    ["出席率", `${(payload.totalAttendanceRate * 100).toFixed(2)}%`],
+  ];
+  stats.forEach(([label, value], index) => {
+    const row = right + 1 + index;
+    styleCell(sheet.getCell(row, 8), label, {
+      font: { bold: true, size: 11, name: MING },
+      alignment: { horizontal: "right", vertical: "middle" },
+      border: THIN_BORDER,
+    });
+    mergeCells(sheet, row, 9, row, 13, value, {
+      font: { size: 12, name: TIMES },
+      alignment: { horizontal: "center", vertical: "middle" },
+      border: THIN_BORDER,
+    });
+    sheet.getRow(row).height = 18;
+  });
 }
 
 interface CellStyle {
   font?: Partial<ExcelJS.Font>;
   alignment?: Partial<ExcelJS.Alignment>;
   fill?: ExcelJS.Fill;
-  numFmt?: string;
   border?: Partial<ExcelJS.Borders>;
 }
 
-function mergeValue(
+function mergeCells(
   sheet: ExcelJS.Worksheet,
   startRow: number,
   startCol: number,
@@ -409,16 +413,30 @@ function mergeValue(
   if (startRow !== endRow || startCol !== endCol) {
     sheet.mergeCells(startRow, startCol, endRow, endCol);
   }
-  const origin = sheet.getCell(startRow, startCol);
-  origin.value = value;
-  if (style.numFmt) origin.numFmt = style.numFmt;
   for (let row = startRow; row <= endRow; row += 1) {
     for (let col = startCol; col <= endCol; col += 1) {
       const cell = sheet.getCell(row, col);
-      cell.border = style.border ?? THIN_BORDER;
-      if (style.font) cell.font = style.font;
-      if (style.alignment) cell.alignment = style.alignment;
-      if (style.fill) cell.fill = style.fill;
+      if (row === startRow && col === startCol) {
+        styleCell(cell, value, style);
+      } else {
+        applyStyleOnly(cell, style);
+      }
     }
   }
+}
+
+function styleCell(
+  cell: ExcelJS.Cell,
+  value: ExcelJS.CellValue,
+  style: CellStyle = {}
+) {
+  cell.value = value;
+  applyStyleOnly(cell, style);
+}
+
+function applyStyleOnly(cell: ExcelJS.Cell, style: CellStyle = {}) {
+  cell.border = style.border ?? THIN_BORDER;
+  if (style.font) cell.font = style.font;
+  if (style.alignment) cell.alignment = style.alignment;
+  if (style.fill) cell.fill = style.fill;
 }
