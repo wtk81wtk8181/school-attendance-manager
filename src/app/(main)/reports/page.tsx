@@ -36,10 +36,11 @@ import { AbsenceDetailFields } from "@/components/absence-detail-fields";
 import { DailyStaffSection } from "@/components/daily-staff-section";
 import { documentLabels, reviewLabels, warningStatusLabels, warningTypeLabels } from "@/components/status-badges";
 import { buildDailyAbsenceRows, buildDailySchoolReport, formatDailyAbsenceLine } from "@/lib/daily-report";
+import { buildLoReport } from "@/lib/lo-report";
 import { hongKongToday, resolveDigestSchoolDay } from "@/lib/digest";
 import { buildMonthlyReport, currentYearMonth, monthRange } from "@/lib/monthly-report";
 import { EmailRecipientPicker } from "@/components/email-recipient-picker";
-import { downloadBase64Xlsx, requestDailyReport, requestMonthlyReport } from "@/lib/digest-client";
+import { downloadBase64Xlsx, requestDailyReport, requestLoReport, requestMonthlyReport } from "@/lib/digest-client";
 import { resolveSendRecipients, persistRecipientEmails } from "@/lib/email-utils";
 import { useStore } from "@/lib/store";
 import type { FormLevel } from "@/lib/types";
@@ -69,10 +70,13 @@ export default function ReportsPage() {
   const [month, setMonth] = useState(currentYearMonth);
   const [monthlyBusy, setMonthlyBusy] = useState(false);
   const [dailyBusy, setDailyBusy] = useState(false);
+  const [loBusy, setLoBusy] = useState(false);
   const [monthlyEmail, setMonthlyEmail] = useState("");
   const [dailyEmail, setDailyEmail] = useState("");
+  const [loEmail, setLoEmail] = useState("");
   const [showMonthlyEmail, setShowMonthlyEmail] = useState(false);
   const [showDailyEmail, setShowDailyEmail] = useState(false);
+  const [showLoEmail, setShowLoEmail] = useState(false);
 
   const dailyScope =
     klass !== "all"
@@ -155,6 +159,19 @@ export default function ReportsPage() {
 
   const monthlyReport = buildMonthlyReport(visibleStudents, state.absences, month);
 
+  const loReport = buildLoReport(
+    visibleStudents,
+    state.absences,
+    reportDay,
+    state.staffMembers,
+    state.staffDailyAbsences,
+    state.staffLeaveRecords,
+    state.studentLeaveRecords,
+    state.hiddenStudents,
+    state.hiddenStudentRemovals,
+    state.academicYear.label
+  );
+
   function exportDailyPdf() {
     const params = new URLSearchParams({
       date: reportDay,
@@ -198,6 +215,42 @@ export default function ReportsPage() {
       toast.error(error instanceof Error ? error.message : "無法產生每日缺席報告。");
     } finally {
       setDailyBusy(false);
+    }
+  }
+
+  async function runLoReport(sendEmail: boolean) {
+    if (sendEmail && !showLoEmail) {
+      setShowLoEmail(true);
+      return;
+    }
+
+    persistRecipientEmails(loEmail, state.digestRecipients, upsertRecipient);
+    const recipients = resolveSendRecipients(state.digestRecipients, loEmail);
+    if (sendEmail && recipients.length === 0) {
+      toast.error("請勾選或輸入至少一個電郵地址。");
+      return;
+    }
+
+    setLoBusy(true);
+    try {
+      const result = await requestLoReport({
+        payload: loReport,
+        sendEmail,
+        recipients: sendEmail ? recipients : [],
+      });
+
+      if (sendEmail) {
+        toast.success(
+          `已將 ${loReport.filename} 電郵予 ${result.recipientCount} 位收件人。`
+        );
+      } else {
+        toast.success(`已產生 ${result.filename}`);
+        downloadBase64Xlsx(result.filename, result.fileBase64);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法產生羅小姐報告。");
+    } finally {
+      setLoBusy(false);
     }
   }
 
@@ -298,7 +351,7 @@ export default function ReportsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">數據導出與報表</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          可按年級、班別與日期篩選，匯出學校格式每日缺席 Excel／PDF、出席率總表、缺席統計，以及警告信存檔清單。
+          可按年級、班別與日期篩選，匯出學校格式每日缺席 Excel／PDF、羅小姐週報、出席率總表、缺席統計，以及警告信存檔清單。
         </p>
       </div>
 
@@ -443,6 +496,47 @@ export default function ReportsPage() {
                 idPrefix="daily"
                 extraEmail={dailyEmail}
                 onExtraEmailChange={setDailyEmail}
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle className="text-base">羅小姐報告</CardTitle>
+            <CardDescription>
+              {formatShortDate(loReport.weekStart)} 至 {formatShortDate(loReport.weekEnd)}
+              　Daily Attendance Record（萬鈞伯裘欄按每日點名生成）
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="lo-report-day">該週上課日</Label>
+              <Input
+                id="lo-report-day"
+                type="date"
+                value={reportDay}
+                onChange={(event) => setReportDay(event.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={loBusy} onClick={() => void runLoReport(false)}>
+                <Download className="size-4" />
+                生成 Excel
+              </Button>
+              <Button
+                variant="outline"
+                disabled={loBusy}
+                onClick={() => void runLoReport(true)}
+              >
+                <Mail className="size-4" />
+                {showLoEmail ? "確認寄出" : "寄出 Email"}
+              </Button>
+            </div>
+            {showLoEmail ? (
+              <EmailRecipientPicker
+                idPrefix="lo"
+                extraEmail={loEmail}
+                onExtraEmailChange={setLoEmail}
               />
             ) : null}
           </CardContent>

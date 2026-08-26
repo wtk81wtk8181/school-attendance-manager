@@ -1,5 +1,6 @@
 import type { DigestPayload } from "@/lib/digest";
 import type { DailyReportPayload } from "@/lib/daily-report";
+import type { LoReportPayload } from "@/lib/lo-report";
 import type { MonthlyReportPayload } from "@/lib/monthly-report";
 
 export interface DigestSendResult {
@@ -57,6 +58,14 @@ export async function requestDailyReport(input: {
   sendEmail: boolean;
 }): Promise<DigestSendResult> {
   return postReport("/api/report/daily", input, "無法產生每日缺席報告。");
+}
+
+export async function requestLoReport(input: {
+  payload: LoReportPayload;
+  recipients: Array<{ name: string; email: string }>;
+  sendEmail: boolean;
+}): Promise<DigestSendResult> {
+  return postReport("/api/report/lo", input, "無法產生羅小姐報告。");
 }
 
 export function downloadBase64Xlsx(filename: string, base64: string) {
