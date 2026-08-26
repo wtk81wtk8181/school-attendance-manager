@@ -59,7 +59,7 @@ function ChineseLetter({
         <h1 className="mt-1 font-serif text-3xl tracking-widest text-[var(--school-navy)]">
           {SCHOOL_NAME}
         </h1>
-        <p className="mt-2 text-sm text-zinc-600">校務處　學生出勤事務</p>
+        <p className="mt-2 text-sm text-zinc-600">學生發展部　學生出勤事務</p>
         <h2 className="mt-4 text-xl font-semibold tracking-wide">
           {isOver
             ? "學生缺席超過上限通知書"
@@ -84,9 +84,8 @@ function ChineseLetter({
           <strong>{classLabel(student.className)}</strong>
           ，學號
           <strong>{student.studentNo}</strong>
-          ，於 2026-2027 學年缺席及遲到合計已達
-          <strong>{letter.triggerDays} 次</strong>
-          ，超過學校規定之 <strong>3 次</strong>出席預警界線，現特此通知。
+          ，於 2026-2027 學年缺席及遲到合計已超過學校規定之 <strong>3 次</strong>
+          出席預警界線，現特此通知。
         </p>
       ) : (
         <p className="mt-4 leading-8">
@@ -98,9 +97,7 @@ function ChineseLetter({
           <strong>{classLabel(student.className)}</strong>
           ，學號
           <strong>{student.studentNo}</strong>
-          ，於 2026-2027 學年累計
-          <strong>計入缺席 {formatDays(letter.triggerDays)} 天</strong>
-          ，已
+          ，於 2026-2027 學年之缺席情況已
           {isOver ? "達至或超過" : "達到"}
           學校缺席上限（{limitNote}）之
           {isOver ? "規定" : "一半"}。
@@ -128,17 +125,20 @@ function ChineseLetter({
 
       <p className="mt-4 leading-8">
         {isOver
-          ? "由於缺席日數已達或超過上限，校務處將啟動跟進程序，或影響學年評核及相關安排。如有特殊原因，請於收信後五個上課日內向本校提交書面說明。"
+          ? "由於缺席日數已達或超過上限，學生部將啟動跟進程序，或影響學年評核及相關安排。如有特殊原因，請盡快書面通知學校。"
           : isFrequent
             ? "現特此預先通知，以免日後觸及缺席上限。如已備妥醫生證明或家長信，請交回校務處審核。"
             : "現特此預先通知，以免日後超過上限。如已備妥醫生證明或家長信，請交回校務處審核。"}
       </p>
 
+      <p className="mt-4 leading-8">若果缺席日數過多，會影響升班。</p>
+
       <p className="mt-8">此致</p>
       <p>家長／監護人</p>
 
       <div className="mt-10 text-right">
-        <p>{SCHOOL_NAME}校務處</p>
+        <p>{SCHOOL_NAME}學生發展部</p>
+        <p className="mt-1 text-sm">此警告信由學生發展部發出</p>
         <p className="mt-1 text-sm text-zinc-600">發出日期：{formatShortDate(letter.issuedAt)}</p>
         <p className="text-sm text-zinc-600">文件編號：{letter.id}</p>
       </div>
@@ -170,7 +170,7 @@ function EnglishLetter({
           {SCHOOL_NAME}
         </h1>
         <p className="mt-2 text-sm text-zinc-600">
-          School Office · Student Attendance
+          Student Development Department · Student Attendance
         </p>
         <h2 className="mt-4 text-xl font-semibold tracking-wide">
           {isOver
@@ -197,10 +197,9 @@ function EnglishLetter({
           <strong> {classLabel(student.className)}</strong>
           , student number
           <strong> {student.studentNo}</strong>
-          , has accumulated
-          <strong> {letter.triggerDays} absence and lateness occurrence(s)</strong>
-          {" "}in the 2026-2027 academic year, exceeding the school alert threshold of{" "}
-          <strong>3 occurrences</strong>.
+          , has exceeded the school alert threshold of{" "}
+          <strong>3 combined absence and lateness occurrences</strong>
+          {" "}in the 2026-2027 academic year.
         </p>
       ) : (
         <p className="mt-4 leading-8">
@@ -213,12 +212,10 @@ function EnglishLetter({
           <strong> {classLabel(student.className)}</strong>
           , student number
           <strong> {student.studentNo}</strong>
-          , has accumulated
-          <strong> {formatDays(letter.triggerDays)} counted absence day(s)</strong>
-          {" "}in the 2026-2027 academic year, which has
-          {isOver ? " reached or exceeded " : " reached "}
-          {isOver ? "the school absence limit" : "half of the school absence limit"}
-          {" "}({limitNote}).
+          , has
+          {isOver ? " reached or exceeded " : " reached half of "}
+          the school absence limit
+          {" "}({limitNote}) in the 2026-2027 academic year.
         </p>
       )}
 
@@ -248,18 +245,23 @@ function EnglishLetter({
 
       <p className="mt-4 leading-8">
         {isOver
-          ? "As the absence days have reached or exceeded the limit, the School Office will start follow-up procedures, which may affect academic assessment and related arrangements. If there are special reasons, please submit a written explanation within five school days of this notice."
+          ? "As the absence has reached or exceeded the limit, the Student Affairs Office will start follow-up procedures, which may affect academic assessment and related arrangements. If there are special reasons, please notify the school in writing as soon as possible."
           : isFrequent
             ? "This is an advance notice to help avoid reaching the absence limit. If a medical certificate or parent letter is ready, please return it to the School Office for review."
             : "This is an advance notice to help avoid exceeding the limit. If a medical certificate or parent letter is ready, please return it to the School Office for review."}
       </p>
 
+      <p className="mt-4 leading-8">
+        Excessive absence may affect promotion to the next form.
+      </p>
+
       <p className="mt-8">Yours faithfully,</p>
-      <p>School Office</p>
+      <p>Student Development Department</p>
       <p>{SCHOOL_NAME_EN}</p>
 
       <div className="mt-10 text-right">
-        <p>{SCHOOL_NAME_EN} School Office</p>
+        <p>{SCHOOL_NAME_EN} Student Development Department</p>
+        <p className="mt-1 text-sm">This warning letter is issued by the Student Development Department.</p>
         <p className="mt-1 text-sm text-zinc-600">
           Date of issue: {formatShortDate(letter.issuedAt)}
         </p>
