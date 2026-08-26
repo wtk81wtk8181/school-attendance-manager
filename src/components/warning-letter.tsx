@@ -1,14 +1,47 @@
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
-import { classLabel, formatDays, formLabel } from "@/lib/rules";
+import { classLabel, formatDays, formLabel, formLabelEn } from "@/lib/rules";
 import { formatDate, formatShortDate } from "@/lib/format";
-import type { Student, WarningLetter } from "@/lib/types";
+import type { Student, WarningLetter as WarningLetterRecord } from "@/lib/types";
 
-export function WarningLetter({
+type LetterLocale = "zh" | "en";
+
+export function WarningLetterBundle({
   student,
   letter,
 }: {
   student: Student;
-  letter: WarningLetter;
+  letter: WarningLetterRecord;
+}) {
+  return (
+    <div className="space-y-8 print:space-y-0">
+      <WarningLetter student={student} letter={letter} locale="zh" />
+      <WarningLetter student={student} letter={letter} locale="en" />
+    </div>
+  );
+}
+
+export function WarningLetter({
+  student,
+  letter,
+  locale = "zh",
+}: {
+  student: Student;
+  letter: WarningLetterRecord;
+  locale?: LetterLocale;
+}) {
+  return locale === "en" ? (
+    <EnglishLetter student={student} letter={letter} />
+  ) : (
+    <ChineseLetter student={student} letter={letter} />
+  );
+}
+
+function ChineseLetter({
+  student,
+  letter,
+}: {
+  student: Student;
+  letter: WarningLetterRecord;
 }) {
   const isOver = letter.type === "over_limit";
   const isFrequent = letter.type === "frequent";
@@ -34,6 +67,7 @@ export function WarningLetter({
               ? "學生出席預警通知書（缺席／遲到）"
               : "學生缺席預警通知書"}
         </h2>
+        <p className="mt-1 text-xs text-zinc-500">中文版本</p>
       </header>
 
       <p className="mt-8 text-right text-sm">日期：{formatDate(letter.issuedAt)}</p>
@@ -107,6 +141,129 @@ export function WarningLetter({
         <p>{SCHOOL_NAME}校務處</p>
         <p className="mt-1 text-sm text-zinc-600">發出日期：{formatShortDate(letter.issuedAt)}</p>
         <p className="text-sm text-zinc-600">文件編號：{letter.id}</p>
+      </div>
+    </article>
+  );
+}
+
+function EnglishLetter({
+  student,
+  letter,
+}: {
+  student: Student;
+  letter: WarningLetterRecord;
+}) {
+  const isOver = letter.type === "over_limit";
+  const isFrequent = letter.type === "frequent";
+  const limitNote =
+    student.form === 6
+      ? "S.6 students must not be absent for more than 4.5 days"
+      : "S.1 to S.5 students must not be absent for more than 9 days";
+
+  return (
+    <article className="letter-sheet letter-sheet-en mx-auto bg-white text-zinc-900">
+      <header className="border-b-2 border-[var(--school-navy)] pb-4 text-center">
+        <p className="text-xs tracking-[0.3em] text-[var(--school-gold)]">
+          {SCHOOL_NAME_EN}
+        </p>
+        <h1 className="mt-1 font-serif text-3xl tracking-widest text-[var(--school-navy)]">
+          {SCHOOL_NAME}
+        </h1>
+        <p className="mt-2 text-sm text-zinc-600">
+          School Office · Student Attendance
+        </p>
+        <h2 className="mt-4 text-xl font-semibold tracking-wide">
+          {isOver
+            ? "Notice of Absence Exceeding the Limit"
+            : isFrequent
+              ? "Attendance Alert (Absence / Lateness)"
+              : "Absence Alert Notice"}
+        </h2>
+        <p className="mt-1 text-xs text-zinc-500">English version</p>
+      </header>
+
+      <p className="mt-8 text-right text-sm">Date: {formatDate(letter.issuedAt)}</p>
+
+      <p className="mt-6">Dear Parent / Guardian,</p>
+
+      {isFrequent ? (
+        <p className="mt-4 leading-8">
+          School records show that your child
+          <strong>
+            {" "}
+            {student.name} ({student.nameEn})
+          </strong>
+          , class
+          <strong> {classLabel(student.className)}</strong>
+          , student number
+          <strong> {student.studentNo}</strong>
+          , has accumulated
+          <strong> {letter.triggerDays} absence and lateness occurrence(s)</strong>
+          {" "}in the 2026-2027 academic year, exceeding the school alert threshold of{" "}
+          <strong>3 occurrences</strong>.
+        </p>
+      ) : (
+        <p className="mt-4 leading-8">
+          School records show that your child
+          <strong>
+            {" "}
+            {student.name} ({student.nameEn})
+          </strong>
+          , class
+          <strong> {classLabel(student.className)}</strong>
+          , student number
+          <strong> {student.studentNo}</strong>
+          , has accumulated
+          <strong> {formatDays(letter.triggerDays)} counted absence day(s)</strong>
+          {" "}in the 2026-2027 academic year, which has
+          {isOver ? " reached or exceeded " : " reached "}
+          {isOver ? "the school absence limit" : "half of the school absence limit"}
+          {" "}({limitNote}).
+        </p>
+      )}
+
+      <div className="mt-4 rounded border border-zinc-200 bg-zinc-50 p-4 text-sm leading-7">
+        <p className="font-medium">School rules (summary)</p>
+        <ul className="mt-2 list-disc pl-5">
+          <li>S.1 to S.5: absence must not exceed 9 days; an alert is issued at 4 days.</li>
+          <li>S.6: absence must not exceed 4.5 days; an alert is issued at 2 days.</li>
+          <li>
+            Combined absence and lateness exceeding 3 occurrences will trigger an automatic alert.
+          </li>
+          <li>
+            Approved leave (medical certificate or parent letter) is not counted towards the
+            absence limit and does not affect the attendance rate.
+          </li>
+          <li>
+            Unapproved leave or unexplained absence is counted and will lower the attendance rate.
+          </li>
+        </ul>
+      </div>
+
+      <p className="mt-4 leading-8">
+        {isFrequent
+          ? `Your child is currently in ${formLabelEn(student.form)}. Please pay attention to attendance. If there is lateness or absence for a special reason, please submit a medical certificate or parent letter to the School Office as soon as possible, and contact the class teacher, ${student.homeroomTeacherName}.`
+          : `Your child is currently in ${formLabelEn(student.form)}. The absence limit is ${formatDays(letter.limitDays)} day(s). Please submit supporting documents to the School Office as soon as possible, and contact the class teacher, ${student.homeroomTeacherName}, so that we may follow up together.`}
+      </p>
+
+      <p className="mt-4 leading-8">
+        {isOver
+          ? "As the absence days have reached or exceeded the limit, the School Office will start follow-up procedures, which may affect academic assessment and related arrangements. If there are special reasons, please submit a written explanation within five school days of this notice."
+          : isFrequent
+            ? "This is an advance notice to help avoid reaching the absence limit. If a medical certificate or parent letter is ready, please return it to the School Office for review."
+            : "This is an advance notice to help avoid exceeding the limit. If a medical certificate or parent letter is ready, please return it to the School Office for review."}
+      </p>
+
+      <p className="mt-8">Yours faithfully,</p>
+      <p>School Office</p>
+      <p>{SCHOOL_NAME_EN}</p>
+
+      <div className="mt-10 text-right">
+        <p>{SCHOOL_NAME_EN} School Office</p>
+        <p className="mt-1 text-sm text-zinc-600">
+          Date of issue: {formatShortDate(letter.issuedAt)}
+        </p>
+        <p className="text-sm text-zinc-600">Document no.: {letter.id}</p>
       </div>
     </article>
   );

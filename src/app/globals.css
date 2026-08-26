@@ -105,6 +105,10 @@
   box-sizing: border-box;
 }
 
+.letter-sheet-en {
+  margin-top: 1.5rem;
+}
+
 .daily-school-sheet {
   width: 297mm;
   max-width: 100%;
@@ -132,6 +136,12 @@
     min-height: auto;
     padding: 0;
     box-shadow: none !important;
+  }
+
+  .letter-sheet-en {
+    break-before: page;
+    page-break-before: always;
+    margin-top: 0;
   }
 
   .daily-school-sheet {

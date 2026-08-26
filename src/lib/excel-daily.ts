@@ -112,14 +112,14 @@ function writeTitle(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload)
 function writeClassHeaders(sheet: ExcelJS.Worksheet) {
   const headers: Array<[number, number, string]> = [
     [1, 1, "班別代碼"],
-    [2, 2, "課室容額"],
+    [2, 2, "學生總人數"],
     [3, 3, "出席"],
     [4, 4, "早退"],
     [5, 10, "缺席名單及原因"],
     [11, 11, "新生插班名單"],
     [12, 12, "退學名單"],
     [13, 13, "班別代碼"],
-    [14, 14, "課室容額"],
+    [14, 14, "學生總人數"],
     [15, 15, "出席"],
     [16, 16, "早退"],
     [17, 22, "缺席名單及原因"],

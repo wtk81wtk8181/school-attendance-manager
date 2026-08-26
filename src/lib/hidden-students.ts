@@ -18,6 +18,19 @@ export function nextSchoolDate(isoDate: string): string {
   return weekdayUtc(isoDate) === 5 ? addUtcDays(isoDate, 3) : addUtcDays(isoDate, 1);
 }
 
+/** 上一個上課日：平日前一天；星期一之前是星期五。 */
+export function previousSchoolDate(isoDate: string): string {
+  const weekday = weekdayUtc(isoDate);
+  if (weekday === 1) return addUtcDays(isoDate, -3);
+  if (weekday === 0) return addUtcDays(isoDate, -2);
+  return addUtcDays(isoDate, -1);
+}
+
+function isWeekday(isoDate: string): boolean {
+  const weekday = weekdayUtc(isoDate);
+  return weekday >= 1 && weekday <= 5;
+}
+
 export function consecutiveAbsentStreak(
   absences: AbsenceRecord[],
   studentId: string
@@ -25,7 +38,12 @@ export function consecutiveAbsentStreak(
   const dates = [
     ...new Set(
       absences
-        .filter((item) => item.studentId === studentId && item.eclassStatus === "absent")
+        .filter(
+          (item) =>
+            item.studentId === studentId &&
+            item.eclassStatus === "absent" &&
+            isWeekday(item.date)
+        )
         .map((item) => item.date)
     ),
   ].sort();
@@ -85,4 +103,13 @@ export function visibleRosterStudents(
 ): Student[] {
   const hiddenIds = hiddenStudentIdSet(hiddenStudents, removals);
   return students.filter((student) => !hiddenIds.has(student.id));
+}
+
+export function formAHiddenStudents(
+  hiddenStudents: HiddenStudent[] | undefined,
+  removals: HiddenStudentRemoval[] | undefined
+): HiddenStudent[] {
+  return (hiddenStudents ?? []).filter((item) =>
+    isStudentHidden(hiddenStudents, removals, item.studentId)
+  );
 }

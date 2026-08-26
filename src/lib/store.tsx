@@ -582,8 +582,8 @@ function applyLongAbsenceHide(state: AppState, student: Student): AppState {
       {
         id: `nt-hidden-${student.id}-${Date.now()}`,
         createdAt: nowIso(),
-        title: `${student.name}同學已連續七天缺席`,
-        body: `${classLabel(student.className)}　${student.name}已連續 ${streak} 天缺席，已從班別名單隱藏並扣減該班一人。`,
+        title: `${student.name}同學已連續七天缺席（需申報教育局 Form A）`,
+        body: `${classLabel(student.className)}　${student.name}已連續 ${streak} 個上課日缺席（不計星期六、日），已從班別名單隱藏。請校務處向教育局申報 Form A。`,
         kind: "warning",
         studentId: student.id,
         read: false,
@@ -998,7 +998,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (status === "absent" && !wasHidden && hiddenNow) {
         const studentName =
           memory.students.find((item) => item.id === studentId)?.name ?? "該";
-        toast.warning(`${studentName}同學已連續七天缺席，已從班別名單隱藏。`);
+        toast.warning(
+          `${studentName}同學已連續七個上課日缺席（不計星期六、日），已從班別名單隱藏。請申報教育局 Form A。`
+        );
       } else if (extrasTouched && currentStatus === status) {
         toast.success("已更新時間／早退資料。請按「確定儲存」寫入資料庫。");
       } else {

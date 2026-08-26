@@ -25,6 +25,10 @@ export function formLabel(form: FormLevel): string {
   return ["", "中一", "中二", "中三", "中四", "中五", "中六"][form] ?? `中${form}`;
 }
 
+export function formLabelEn(form: FormLevel): string {
+  return `S.${form}`;
+}
+
 const statusLabels = {
   present: "出席",
   absent: "缺席",

@@ -24,7 +24,7 @@ import {
 } from "@/lib/rules";
 import { formatDate, formatPercent, formatShortDate } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import { isStudentHidden } from "@/lib/hidden-students";
+import { formAHiddenStudents } from "@/lib/hidden-students";
 
 export default function DashboardPage() {
   const { state, visibleStudents, currentUser } = useStore();
@@ -59,12 +59,40 @@ export default function DashboardPage() {
   const watchList = [...stats]
     .filter((item) => item.level !== "ok")
     .sort((a, b) => b.countedDays - a.countedDays);
-  const hiddenStudents = (state.hiddenStudents ?? []).filter((item) =>
-    isStudentHidden(state.hiddenStudents, state.hiddenStudentRemovals, item.studentId)
+  const hiddenStudents = formAHiddenStudents(
+    state.hiddenStudents,
+    state.hiddenStudentRemovals
   );
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
+      {currentUser?.role === "office" && hiddenStudents.length > 0 ? (
+        <Card className="border-rose-300 bg-rose-50 shadow-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base text-rose-950">
+              <AlertTriangle className="size-4" />
+              教育局 Form A 申報提醒
+            </CardTitle>
+            <CardDescription className="text-rose-900/80">
+              以下學生已連續七個上課日缺席（不計算星期六、日），請校務處盡快向教育局申報 Form A。該生已從班別名單隱藏，每日缺席報告的「學生總人數」亦已扣減。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-rose-950">
+            {hiddenStudents.map((item) => (
+              <p key={item.studentId}>
+                {classLabel(item.className)}　{item.studentName}同學已連續 {item.streak} 個上課日缺席
+                {item.lastAbsentDate ? `（至 ${item.lastAbsentDate}）` : ""}
+              </p>
+            ))}
+            <div className="pt-1">
+              <Button size="sm" variant="outline" render={<Link href="/students" />}>
+                前往學生出勤跟進
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">出勤總覽</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -73,29 +101,6 @@ export default function DashboardPage() {
             : `正在檢閱 ${currentUser?.title} 負責班級，僅供查閱。`}
         </p>
       </div>
-
-      {currentUser?.role === "office" && hiddenStudents.length > 0 ? (
-        <Card className="shadow-none border-amber-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">連續七天缺席</CardTitle>
-            <CardDescription>
-              這些學生已從班別名單隱藏，該班人數已扣減。可到學生出勤頁加回。
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-1 text-sm">
-            {hiddenStudents.map((item) => (
-              <p key={item.studentId}>
-                {classLabel(item.className)}　{item.studentName}同學已連續七天缺席
-              </p>
-            ))}
-            <div className="pt-2">
-              <Button size="sm" variant="outline" render={<Link href="/students" />}>
-                前往學生出勤
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="shadow-none sm:col-span-2 xl:col-span-4">

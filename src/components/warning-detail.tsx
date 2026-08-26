@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/empty-state";
-import { WarningLetter } from "@/components/warning-letter";
+import { WarningLetterBundle } from "@/components/warning-letter";
 import { WarningStatusBadge, WarningTypeBadge } from "@/components/status-badges";
 import { formatDateTime } from "@/lib/format";
 import { useStore } from "@/lib/store";
@@ -44,7 +44,7 @@ export function WarningDetail({ id }: { id: string }) {
             <ArrowLeft className="size-3.5" />
             返回存檔
           </Button>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">警告信預覽</h1>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">警告信預覽（中英對照）</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <WarningTypeBadge type={letter.type} />
             <WarningStatusBadge status={letter.status} />
@@ -52,12 +52,12 @@ export function WarningDetail({ id }: { id: string }) {
         </div>
         <Button onClick={() => window.print()}>
           <Printer className="size-4" />
-          下載／列印 PDF
+          下載／列印 PDF（中英）
         </Button>
       </div>
 
       <div className="overflow-auto rounded-xl border bg-zinc-200/60 p-4 print:border-0 print:bg-white print:p-0">
-        <WarningLetter student={student} letter={letter} />
+        <WarningLetterBundle student={student} letter={letter} />
       </div>
 
       <Card className="no-print shadow-none">

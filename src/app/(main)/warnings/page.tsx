@@ -29,7 +29,7 @@ export default function WarningsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">警告信</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          學生計入缺席達上限一半、超過上限，或缺席＋遲到合計超過 3 次時，平台會自動發出警告信並電郵通知指定收件人。
+          學生計入缺席達上限一半、超過上限，或缺席＋遲到合計超過 3 次時，平台會自動發出警告信（中文及英文版本一次過產生）並電郵通知指定收件人。
           {currentUser?.role === "homeroom" ? "班主任可預覽及列印，但不能登記跟進。" : ""}
         </p>
       </div>
@@ -78,7 +78,7 @@ export default function WarningsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" variant="outline" render={<Link href={`/warnings/${letter.id}`} />}>
-                        預覽／PDF
+                        預覽／PDF（中英）
                       </Button>
                     </TableCell>
                   </TableRow>

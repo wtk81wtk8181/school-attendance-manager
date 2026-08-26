@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Users, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Users, Check } from "lucide-react";
 import { AttendanceMark } from "@/components/attendance-mark";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { hongKongToday } from "@/lib/digest";
-import { formatPercent } from "@/lib/format";
+import { formatDate, formatPercent } from "@/lib/format";
 import { CLASS_STREAMS, CLASS_TEACHERS } from "@/lib/roster";
 import {
   buildStudentStats,
@@ -37,7 +37,7 @@ import {
   progressPercent,
 } from "@/lib/rules";
 import { useStore } from "@/lib/store";
-import { isStudentHidden } from "@/lib/hidden-students";
+import { isStudentHidden, nextSchoolDate, previousSchoolDate } from "@/lib/hidden-students";
 import type { FormLevel, StudentStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -129,6 +129,28 @@ export default function StudentsPage() {
   const selectedDayEarly = rows.filter(
     (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "early"
   ).length;
+  const today = hongKongToday();
+  const minSchoolDay =
+    state.academicYear.start <= today ? state.academicYear.start : today;
+  const maxSchoolDay =
+    state.academicYear.end >= today ? state.academicYear.end : today;
+  const previousDay = previousSchoolDate(schoolDay);
+  const nextDay = nextSchoolDate(schoolDay);
+  const canGoPrevious = previousDay >= minSchoolDay;
+  const canGoNext = nextDay <= maxSchoolDay;
+
+  async function changeSchoolDay(next: string) {
+    if (!next || next === schoolDay) return;
+    if (isOffice && pendingSave && usingDatabase) {
+      setSaving(true);
+      try {
+        await saveToDatabase();
+      } finally {
+        setSaving(false);
+      }
+    }
+    setSchoolDay(next);
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
@@ -180,7 +202,7 @@ export default function StudentsPage() {
             <p className="text-sm font-medium">
               按班點名
               <span className="ml-2 text-xs font-normal text-muted-foreground">
-                選班後可編輯該班當日狀態
+                選班及上課日後可編輯該班出勤；過往日子亦可修改
               </span>
             </p>
             <div className="flex items-center gap-2">
@@ -191,8 +213,10 @@ export default function StudentsPage() {
                 id="school-day"
                 type="date"
                 className="h-8 w-40"
+                min={minSchoolDay}
+                max={maxSchoolDay}
                 value={schoolDay}
-                onChange={(event) => setSchoolDay(event.target.value)}
+                onChange={(event) => void changeSchoolDay(event.target.value)}
               />
             </div>
           </div>
@@ -308,8 +332,10 @@ export default function StudentsPage() {
             <Input
               type="date"
               className="w-full md:w-44"
+              min={minSchoolDay}
+              max={maxSchoolDay}
               value={schoolDay}
-              onChange={(event) => setSchoolDay(event.target.value)}
+              onChange={(event) => void changeSchoolDay(event.target.value)}
               aria-label="上課日"
             />
           </div>
@@ -328,10 +354,75 @@ export default function StudentsPage() {
       </div>
 
       {rows.length > 0 ? (
+        <div className="flex flex-col gap-3 rounded-xl border bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">
+              {klass !== "all" ? classLabel(klass) : "本班"}
+              {selectedTeacher ? (
+                <span className="ml-2 font-normal text-muted-foreground">
+                  班主任 {selectedTeacher}
+                </span>
+              ) : null}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {formatDate(schoolDay)}
+              {isOffice
+                ? "　可改選過往上課日補記出勤；標記後請按「確定儲存」寫入平台"
+                : "　可改選上課日檢視該日紀錄（唯讀）"}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Label htmlFor="school-day-record" className="text-sm font-medium">
+              上課日
+            </Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-8"
+              disabled={!canGoPrevious}
+              onClick={() => void changeSchoolDay(previousDay)}
+              aria-label="上一個上課日"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Input
+              id="school-day-record"
+              type="date"
+              className="h-8 w-40"
+              min={minSchoolDay}
+              max={maxSchoolDay}
+              value={schoolDay}
+              onChange={(event) => void changeSchoolDay(event.target.value)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-8"
+              disabled={!canGoNext}
+              onClick={() => void changeSchoolDay(nextDay)}
+              aria-label="下一個上課日"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+            {schoolDay !== today ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void changeSchoolDay(today)}
+              >
+                回到今天
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {rows.length > 0 ? (
         <p className="text-sm text-muted-foreground">
-          {klass !== "all" ? classLabel(klass) : "本班"}
-          {selectedTeacher ? `　班主任 ${selectedTeacher}` : ""}
-          　上課日 {schoolDay}：出席 {selectedDayPresent}　缺席 {selectedDayAbsent}　半日缺席{" "}
+          {schoolDay}：出席 {selectedDayPresent}　缺席 {selectedDayAbsent}　半日缺席{" "}
           {selectedDayHalf}　遲到 {selectedDayLate}　事假 {selectedDayLeave}　早退 {selectedDayEarly}
           {hiddenInView.length > 0 ? `　已隱藏 ${hiddenInView.length} 人` : ""}
         </p>
@@ -340,7 +431,7 @@ export default function StudentsPage() {
       {isOffice && hiddenInView.length > 0 ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-medium text-amber-950">
-            連續七天缺席而隱藏的學生（已從該班人數扣除）
+            連續七個上課日缺席（不計星期六、日），需向教育局申報 Form A；已從該班學生總人數扣除
           </p>
           <ul className="mt-2 space-y-2">
             {hiddenInView.map((item) => (
@@ -349,7 +440,7 @@ export default function StudentsPage() {
                 className="flex flex-wrap items-center justify-between gap-2 text-sm text-amber-950"
               >
                 <span>
-                  {classLabel(item.className)}　{item.studentName}同學已連續七天缺席
+                  {classLabel(item.className)}　{item.studentName}同學已連續七個上課日缺席
                   {item.lastAbsentDate ? `（至 ${item.lastAbsentDate}）` : ""}
                 </span>
                 <Button
@@ -388,7 +479,7 @@ export default function StudentsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>學生</TableHead>
-                    <TableHead>當日出勤</TableHead>
+                    <TableHead>當日出勤（{schoolDay}）</TableHead>
                     <TableHead>出席率</TableHead>
                     <TableHead>計入缺席</TableHead>
                     <TableHead>獲批請假</TableHead>

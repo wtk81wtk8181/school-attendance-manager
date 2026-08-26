@@ -250,7 +250,7 @@ function ClassColumn({
         <thead>
           <tr className="bg-slate-100 text-center">
             <th className="border border-zinc-300 px-1 py-1">班別代碼</th>
-            <th className="border border-zinc-300 px-1 py-1">課室容額</th>
+            <th className="border border-zinc-300 px-1 py-1">學生總人數</th>
             <th className="border border-zinc-300 px-1 py-1">出席</th>
             <th className="border border-zinc-300 px-1 py-1">早退</th>
             <th className="border border-zinc-300 px-1 py-1 text-left">缺席名單及原因</th>

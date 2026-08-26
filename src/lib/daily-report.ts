@@ -28,7 +28,10 @@ import type {
   StaffMember,
   Student,
   StudentLeaveRecord,
+  HiddenStudent,
+  HiddenStudentRemoval,
 } from "@/lib/types";
+import { visibleRosterStudents } from "@/lib/hidden-students";
 
 export interface DailyAbsenceRow {
   id: string;
@@ -165,21 +168,24 @@ export function buildDailySchoolReport(
   staffDailyAbsences: StaffDailyAbsence[] = [],
   scope = "全校",
   staffLeaveRecords: StaffLeaveRecord[] = [],
-  studentLeaveRecords: StudentLeaveRecord[] = []
+  studentLeaveRecords: StudentLeaveRecord[] = [],
+  hiddenStudents: HiddenStudent[] = [],
+  hiddenStudentRemovals: HiddenStudentRemoval[] = []
 ): DailySchoolReportPayload {
+  const roster = visibleRosterStudents(students, hiddenStudents, hiddenStudentRemovals);
   const rows = buildDailyAbsenceRows(
-    students,
+    roster,
     absences,
     schoolDay,
     studentLeaveRecords
   );
-  const studentIds = new Set(students.map((item) => item.id));
+  const studentIds = new Set(roster.map((item) => item.id));
   const dayStudentLeaves = studentLeavesForDate(studentLeaveRecords, schoolDay).filter(
     (item) => studentIds.has(item.studentId)
   );
   const classNames = allClassNames();
   const classes: DailyClassBlock[] = classNames.map((className) => {
-    const classStudents = students.filter((item) => item.className === className);
+    const classStudents = roster.filter((item) => item.className === className);
     const classRows = rows.filter((item) => item.className === className);
     const notPresent = classRows.filter(
       (item) =>
