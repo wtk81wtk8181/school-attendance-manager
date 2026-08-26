@@ -1,5 +1,5 @@
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
-import { classLabel, formatDays, formLabel, formLabelEn } from "@/lib/rules";
+import { classLabel, formLabel, formLabelEn } from "@/lib/rules";
 import { formatDate, formatShortDate } from "@/lib/format";
 import type { Student, WarningLetter as WarningLetterRecord } from "@/lib/types";
 
@@ -45,10 +45,6 @@ function ChineseLetter({
 }) {
   const isOver = letter.type === "over_limit";
   const isFrequent = letter.type === "frequent";
-  const limitNote =
-    student.form === 6
-      ? "中六學生缺席不可超過 4.5 天"
-      : "中一至中五學生缺席不可超過 9 天";
 
   return (
     <article className="letter-sheet mx-auto bg-white text-zinc-900">
@@ -84,8 +80,7 @@ function ChineseLetter({
           <strong>{classLabel(student.className)}</strong>
           ，學號
           <strong>{student.studentNo}</strong>
-          ，於 2026-2027 學年缺席及遲到合計已超過學校規定之 <strong>3 次</strong>
-          出席預警界線，現特此通知。
+          ，於 2026-2027 學年缺席及遲到合計已超過學校出席預警界線，現特此通知。
         </p>
       ) : (
         <p className="mt-4 leading-8">
@@ -98,9 +93,8 @@ function ChineseLetter({
           ，學號
           <strong>{student.studentNo}</strong>
           ，於 2026-2027 學年之缺席情況已
-          {isOver ? "達至或超過" : "達到"}
-          學校缺席上限（{limitNote}）之
-          {isOver ? "規定" : "一半"}。
+          {isOver ? "達至或超過學校缺席上限" : "達到學校缺席上限之一半"}
+          。
         </p>
       )}
 
@@ -118,9 +112,7 @@ function ChineseLetter({
       <p className="mt-4 leading-8">
         {isFrequent
           ? `該生現時就讀${formLabel(student.form)}。請家長留意子弟出勤情況，如遲到或有特殊原因缺席，請盡早向校務處提交醫生證明或家長信，並與班主任${student.homeroomTeacherName}老師聯絡。`
-          : `該生現時就讀${formLabel(student.form)}
-        ，缺席上限為 ${formatDays(letter.limitDays)} 天。請家長盡快向校務處補交相關證明文件，並與班主任
-        ${student.homeroomTeacherName}老師聯絡，共同跟進出勤情況。`}
+          : `該生現時就讀${formLabel(student.form)}。請家長盡快向校務處補交相關證明文件，並與班主任${student.homeroomTeacherName}老師聯絡，共同跟進出勤情況。`}
       </p>
 
       <p className="mt-4 leading-8">
@@ -155,10 +147,6 @@ function EnglishLetter({
 }) {
   const isOver = letter.type === "over_limit";
   const isFrequent = letter.type === "frequent";
-  const limitNote =
-    student.form === 6
-      ? "S.6 students must not be absent for more than 4.5 days"
-      : "S.1 to S.5 students must not be absent for more than 9 days";
 
   return (
     <article className="letter-sheet letter-sheet-en mx-auto bg-white text-zinc-900">
@@ -197,9 +185,7 @@ function EnglishLetter({
           <strong> {classLabel(student.className)}</strong>
           , student number
           <strong> {student.studentNo}</strong>
-          , has exceeded the school alert threshold of{" "}
-          <strong>3 combined absence and lateness occurrences</strong>
-          {" "}in the 2026-2027 academic year.
+          , has exceeded the school attendance alert threshold in the 2026-2027 academic year.
         </p>
       ) : (
         <p className="mt-4 leading-8">
@@ -214,8 +200,7 @@ function EnglishLetter({
           <strong> {student.studentNo}</strong>
           , has
           {isOver ? " reached or exceeded " : " reached half of "}
-          the school absence limit
-          {" "}({limitNote}) in the 2026-2027 academic year.
+          the school absence limit in the 2026-2027 academic year.
         </p>
       )}
 
@@ -240,7 +225,7 @@ function EnglishLetter({
       <p className="mt-4 leading-8">
         {isFrequent
           ? `Your child is currently in ${formLabelEn(student.form)}. Please pay attention to attendance. If there is lateness or absence for a special reason, please submit a medical certificate or parent letter to the School Office as soon as possible, and contact the class teacher, ${student.homeroomTeacherName}.`
-          : `Your child is currently in ${formLabelEn(student.form)}. The absence limit is ${formatDays(letter.limitDays)} day(s). Please submit supporting documents to the School Office as soon as possible, and contact the class teacher, ${student.homeroomTeacherName}, so that we may follow up together.`}
+          : `Your child is currently in ${formLabelEn(student.form)}. Please submit supporting documents to the School Office as soon as possible, and contact the class teacher, ${student.homeroomTeacherName}, so that we may follow up together.`}
       </p>
 
       <p className="mt-4 leading-8">
