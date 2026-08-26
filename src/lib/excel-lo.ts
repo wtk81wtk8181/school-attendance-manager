@@ -14,7 +14,7 @@ const YELLOW: ExcelJS.Fill = {
 };
 const THIN: Partial<ExcelJS.Border> = { style: "thin", color: BLACK };
 const MEDIUM: Partial<ExcelJS.Border> = { style: "medium", color: BLACK };
-const COLS = 29;
+const COLS = 11;
 const DAY_METRIC_ROWS = 4;
 const STUDENT_START = 6;
 const STAFF_HEADER_ROW = 27;
@@ -22,28 +22,16 @@ const STAFF_START = 28;
 const TEACHER_ROWS = 6;
 const STAFF_ROWS_PER_DAY = 8;
 
-interface SchoolBlock {
-  name: string;
-  labelCol: number;
-  formStart: number;
-  spacerCol: number;
-  totalCol: number;
-  startCol: number;
-  endCol: number;
-}
+const SCHOOL = {
+  name: "萬鈞伯裘",
+  labelCol: 3,
+  formStart: 4,
+  totalCol: 11,
+  startCol: 3,
+  endCol: 11,
+};
 
-const SCHOOLS: SchoolBlock[] = [
-  { name: "萬鈞伯裘", labelCol: 3, formStart: 4, spacerCol: 10, totalCol: 11, startCol: 3, endCol: 11 },
-  { name: "萬鈞匯知", labelCol: 12, formStart: 13, spacerCol: 19, totalCol: 20, startCol: 12, endCol: 20 },
-  { name: "萬鈞毅智", labelCol: 21, formStart: 22, spacerCol: 28, totalCol: 29, startCol: 21, endCol: 29 },
-];
-
-const PAK_KAU = SCHOOLS[0];
-
-const COLUMN_WIDTHS = [
-  6.13, 5.25, 5.13, 7, 7, 7, 7, 7, 7, 5.13, 9.88, 4.75, 5.13, 5.13, 5.13, 5.13, 5.75, 5.13,
-  5.13, 5.63, 4.5, 5.13, 5.13, 5.13, 5.13, 5.75, 5.13, 6, 7.13,
-];
+const COLUMN_WIDTHS = [8, 8, 6, 8, 8, 8, 8, 8, 8, 5.5, 10];
 
 export async function buildLoWorkbook(payload: LoReportPayload): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
@@ -58,7 +46,7 @@ export async function buildLoWorkbook(payload: LoReportPayload): Promise<Buffer>
       fitToPage: true,
       fitToWidth: 1,
       fitToHeight: 1,
-      printArea: `A1:AC${STAFF_START + STAFF_ROWS_PER_DAY * 5 - 1}`,
+      printArea: `A1:K${STAFF_START + STAFF_ROWS_PER_DAY * 5 - 1}`,
       margins: {
         left: 0.5,
         right: 0.5,
@@ -105,19 +93,17 @@ function writeTitle(sheet: ExcelJS.Worksheet, payload: LoReportPayload) {
   writeCell(sheet, 2, 2, "", {
     border: { top: MEDIUM, bottom: THIN },
   });
-  for (const school of SCHOOLS) {
-    sheet.mergeCells(2, school.startCol, 2, school.endCol);
-    writeRangeBorder(sheet, 2, school.startCol, 2, school.endCol, {
-      left: MEDIUM,
-      top: MEDIUM,
-      bottom: THIN,
-      right: MEDIUM,
-    });
-    const cell = sheet.getCell(2, school.startCol);
-    cell.value = school.name;
-    cell.font = { size: 12, name: MING };
-    cell.alignment = { horizontal: "center", vertical: "middle" };
-  }
+  sheet.mergeCells(2, SCHOOL.startCol, 2, SCHOOL.endCol);
+  writeRangeBorder(sheet, 2, SCHOOL.startCol, 2, SCHOOL.endCol, {
+    left: MEDIUM,
+    top: MEDIUM,
+    bottom: THIN,
+    right: MEDIUM,
+  });
+  const schoolTitle = sheet.getCell(2, SCHOOL.startCol);
+  schoolTitle.value = SCHOOL.name;
+  schoolTitle.font = { size: 12, name: MING };
+  schoolTitle.alignment = { horizontal: "center", vertical: "middle" };
 }
 
 function writeStudentHeaders(sheet: ExcelJS.Worksheet, payload: LoReportPayload) {
@@ -125,52 +111,47 @@ function writeStudentHeaders(sheet: ExcelJS.Worksheet, payload: LoReportPayload)
   sheet.getRow(4).height = 14.1;
   sheet.getRow(5).height = 14.1;
 
-  for (const school of SCHOOLS) {
-    writeCell(sheet, 4, school.labelCol, "班級", {
-      font: { size: 8, name: MING },
-      alignment: { horizontal: "center", shrinkToFit: true },
-      border: { left: MEDIUM, right: THIN },
-    });
-    for (let form = 0; form < 6; form += 1) {
-      writeCell(sheet, 4, school.formStart + form, `S${form + 1}`, {
-        font: { size: 8, name: TIMES },
-        alignment: { horizontal: "center" },
-        border: { left: THIN },
-      });
-    }
-    writeCell(sheet, 4, school.totalCol, "Total", {
+  writeCell(sheet, 4, SCHOOL.labelCol, "班級", {
+    font: { size: 8, name: MING },
+    alignment: { horizontal: "center", shrinkToFit: true },
+    border: { left: MEDIUM, right: THIN },
+  });
+  for (let form = 0; form < 6; form += 1) {
+    writeCell(sheet, 4, SCHOOL.formStart + form, `S${form + 1}`, {
       font: { size: 8, name: TIMES },
       alignment: { horizontal: "center" },
-      border: { right: MEDIUM },
+      border: { left: THIN },
     });
-
-    writeCell(sheet, 5, school.labelCol, "班數", {
-      font: { size: 8, name: MING },
-      alignment: { horizontal: "center", shrinkToFit: true },
-      border: { left: MEDIUM, right: THIN, bottom: THIN },
-    });
-    for (let form = 0; form < 6; form += 1) {
-      const isPakKau = school === PAK_KAU;
-      writeCell(sheet, 5, school.formStart + form, isPakKau ? payload.classCounts[form] : "", {
-        font: { bold: true, size: 8, name: TIMES, color: BLUE },
-        alignment: { horizontal: "center" },
-        border: { bottom: THIN, left: THIN },
-      });
-    }
-    writeCell(
-      sheet,
-      5,
-      school.totalCol,
-      school === PAK_KAU
-        ? { formula: `SUM(${colLetter(school.formStart)}5:${colLetter(school.formStart + 5)}5)` }
-        : "",
-      {
-        font: { bold: true, size: 8, name: TIMES, color: BLUE },
-        alignment: { horizontal: "center" },
-        border: { right: MEDIUM, bottom: THIN },
-      }
-    );
   }
+  writeCell(sheet, 4, SCHOOL.totalCol, "Total", {
+    font: { size: 8, name: TIMES },
+    alignment: { horizontal: "center" },
+    border: { right: MEDIUM },
+  });
+
+  writeCell(sheet, 5, SCHOOL.labelCol, "班數", {
+    font: { size: 8, name: MING },
+    alignment: { horizontal: "center", shrinkToFit: true },
+    border: { left: MEDIUM, right: THIN, bottom: THIN },
+  });
+  for (let form = 0; form < 6; form += 1) {
+    writeCell(sheet, 5, SCHOOL.formStart + form, payload.classCounts[form], {
+      font: { bold: true, size: 8, name: TIMES, color: BLUE },
+      alignment: { horizontal: "center" },
+      border: { bottom: THIN, left: THIN },
+    });
+  }
+  writeCell(
+    sheet,
+    5,
+    SCHOOL.totalCol,
+    { formula: `SUM(${colLetter(SCHOOL.formStart)}5:${colLetter(SCHOOL.formStart + 5)}5)` },
+    {
+      font: { bold: true, size: 8, name: TIMES, color: BLUE },
+      alignment: { horizontal: "center" },
+      border: { right: MEDIUM, bottom: THIN },
+    }
+  );
 }
 
 function writeStudentDay(sheet: ExcelJS.Worksheet, day: LoDayStudentStats, dayIndex: number) {
@@ -180,11 +161,10 @@ function writeStudentDay(sheet: ExcelJS.Worksheet, day: LoDayStudentStats, dayIn
     sheet.getRow(start + offset).height = 14.1;
   }
 
-  writeCell(sheet, start, 1, excelDate(day.date), {
+  writeCell(sheet, start, 1, slashDate(day.date), {
     font: { size: 12, name: TIMES },
     alignment: { horizontal: "center" },
     border: { left: MEDIUM, top: THIN },
-    numFmt: "dd/mm",
   });
   writeCell(sheet, start, 2, day.weekdayLabel, {
     font: { size: 8, name: MING },
@@ -196,91 +176,85 @@ function writeStudentDay(sheet: ExcelJS.Worksheet, day: LoDayStudentStats, dayIn
     writeCell(sheet, start + offset, 2, "", {});
   }
 
-  for (const school of SCHOOLS) {
-    labels.forEach((label, offset) => {
-      const row = start + offset;
-      const isAbsent = label === "缺席";
-      const isLast = offset === DAY_METRIC_ROWS - 1;
-      writeCell(sheet, row, school.labelCol, label, {
-        font: { size: 8, name: label === "%" ? TIMES : MING },
-        alignment: { horizontal: "center", shrinkToFit: true },
-        border: {
-          left: MEDIUM,
-          right: THIN,
-          top: offset === 0 ? THIN : undefined,
-          bottom: isLast ? MEDIUM : undefined,
-        },
-        fill: isAbsent ? YELLOW : undefined,
-      });
+  labels.forEach((label, offset) => {
+    const row = start + offset;
+    const isAbsent = label === "缺席";
+    const isLast = offset === DAY_METRIC_ROWS - 1;
+    writeCell(sheet, row, SCHOOL.labelCol, label, {
+      font: { size: 8, name: label === "%" ? TIMES : MING },
+      alignment: { horizontal: "center", shrinkToFit: true },
+      border: {
+        left: MEDIUM,
+        right: THIN,
+        top: offset === 0 ? THIN : undefined,
+        bottom: isLast ? MEDIUM : undefined,
+      },
+      fill: isAbsent ? YELLOW : undefined,
     });
+  });
 
-    for (let form = 0; form < 6; form += 1) {
-      const col = school.formStart + form;
-      const stat = school === PAK_KAU ? day.forms[form] : undefined;
-      const hasData = Boolean(stat && stat.registered > 0);
-      writeMetricCell(sheet, start, col, hasData ? stat!.present : "", false, THIN);
-      writeMetricCell(sheet, start + 1, col, hasData ? stat!.registered : "", false, THIN);
-      writeMetricCell(sheet, start + 2, col, hasData ? stat!.attendanceRate : "", true, THIN);
-      writeCell(
-        sheet,
-        start + 3,
-        col,
-        hasData
-          ? { formula: `${colLetter(col)}${start + 1}-${colLetter(col)}${start}` }
-          : "",
-        {
-          font: { size: 8, name: TIMES, color: RED },
-          alignment: { horizontal: "center", vertical: "middle", wrapText: true },
-          border: { bottom: MEDIUM, left: THIN },
-          fill: YELLOW,
-        }
-      );
-    }
-
-    const firstForm = colLetter(school.formStart);
-    const lastForm = colLetter(school.formStart + 5);
-    writeMetricCell(
-      sheet,
-      start,
-      school.totalCol,
-      school === PAK_KAU ? { formula: `SUM(${firstForm}${start}:${lastForm}${start})` } : "",
-      false,
-      MEDIUM,
-      "right"
-    );
-    writeMetricCell(
-      sheet,
-      start + 1,
-      school.totalCol,
-      school === PAK_KAU ? { formula: `SUM(${firstForm}${start + 1}:${lastForm}${start + 1})` } : "",
-      false,
-      MEDIUM,
-      "right"
-    );
-    writeMetricCell(
-      sheet,
-      start + 2,
-      school.totalCol,
-      school === PAK_KAU && day.totalRegistered > 0 ? day.totalAttendanceRate : "",
-      true,
-      MEDIUM,
-      "right"
-    );
+  for (let form = 0; form < 6; form += 1) {
+    const col = SCHOOL.formStart + form;
+    const stat = day.forms[form];
+    const hasData = Boolean(stat && stat.registered > 0);
+    writeMetricCell(sheet, start, col, hasData ? stat.present : "", false, THIN);
+    writeMetricCell(sheet, start + 1, col, hasData ? stat.registered : "", false, THIN);
+    writeMetricCell(sheet, start + 2, col, hasData ? stat.attendanceRate : "", true, THIN);
     writeCell(
       sheet,
       start + 3,
-      school.totalCol,
-      school === PAK_KAU
-        ? { formula: `SUM(${firstForm}${start + 3}:${lastForm}${start + 3})` }
-        : "",
+      col,
+      hasData ? { formula: `${colLetter(col)}${start + 1}-${colLetter(col)}${start}` } : "",
       {
         font: { size: 8, name: TIMES, color: RED },
         alignment: { horizontal: "center", vertical: "middle", wrapText: true },
-        border: { right: MEDIUM, bottom: MEDIUM },
+        border: { bottom: MEDIUM, left: THIN },
         fill: YELLOW,
       }
     );
   }
+
+  const firstForm = colLetter(SCHOOL.formStart);
+  const lastForm = colLetter(SCHOOL.formStart + 5);
+  writeMetricCell(
+    sheet,
+    start,
+    SCHOOL.totalCol,
+    { formula: `SUM(${firstForm}${start}:${lastForm}${start})` },
+    false,
+    MEDIUM,
+    "right"
+  );
+  writeMetricCell(
+    sheet,
+    start + 1,
+    SCHOOL.totalCol,
+    { formula: `SUM(${firstForm}${start + 1}:${lastForm}${start + 1})` },
+    false,
+    MEDIUM,
+    "right"
+  );
+  writeMetricCell(
+    sheet,
+    start + 2,
+    SCHOOL.totalCol,
+    day.totalRegistered > 0 ? day.totalAttendanceRate : "",
+    true,
+    MEDIUM,
+    "right"
+  );
+  writeCell(
+    sheet,
+    start + 3,
+    SCHOOL.totalCol,
+    { formula: `SUM(${firstForm}${start + 3}:${lastForm}${start + 3})` },
+    {
+      font: { size: 8, name: TIMES, color: RED },
+      alignment: { horizontal: "center", vertical: "middle", wrapText: true },
+      border: { right: MEDIUM, bottom: MEDIUM },
+      fill: YELLOW,
+    }
+  );
 }
 
 function writeStaffSection(sheet: ExcelJS.Worksheet, payload: LoReportPayload) {
@@ -292,19 +266,17 @@ function writeStaffSection(sheet: ExcelJS.Worksheet, payload: LoReportPayload) {
   sheet.getRow(STAFF_HEADER_ROW).height = 16.5;
   writeCell(sheet, STAFF_HEADER_ROW, 1, "", { border: { left: MEDIUM, top: MEDIUM, bottom: MEDIUM } });
   writeCell(sheet, STAFF_HEADER_ROW, 2, "", { border: { top: MEDIUM, bottom: MEDIUM } });
-  for (const school of SCHOOLS) {
-    sheet.mergeCells(STAFF_HEADER_ROW, school.startCol, STAFF_HEADER_ROW, school.endCol);
-    writeRangeBorder(sheet, STAFF_HEADER_ROW, school.startCol, STAFF_HEADER_ROW, school.endCol, {
-      left: MEDIUM,
-      top: MEDIUM,
-      bottom: MEDIUM,
-      right: MEDIUM,
-    });
-    const cell = sheet.getCell(STAFF_HEADER_ROW, school.startCol);
-    cell.value = school.name;
-    cell.font = { size: 12, name: MING };
-    cell.alignment = { horizontal: "center", vertical: "middle" };
-  }
+  sheet.mergeCells(STAFF_HEADER_ROW, SCHOOL.startCol, STAFF_HEADER_ROW, SCHOOL.endCol);
+  writeRangeBorder(sheet, STAFF_HEADER_ROW, SCHOOL.startCol, STAFF_HEADER_ROW, SCHOOL.endCol, {
+    left: MEDIUM,
+    top: MEDIUM,
+    bottom: MEDIUM,
+    right: MEDIUM,
+  });
+  const staffTitle = sheet.getCell(STAFF_HEADER_ROW, SCHOOL.startCol);
+  staffTitle.value = SCHOOL.name;
+  staffTitle.font = { size: 12, name: MING };
+  staffTitle.alignment = { horizontal: "center", vertical: "middle" };
 
   payload.staffDays.forEach((day, index) => writeStaffDay(sheet, day, index));
 }
@@ -318,7 +290,7 @@ function writeStaffDay(sheet: ExcelJS.Worksheet, day: LoDayStaff, dayIndex: numb
   for (let offset = 0; offset < STAFF_ROWS_PER_DAY; offset += 1) {
     sheet.getRow(start + offset).height = 26.45;
     const isLast = offset === STAFF_ROWS_PER_DAY - 1;
-    writeCell(sheet, start + offset, 1, offset === 0 ? excelDate(day.date) : "", {
+    writeCell(sheet, start + offset, 1, offset === 0 ? slashDate(day.date) : "", {
       font: { size: 12, name: TIMES },
       alignment: { horizontal: "center" },
       border: {
@@ -326,7 +298,6 @@ function writeStaffDay(sheet: ExcelJS.Worksheet, day: LoDayStaff, dayIndex: numb
         top: offset === 0 ? THIN : undefined,
         bottom: isLast ? MEDIUM : undefined,
       },
-      numFmt: offset === 0 ? "dd/mm" : undefined,
     });
     writeCell(sheet, start + offset, 2, offset === 0 ? day.weekdayLabel : "", {
       font: { size: 8, name: MING },
@@ -335,32 +306,28 @@ function writeStaffDay(sheet: ExcelJS.Worksheet, day: LoDayStaff, dayIndex: numb
     });
   }
 
-  for (const school of SCHOOLS) {
-    const isPakKau = school === PAK_KAU;
-    writeStaffLabelRow(sheet, start, school, "老師", false);
-    for (let extra = 1; extra < TEACHER_ROWS; extra += 1) {
-      writeStaffLabelRow(sheet, start + extra, school, "", false);
-    }
-    writeStaffLabelRow(sheet, start + TEACHER_ROWS, school, "職員", false);
-    writeStaffLabelRow(sheet, start + TEACHER_ROWS + 1, school, "校工", true);
-
-    writeStaffNames(sheet, start, school, isPakKau ? teacherLines[0] ?? "" : "", false, true);
-    for (let extra = 1; extra < TEACHER_ROWS; extra += 1) {
-      writeStaffNames(sheet, start + extra, school, isPakKau ? teacherLines[extra] ?? "" : "", false, false);
-    }
-    writeStaffNames(sheet, start + TEACHER_ROWS, school, isPakKau ? officeLines[0] ?? "" : "", false, false);
-    writeStaffNames(sheet, start + TEACHER_ROWS + 1, school, isPakKau ? janitorLines[0] ?? "" : "", true, false);
+  writeStaffLabelRow(sheet, start, "老師", false);
+  for (let extra = 1; extra < TEACHER_ROWS; extra += 1) {
+    writeStaffLabelRow(sheet, start + extra, "", false);
   }
+  writeStaffLabelRow(sheet, start + TEACHER_ROWS, "職員", false);
+  writeStaffLabelRow(sheet, start + TEACHER_ROWS + 1, "校工", true);
+
+  writeStaffNames(sheet, start, teacherLines[0] ?? "", false, true);
+  for (let extra = 1; extra < TEACHER_ROWS; extra += 1) {
+    writeStaffNames(sheet, start + extra, teacherLines[extra] ?? "", false, false);
+  }
+  writeStaffNames(sheet, start + TEACHER_ROWS, officeLines[0] ?? "", false, false);
+  writeStaffNames(sheet, start + TEACHER_ROWS + 1, janitorLines[0] ?? "", true, false);
 }
 
 function writeStaffLabelRow(
   sheet: ExcelJS.Worksheet,
   row: number,
-  school: SchoolBlock,
   label: string,
   last: boolean
 ) {
-  writeCell(sheet, row, school.labelCol, label, {
+  writeCell(sheet, row, SCHOOL.labelCol, label, {
     font: { size: 7, name: MING },
     alignment: { horizontal: "center" },
     border: {
@@ -374,13 +341,12 @@ function writeStaffLabelRow(
 function writeStaffNames(
   sheet: ExcelJS.Worksheet,
   row: number,
-  school: SchoolBlock,
   text: string,
   last: boolean,
   first: boolean
 ) {
-  const startCol = school.formStart;
-  const endCol = school.endCol;
+  const startCol = SCHOOL.formStart;
+  const endCol = SCHOOL.endCol;
   sheet.mergeCells(row, startCol, row, endCol);
   writeRangeBorder(sheet, row, startCol, row, endCol, {
     left: THIN,
@@ -461,9 +427,9 @@ function chunkJoin(items: string[], size: number, maxLines: number): string[] {
   return kept;
 }
 
-function excelDate(iso: string): Date {
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day));
+function slashDate(iso: string): string {
+  const [, month, day] = iso.split("-");
+  return `${Number(day)}/${Number(month)}`;
 }
 
 function colLetter(col: number): string {

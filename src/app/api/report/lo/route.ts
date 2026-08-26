@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "缺少羅小姐報告資料。" }, { status: 400 });
   }
 
-  const filename = body.payload.filename || `Daily Attendance Report ${body.payload.weekLabel} (羅小姐).xlsx`;
+  const filename = body.payload.filename || `Daily Attendance Report (羅小姐) ${body.payload.weekLabel}.xlsx`;
   const buffer = await buildLoWorkbook(body.payload);
   const enabledRecipients = (body.recipients ?? []).filter((item) => item.email);
 
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     try {
       await sendMail({
         fromName: `${SCHOOL_NAME}校務處`,
-        subject: `【${SCHOOL_NAME}】羅小姐報告 ${body.payload.weekLabel}`,
+        subject: `【${SCHOOL_NAME}】${filename.replace(/\.xlsx$/, "")}`,
         html: loEmailHtml(body.payload, enabledRecipients),
         recipients: enabledRecipients,
         attachments: [
@@ -81,8 +81,7 @@ function loEmailHtml(
 
   return `
     <p>各位同事：</p>
-    <p>附件為 <strong>${SCHOOL_NAME}</strong> ${formatShortDate(payload.weekStart)} 至 ${formatShortDate(payload.weekEnd)} 之<strong>羅小姐報告</strong>（Daily Attendance Record，Excel）。</p>
-    <p>萬鈞伯裘欄已按該週每日點名資料填入；萬鈞匯知、萬鈞毅智欄位留空，可於 Excel 補上。</p>
+    <p>附件為 <strong>${SCHOOL_NAME}</strong> ${formatShortDate(payload.weekStart)} 至 ${formatShortDate(payload.weekEnd)} 之<strong>羅小姐報告</strong>（Daily Attendance Record，Excel，只含萬鈞伯裘）。</p>
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px">
       <thead>
         <tr>

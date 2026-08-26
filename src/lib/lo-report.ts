@@ -56,6 +56,7 @@ export interface LoDayStaff {
 
 export interface LoReportPayload {
   academicYearLabel: string;
+  schoolDay: string;
   weekStart: string;
   weekEnd: string;
   weekLabel: string;
@@ -76,9 +77,9 @@ export function weekdaysOf(weekStart: string): string[] {
   return [0, 1, 2, 3, 4].map((offset) => addUtcDays(weekStart, offset));
 }
 
-export function loWeekFileLabel(weekStart: string): string {
-  const [, month, day] = weekStart.split("-");
-  return `${Number(day)}-${Number(month)}`;
+export function loWeekFileLabel(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-");
+  return `${Number(day)}-${Number(month)}-${year}`;
 }
 
 export function buildLoReport(
@@ -97,6 +98,7 @@ export function buildLoReport(
   const dates = weekdaysOf(weekStart);
   const weekEnd = dates[dates.length - 1];
   const weekLabel = loWeekFileLabel(weekStart);
+  const dayLabel = loWeekFileLabel(schoolDay);
   const classCounts = FORMS.map(() => CLASS_STREAMS.length);
 
   const days = dates.map((date) => {
@@ -138,11 +140,12 @@ export function buildLoReport(
 
   return {
     academicYearLabel,
+    schoolDay,
     weekStart,
     weekEnd,
     weekLabel,
-    sheetName: weekLabel.replace("-", "."),
-    filename: `Daily Attendance Report ${weekLabel} (羅小姐).xlsx`,
+    sheetName: `${Number(weekStart.slice(8))}.${Number(weekStart.slice(5, 7))}`,
+    filename: `Daily Attendance Report (羅小姐) ${dayLabel}.xlsx`,
     classCounts,
     days,
     staffDays,

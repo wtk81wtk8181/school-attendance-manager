@@ -505,7 +505,7 @@ export default function ReportsPage() {
             <CardTitle className="text-base">羅小姐報告</CardTitle>
             <CardDescription>
               {formatShortDate(loReport.weekStart)} 至 {formatShortDate(loReport.weekEnd)}
-              　Daily Attendance Record（萬鈞伯裘欄按每日點名生成）
+              　Daily Attendance Record（只含萬鈞伯裘，該週一至五日期會自動填入）
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
