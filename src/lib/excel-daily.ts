@@ -2,12 +2,15 @@ import ExcelJS from "exceljs";
 import { SCHOOL_NAME } from "@/lib/seed";
 import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
 
+const MING = "新細明體";
+const TIMES = "Times New Roman";
 const THIN: ExcelJS.BorderStyle = "thin";
+const MEDIUM: ExcelJS.BorderStyle = "medium";
 const BLACK = { argb: "FF000000" };
 const HEADER_FILL: ExcelJS.Fill = {
   type: "pattern",
   pattern: "solid",
-  fgColor: { argb: "FFD9E2F3" },
+  fgColor: { argb: "FFE7EEF7" },
 };
 const TITLE_FILL: ExcelJS.Fill = {
   type: "pattern",
@@ -19,6 +22,43 @@ const THIN_BORDER: Partial<ExcelJS.Borders> = {
   left: { style: THIN, color: BLACK },
   right: { style: THIN, color: BLACK },
   bottom: { style: THIN, color: BLACK },
+};
+const MEDIUM_BORDER: Partial<ExcelJS.Borders> = {
+  top: { style: MEDIUM, color: BLACK },
+  left: { style: MEDIUM, color: BLACK },
+  right: { style: MEDIUM, color: BLACK },
+  bottom: { style: MEDIUM, color: BLACK },
+};
+
+/**
+ * 欄寬貼近學校原版：左欄缺席名單加寬以便影印；
+ * 右欄略收，以免底部級別統計被拉得過闊。
+ */
+const COLUMN_WIDTHS: Record<number, number> = {
+  1: 7.2,
+  2: 5.2,
+  3: 5.8,
+  4: 4.8,
+  5: 14,
+  6: 14,
+  7: 14,
+  8: 14,
+  9: 14,
+  10: 14,
+  11: 11,
+  12: 11,
+  13: 7.2,
+  14: 5.2,
+  15: 5.8,
+  16: 4.8,
+  17: 9,
+  18: 9,
+  19: 9,
+  20: 9,
+  21: 9,
+  22: 9,
+  23: 11,
+  24: 11,
 };
 
 const ROWS_PER_CLASS = 5;
@@ -49,28 +89,32 @@ export async function buildDailySchoolWorkbook(
     pageSetup: {
       paperSize: 9,
       orientation: "portrait",
-      fitToPage: true,
+      // 與學校原版相同：固定縮放，避免 fit 成一頁把字壓得看不清
+      fitToPage: false,
+      scale: 61,
       fitToWidth: 1,
       fitToHeight: 1,
       horizontalCentered: true,
       verticalCentered: true,
       printArea: "A1:AU90",
+      pageOrder: "downThenOver",
+      blackAndWhite: false,
+      draft: false,
+      showGridLines: false,
       margins: {
-        left: 0.3,
-        right: 0.3,
-        top: 0.4,
-        bottom: 0.3,
-        header: 0.2,
+        left: 0.43,
+        right: 0.31,
+        top: 0.47,
+        bottom: 0.24,
+        header: 0.31,
         footer: 0.2,
       },
     },
   });
 
   for (let col = 1; col <= 47; col += 1) {
-    sheet.getColumn(col).width = col <= 24 ? 7.2 : 4.2;
+    sheet.getColumn(col).width = COLUMN_WIDTHS[col] ?? 4.2;
   }
-  sheet.getColumn(5).width = 11;
-  sheet.getColumn(17).width = 11;
 
   writeTitle(sheet, payload);
   writeClassHeaders(sheet);
@@ -85,28 +129,33 @@ export async function buildDailySchoolWorkbook(
 
 function writeTitle(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload) {
   mergeValue(sheet, 1, 1, 1, 47, `${SCHOOL_NAME}　學生缺席每日報告表`, {
-    font: { bold: true, size: 16, color: { argb: "FFFFFFFF" } },
+    font: { bold: true, size: 16, name: MING, color: { argb: "FFFFFFFF" } },
     alignment: { horizontal: "center", vertical: "middle" },
     fill: TITLE_FILL,
+    border: THIN_BORDER,
   });
-  sheet.getRow(1).height = 24;
+  sheet.getRow(1).height = 22;
 
   mergeValue(sheet, 2, 1, 2, 47, payload.dateLabel, {
-    font: { bold: true, size: 12 },
+    font: { bold: true, size: 14, name: MING },
     alignment: { horizontal: "center", vertical: "middle" },
+    border: THIN_BORDER,
   });
-  sheet.getRow(2).height = 18;
+  sheet.getRow(2).height = 20;
 
   mergeValue(sheet, 3, 1, 3, 12, "中一至中三", {
-    font: { bold: true, size: 11 },
+    font: { bold: true, size: 12, name: MING },
     alignment: { horizontal: "center", vertical: "middle" },
     fill: HEADER_FILL,
+    border: MEDIUM_BORDER,
   });
   mergeValue(sheet, 3, 13, 3, 24, "中四至中六", {
-    font: { bold: true, size: 11 },
+    font: { bold: true, size: 12, name: MING },
     alignment: { horizontal: "center", vertical: "middle" },
     fill: HEADER_FILL,
+    border: MEDIUM_BORDER,
   });
+  sheet.getRow(3).height = 18;
 }
 
 function writeClassHeaders(sheet: ExcelJS.Worksheet) {
@@ -128,9 +177,10 @@ function writeClassHeaders(sheet: ExcelJS.Worksheet) {
   ];
   for (const [start, end, text] of headers) {
     mergeValue(sheet, 4, start, 4, end, text, {
-      font: { bold: true, size: 9 },
+      font: { bold: true, size: 11, name: MING },
       alignment: { horizontal: "center", vertical: "middle", wrapText: true },
       fill: HEADER_FILL,
+      border: MEDIUM_BORDER,
     });
   }
   sheet.getRow(4).height = 28;
@@ -146,39 +196,50 @@ function writeClassBlocks(
     const row = startRow + index * ROWS_PER_CLASS;
     const end = row + ROWS_PER_CLASS - 1;
     const center = {
-      font: { size: 9 },
+      font: { size: 11, name: MING },
       alignment: { horizontal: "center" as const, vertical: "middle" as const, wrapText: true },
+      border: MEDIUM_BORDER,
     };
+
     mergeValue(sheet, row, cols.class, end, cols.class, block.className, {
       ...center,
-      font: { bold: true, size: 10 },
+      font: { bold: true, size: 12, name: TIMES },
     });
     mergeValue(sheet, row, cols.cap, end, cols.cap, block.registered || "", center);
     mergeValue(sheet, row, cols.present, end, cols.present, block.present, center);
     mergeValue(sheet, row, cols.early, end, cols.early, block.earlyLeave || "", center);
-    mergeValue(
-      sheet,
-      row,
-      cols.absences,
-      end,
-      cols.absencesEnd,
-      block.absenceLines.join("\n"),
-      {
-        font: { size: 8 },
-        alignment: { horizontal: "left", vertical: "top", wrapText: true },
-      }
-    );
+
+    // 每列一條缺席，避免合併格換行影印後模糊
+    const lines = block.absenceLines.length > 0 ? block.absenceLines : [""];
+    for (let offset = 0; offset < ROWS_PER_CLASS; offset += 1) {
+      const r = row + offset;
+      const isLast = offset === ROWS_PER_CLASS - 1;
+      const remaining = lines.length - (ROWS_PER_CLASS - 1);
+      const text =
+        isLast && remaining > 1
+          ? lines.slice(ROWS_PER_CLASS - 1).join("；")
+          : (lines[offset] ?? "");
+      mergeValue(sheet, r, cols.absences, r, cols.absencesEnd, text, {
+        font: { size: 11, name: MING },
+        alignment: { horizontal: "left", vertical: "middle", wrapText: true, shrinkToFit: true },
+        border: {
+          left: { style: MEDIUM, color: BLACK },
+          right: { style: MEDIUM, color: BLACK },
+          top: { style: offset === 0 ? MEDIUM : THIN, color: BLACK },
+          bottom: { style: isLast ? MEDIUM : THIN, color: BLACK },
+        },
+      });
+      sheet.getRow(r).height = 16;
+    }
+
     mergeValue(sheet, row, cols.enroll, end, cols.enroll, "", center);
     mergeValue(sheet, row, cols.withdraw, end, cols.withdraw, "", center);
-    for (let r = row; r <= end; r += 1) {
-      sheet.getRow(r).height = 15;
-    }
   });
 }
 
 function writeStaffFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload) {
   mergeValue(sheet, 81, 1, 81, 12, "教職員缺席情況：", {
-    font: { bold: true, size: 10 },
+    font: { bold: true, size: 12, name: MING },
     alignment: { vertical: "middle" },
   });
   const rows: Array<[number, string, string[]]> = [
@@ -189,36 +250,36 @@ function writeStaffFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPa
   ];
   for (const [row, label, names] of rows) {
     mergeValue(sheet, row, 1, row, 2, label, {
-      font: { bold: true, size: 9 },
+      font: { bold: true, size: 11, name: MING },
       alignment: { vertical: "middle" },
     });
     mergeValue(sheet, row, 3, row, 12, names.join("、"), {
-      font: { size: 9 },
+      font: { size: 11, name: MING },
       alignment: { vertical: "middle", wrapText: true },
     });
     sheet.getRow(row).height = 18;
   }
   if (payload.staffLeaveLines.length > 0) {
     mergeValue(sheet, 82, 1, 82, 2, "預假：", {
-      font: { bold: true, size: 8 },
+      font: { bold: true, size: 10, name: MING },
       alignment: { vertical: "middle" },
     });
     mergeValue(sheet, 82, 3, 82, 12, payload.staffLeaveLines.join("；"), {
-      font: { size: 8 },
+      font: { size: 10, name: MING },
       alignment: { vertical: "middle", wrapText: true },
     });
-    sheet.getRow(82).height = 14;
+    sheet.getRow(82).height = 16;
   }
   if (payload.studentLeaveLines.length > 0) {
     mergeValue(sheet, 80, 1, 80, 2, "學生預假：", {
-      font: { bold: true, size: 8 },
+      font: { bold: true, size: 10, name: MING },
       alignment: { vertical: "middle" },
     });
     mergeValue(sheet, 80, 3, 80, 12, payload.studentLeaveLines.join("；"), {
-      font: { size: 8 },
+      font: { size: 10, name: MING },
       alignment: { vertical: "middle", wrapText: true },
     });
-    sheet.getRow(80).height = 14;
+    sheet.getRow(80).height = 16;
   }
 }
 
@@ -244,7 +305,7 @@ function writeStatsFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPa
   mergeValue(sheet, 86, 13, 86, 15, "", headerStyle());
   payload.classes.forEach((block, index) => {
     const col = CLASS_CODE_START + index;
-    mergeValue(sheet, 86, col, 86, col, block.className, headerStyle(8));
+    mergeValue(sheet, 86, col, 86, col, block.className, headerStyle(10));
   });
   mergeValue(sheet, 86, 46, 86, 47, "TOTAL", headerStyle());
 
@@ -298,30 +359,33 @@ function writeFormMetric(
   });
   mergeValue(sheet, row, TOTAL_START, row, TOTAL_END, total, {
     ...centerStyle(),
-    font: { bold: true, size: 9 },
+    font: { bold: true, size: 10, name: MING },
     numFmt: percent ? "0.00%" : undefined,
   });
 }
 
-function headerStyle(size = 9): CellStyle {
+function headerStyle(size = 10): CellStyle {
   return {
-    font: { bold: true, size },
+    font: { bold: true, size, name: MING },
     alignment: { horizontal: "center", vertical: "middle", wrapText: true },
     fill: HEADER_FILL,
+    border: THIN_BORDER,
   };
 }
 
 function labelStyle(): CellStyle {
   return {
-    font: { size: 8 },
+    font: { size: 10, name: MING },
     alignment: { horizontal: "right", vertical: "middle", wrapText: true },
+    border: THIN_BORDER,
   };
 }
 
 function centerStyle(): CellStyle {
   return {
-    font: { size: 8 },
+    font: { size: 9, name: TIMES },
     alignment: { horizontal: "center", vertical: "middle" },
+    border: THIN_BORDER,
   };
 }
 
@@ -330,6 +394,7 @@ interface CellStyle {
   alignment?: Partial<ExcelJS.Alignment>;
   fill?: ExcelJS.Fill;
   numFmt?: string;
+  border?: Partial<ExcelJS.Borders>;
 }
 
 function mergeValue(
@@ -350,7 +415,7 @@ function mergeValue(
   for (let row = startRow; row <= endRow; row += 1) {
     for (let col = startCol; col <= endCol; col += 1) {
       const cell = sheet.getCell(row, col);
-      cell.border = THIN_BORDER;
+      cell.border = style.border ?? THIN_BORDER;
       if (style.font) cell.font = style.font;
       if (style.alignment) cell.alignment = style.alignment;
       if (style.fill) cell.fill = style.fill;
