@@ -44,7 +44,7 @@ const CLASS_LABEL_END = 2;
 const CLASS_CODE_START = 3;
 const CLASS_TOTAL_START = 18;
 const CLASS_TOTAL_END = 24;
-const FOOTER_START_ROW = 80;
+const JUNIOR_SPLIT = 8;
 
 export async function buildDailySchoolWorkbook(
   payload: DailySchoolReportPayload
@@ -53,7 +53,35 @@ export async function buildDailySchoolWorkbook(
   workbook.creator = SCHOOL_NAME;
   workbook.created = new Date();
 
-  const sheet = workbook.addWorksheet("每日缺席報告", {
+  const junior = payload.classes.slice(0, 15);
+  const senior = payload.classes.slice(15, 30);
+
+  const juniorSheet = createDailySheet(workbook, "中一至中三");
+  setupColumns(juniorSheet);
+  writeTitle(juniorSheet, payload, "中一至中三");
+  writeClassHeaders(juniorSheet);
+  writeClassBlocks(juniorSheet, junior.slice(0, JUNIOR_SPLIT), LEFT_COLS, CLASS_START_ROW, payload);
+  writeClassBlocks(juniorSheet, junior.slice(JUNIOR_SPLIT), RIGHT_COLS, CLASS_START_ROW, payload);
+  const juniorFooterStart = classSectionEndRow(Math.max(junior.slice(0, JUNIOR_SPLIT).length, junior.slice(JUNIOR_SPLIT).length));
+  const juniorLastRow = writeStaffFooter(juniorSheet, payload, juniorFooterStart);
+  juniorSheet.pageSetup.printArea = `A1:X${juniorLastRow}`;
+
+  const seniorSheet = createDailySheet(workbook, "中四至中六");
+  setupColumns(seniorSheet);
+  writeTitle(seniorSheet, payload, "中四至中六");
+  writeClassHeaders(seniorSheet);
+  writeClassBlocks(seniorSheet, senior.slice(0, JUNIOR_SPLIT), LEFT_COLS, CLASS_START_ROW, payload);
+  writeClassBlocks(seniorSheet, senior.slice(JUNIOR_SPLIT), RIGHT_COLS, CLASS_START_ROW, payload);
+  const seniorFooterStart = classSectionEndRow(Math.max(senior.slice(0, JUNIOR_SPLIT).length, senior.slice(JUNIOR_SPLIT).length));
+  const seniorLastRow = writeStatsFooter(seniorSheet, payload, seniorFooterStart);
+  seniorSheet.pageSetup.printArea = `A1:X${seniorLastRow}`;
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer);
+}
+
+function createDailySheet(workbook: ExcelJS.Workbook, name: string): ExcelJS.Worksheet {
+  return workbook.addWorksheet(name, {
     views: [{ showGridLines: false }],
     pageSetup: {
       paperSize: 9,
@@ -63,7 +91,6 @@ export async function buildDailySchoolWorkbook(
       fitToHeight: 1,
       horizontalCentered: true,
       verticalCentered: true,
-      printArea: "A1:X99",
       margins: {
         left: 0.25,
         right: 0.25,
@@ -74,25 +101,25 @@ export async function buildDailySchoolWorkbook(
       },
     },
   });
+}
 
+function setupColumns(sheet: ExcelJS.Worksheet) {
   for (let col = 1; col <= LAST_COL; col += 1) {
     sheet.getColumn(col).width = 7.2;
   }
   sheet.getColumn(5).width = 11;
   sheet.getColumn(17).width = 11;
-
-  writeTitle(sheet, payload);
-  writeClassHeaders(sheet);
-  writeClassBlocks(sheet, payload.classes.slice(0, 15), LEFT_COLS, CLASS_START_ROW, payload);
-  writeClassBlocks(sheet, payload.classes.slice(15, 30), RIGHT_COLS, CLASS_START_ROW, payload);
-  const lastRow = writeStatsFooter(sheet, payload, writeStaffFooter(sheet, payload));
-  sheet.pageSetup.printArea = `A1:X${lastRow}`;
-
-  const buffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(buffer);
 }
 
-function writeTitle(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload) {
+function classSectionEndRow(classCount: number): number {
+  return CLASS_START_ROW + classCount * ROWS_PER_CLASS + 1;
+}
+
+function writeTitle(
+  sheet: ExcelJS.Worksheet,
+  payload: DailySchoolReportPayload,
+  sectionLabel: string
+) {
   mergeValue(sheet, 1, 1, 1, LAST_COL, `${SCHOOL_NAME}　學生缺席每日報告表`, {
     font: { bold: true, size: 16, color: { argb: "FFFFFFFF" } },
     alignment: { horizontal: "center", vertical: "middle" },
@@ -106,12 +133,7 @@ function writeTitle(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload)
   });
   sheet.getRow(2).height = 18;
 
-  mergeValue(sheet, 3, 1, 3, 12, "中一至中三", {
-    font: { bold: true, size: 11 },
-    alignment: { horizontal: "center", vertical: "middle" },
-    fill: HEADER_FILL,
-  });
-  mergeValue(sheet, 3, 13, 3, 24, "中四至中六", {
+  mergeValue(sheet, 3, 1, 3, LAST_COL, sectionLabel, {
     font: { bold: true, size: 11 },
     alignment: { horizontal: "center", vertical: "middle" },
     fill: HEADER_FILL,
@@ -204,8 +226,12 @@ function writeClassBlocks(
   });
 }
 
-function writeStaffFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload): number {
-  let row = FOOTER_START_ROW;
+function writeStaffFooter(
+  sheet: ExcelJS.Worksheet,
+  payload: DailySchoolReportPayload,
+  startRow: number
+): number {
+  let row = startRow;
   mergeValue(sheet, row, 1, row, LAST_COL, "教職員缺席情況", {
     font: { bold: true, size: 9 },
     alignment: { horizontal: "left", vertical: "middle" },
@@ -226,15 +252,7 @@ function writeStaffFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPa
     row += 1;
   }
 
-  if (payload.studentLeaveLines.length > 0) {
-    writeLeaveLine(sheet, row, "學生預假：", payload.studentLeaveLines.join("；"));
-    row += 1;
-  }
-  if (payload.staffLeaveLines.length > 0) {
-    writeLeaveLine(sheet, row, "預假：", payload.staffLeaveLines.join("；"));
-    row += 1;
-  }
-  return row + 1;
+  return row;
 }
 
 function writeStaffPair(
@@ -259,18 +277,6 @@ function writeStaffPair(
     font: { size: 8 },
     alignment: { vertical: "middle", wrapText: true },
   });
-}
-
-function writeLeaveLine(sheet: ExcelJS.Worksheet, row: number, label: string, text: string) {
-  mergeValue(sheet, row, 1, row, 2, label, {
-    font: { bold: true, size: 8 },
-    alignment: { vertical: "middle" },
-  });
-  mergeValue(sheet, row, 3, row, LAST_COL, text, {
-    font: { size: 8 },
-    alignment: { vertical: "middle", wrapText: true },
-  });
-  sheet.getRow(row).height = 14;
 }
 
 function writeStatsFooter(
@@ -311,16 +317,8 @@ function writeStatsFooter(
     true
   );
 
-  const junior = payload.classes.slice(0, 15);
   const senior = payload.classes.slice(15, 30);
-  const juniorRow = writeClassMetricTable(sheet, startRow + 5, "中一至中三", junior, {
-    absent: sumBy(junior, (item) => item.absentCount),
-    attendanceRate: attendanceOf(junior),
-    late: sumBy(junior, (item) => item.lateCount),
-    punctualityRate: punctualityOf(junior),
-    totalLabel: "小計",
-  });
-  return writeClassMetricTable(sheet, juniorRow + 1, "中四至中六", senior, {
+  return writeClassMetricTable(sheet, startRow + 5, "中四至中六", senior, {
     absent: payload.totalAbsent,
     attendanceRate: payload.totalAttendanceRate,
     late: payload.totalLate,
@@ -437,24 +435,6 @@ function writeFormMetric(
     font: { bold: true, size: 9 },
     numFmt: percent ? "0.00%" : undefined,
   });
-}
-
-function sumBy(blocks: DailyClassBlock[], pick: (item: DailyClassBlock) => number): number {
-  return blocks.reduce((sum, item) => sum + pick(item), 0);
-}
-
-function attendanceOf(blocks: DailyClassBlock[]): number {
-  const registered = sumBy(blocks, (item) => item.registered);
-  const present = sumBy(blocks, (item) => item.present);
-  if (registered <= 0) return 1;
-  return present / registered;
-}
-
-function punctualityOf(blocks: DailyClassBlock[]): number {
-  const present = sumBy(blocks, (item) => item.present);
-  const late = sumBy(blocks, (item) => item.lateCount);
-  if (present <= 0) return 1;
-  return Math.max(0, present - late) / present;
 }
 
 function headerStyle(size = 9): CellStyle {

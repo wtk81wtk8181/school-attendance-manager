@@ -296,7 +296,7 @@ export function formatDays(days: number): string {
 
 export function formatNameWithCountedDays(name: string, countedDays: number): string {
   const days = Number(countedDays);
-  if (!Number.isFinite(days) || days <= 0) return name;
+  if (!Number.isFinite(days) || days < 2) return name;
   const suffix = `(${formatDays(days)})`;
   if (name.endsWith(suffix)) return name;
   return `${name}${suffix}`;
