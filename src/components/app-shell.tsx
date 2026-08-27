@@ -76,10 +76,10 @@ function SideNav({
             href={item.href}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-200",
+              "flex items-center gap-2.5 rounded-lg border-l-[3px] px-3 py-2 text-sm transition-colors duration-200",
               active
-                ? "bg-white/10 text-white"
-                : "text-slate-300 hover:bg-white/8 hover:text-white"
+                ? "border-[var(--school-gold)] bg-white/12 text-white shadow-sm"
+                : "border-transparent text-slate-300 hover:border-white/20 hover:bg-white/8 hover:text-white"
             )}
           >
             <item.icon className="size-4" />
@@ -125,9 +125,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const userInitial = currentUser?.name.slice(0, 1) ?? "";
 
   return (
-    <div className="flex min-h-dvh items-stretch bg-slate-50">
+    <div className="flex min-h-dvh items-stretch app-main-bg">
       {currentUser?.role === "office" ? <DigestScheduler /> : null}
-      <aside className="no-print hidden min-h-dvh w-60 shrink-0 flex-col self-stretch bg-slate-950 text-white md:flex">
+      <aside className="no-print hidden min-h-dvh w-60 shrink-0 flex-col self-stretch bg-gradient-to-b from-[#254a78] via-[var(--school-navy)] to-[#0f2744] text-white shadow-lg md:flex">
         <div className="border-b border-white/10 py-4">
           <Link href="/dashboard" className="flex items-center gap-2.5 px-3 py-1">
             <SchoolLogoMark />
@@ -146,7 +146,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
-        <header className="no-print sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-slate-200/80 bg-slate-50/90 px-3 py-2 backdrop-blur sm:gap-3 sm:px-4">
+        <header className="no-print sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-blue-100/80 bg-white/85 px-3 py-2 shadow-sm backdrop-blur sm:gap-3 sm:px-4">
           <Button
             variant="ghost"
             size="icon"
@@ -323,7 +323,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
           side="left"
-          className="w-64 border-none bg-slate-950 p-0 text-white"
+          className="w-64 border-none bg-gradient-to-b from-[#254a78] via-[var(--school-navy)] to-[#0f2744] p-0 text-white"
         >
           <SheetHeader className="border-b border-white/10 p-4">
             <SheetTitle className="flex items-center gap-2.5 text-white">

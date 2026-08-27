@@ -82,10 +82,10 @@ export default function DashboardPage() {
       />
 
       {currentUser?.role === "office" ? (
-        <Card className="border-slate-200 bg-white">
+        <Card className="border-amber-200/80 bg-gradient-to-br from-amber-50/90 to-orange-50/40">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="size-4 text-slate-400" />
+              <AlertTriangle className="size-4 text-amber-600" />
               教育局 Form A 申報提醒
             </CardTitle>
             <CardDescription>
@@ -116,24 +116,28 @@ export default function DashboardPage() {
           value={stats.length}
           hint={`${state.academicYear.label} 學年・${state.academicYear.schoolDays} 個上課日`}
           icon={Users}
+          tone="blue"
         />
         <StatTile
           label="平均出席率"
           value={formatPercent(avgRate)}
           hint="（上課日 − 計入缺席）÷ 上課日"
           icon={Percent}
+          tone="emerald"
         />
         <StatTile
           label="預警學生"
           value={warningCount}
           hint="已達上限一半，尚未超過上限"
           icon={AlertTriangle}
+          tone="amber"
         />
         <StatTile
           label="超過上限"
           value={overCount}
           hint="中一至中五 9 天；中六 4.5 天"
           icon={FileWarning}
+          tone="rose"
         />
       </section>
 
@@ -148,7 +152,7 @@ export default function DashboardPage() {
                   : `${chaseStudentCount} 名學生・${documentChase.length} 個缺席日`}
               </CardDescription>
             </div>
-            <FileText className="size-4 text-slate-400" />
+            <FileText className="size-4 text-sky-600" />
           </CardHeader>
           <CardContent>
             {documentChase.length === 0 ? (
@@ -195,8 +199,8 @@ export default function DashboardPage() {
           <CardContent className="space-y-3 text-sm">
             {currentUser?.role === "office" ? (
               <>
-                <div className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 transition-colors duration-200 hover:bg-slate-50/80">
-                  <ClipboardList className="mt-0.5 size-4 text-slate-400" />
+                <div className="flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/50 p-3 transition-colors duration-200 hover:bg-blue-50">
+                  <ClipboardList className="mt-0.5 size-4 text-blue-600" />
                   <div className="flex-1">
                     <p className="font-medium text-slate-900">待審核缺席 {pending.length} 筆</p>
                     <p className="text-xs text-slate-400">核對醫生證明、家長信與缺席原因</p>
@@ -205,8 +209,8 @@ export default function DashboardPage() {
                     審核
                   </Button>
                 </div>
-                <div className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 transition-colors duration-200 hover:bg-slate-50/80">
-                  <CalendarClock className="mt-0.5 size-4 text-slate-400" />
+                <div className="flex items-start gap-3 rounded-lg border border-violet-100 bg-violet-50/50 p-3 transition-colors duration-200 hover:bg-violet-50">
+                  <CalendarClock className="mt-0.5 size-4 text-violet-600" />
                   <div className="flex-1">
                     <p className="font-medium text-slate-900">預先請假</p>
                     <p className="text-xs text-slate-400">到日自動顯示於缺席報告</p>
@@ -217,8 +221,8 @@ export default function DashboardPage() {
                 </div>
               </>
             ) : null}
-            <div className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 transition-colors duration-200 hover:bg-slate-50/80">
-              <FileWarning className="mt-0.5 size-4 text-slate-400" />
+            <div className="flex items-start gap-3 rounded-lg border border-rose-100 bg-rose-50/50 p-3 transition-colors duration-200 hover:bg-rose-50">
+              <FileWarning className="mt-0.5 size-4 text-rose-600" />
               <div className="flex-1">
                 <p className="font-medium text-slate-900">待跟進警告信 {openLetters.length} 封</p>
                 <p className="text-xs text-slate-400">缺席與遲到分開發出</p>

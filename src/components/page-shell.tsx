@@ -3,6 +3,70 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+export type StatTone =
+  | "default"
+  | "blue"
+  | "emerald"
+  | "amber"
+  | "rose"
+  | "violet"
+  | "sky"
+  | "gold";
+
+const statToneStyles: Record<
+  StatTone,
+  { icon: string; activeIcon: string; card: string; activeCard: string }
+> = {
+  default: {
+    icon: "bg-slate-100 text-slate-600 group-hover:bg-slate-200/80",
+    activeIcon: "bg-slate-900 text-white",
+    card: "ring-slate-200/80 hover:ring-slate-300/80",
+    activeCard: "bg-slate-50/90 ring-slate-900/15",
+  },
+  blue: {
+    icon: "bg-blue-100 text-blue-700 group-hover:bg-blue-200/80",
+    activeIcon: "bg-blue-600 text-white",
+    card: "ring-blue-100 hover:ring-blue-200",
+    activeCard: "bg-blue-50/80 ring-blue-300/60",
+  },
+  emerald: {
+    icon: "bg-emerald-100 text-emerald-700 group-hover:bg-emerald-200/80",
+    activeIcon: "bg-emerald-600 text-white",
+    card: "ring-emerald-100 hover:ring-emerald-200",
+    activeCard: "bg-emerald-50/80 ring-emerald-300/60",
+  },
+  amber: {
+    icon: "bg-amber-100 text-amber-800 group-hover:bg-amber-200/80",
+    activeIcon: "bg-amber-500 text-white",
+    card: "ring-amber-100 hover:ring-amber-200",
+    activeCard: "bg-amber-50/80 ring-amber-300/60",
+  },
+  rose: {
+    icon: "bg-rose-100 text-rose-700 group-hover:bg-rose-200/80",
+    activeIcon: "bg-rose-600 text-white",
+    card: "ring-rose-100 hover:ring-rose-200",
+    activeCard: "bg-rose-50/80 ring-rose-300/60",
+  },
+  violet: {
+    icon: "bg-violet-100 text-violet-700 group-hover:bg-violet-200/80",
+    activeIcon: "bg-violet-600 text-white",
+    card: "ring-violet-100 hover:ring-violet-200",
+    activeCard: "bg-violet-50/80 ring-violet-300/60",
+  },
+  sky: {
+    icon: "bg-sky-100 text-sky-700 group-hover:bg-sky-200/80",
+    activeIcon: "bg-sky-600 text-white",
+    card: "ring-sky-100 hover:ring-sky-200",
+    activeCard: "bg-sky-50/80 ring-sky-300/60",
+  },
+  gold: {
+    icon: "bg-yellow-100 text-yellow-900 group-hover:bg-yellow-200/80",
+    activeIcon: "bg-[var(--school-gold)] text-slate-900",
+    card: "ring-yellow-100 hover:ring-yellow-200",
+    activeCard: "bg-yellow-50/80 ring-[var(--school-gold)]/50",
+  },
+};
+
 export function PageShell({
   children,
   className,
@@ -36,11 +100,19 @@ export function PageHeader({
 }) {
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0 space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{title}</h1>
-        {description ? (
-          <p className="max-w-2xl text-sm leading-relaxed text-slate-600">{description}</p>
-        ) : null}
+      <div className="flex min-w-0 gap-3">
+        <div
+          aria-hidden
+          className="mt-1 hidden h-11 w-1.5 shrink-0 rounded-full bg-gradient-to-b from-[var(--school-gold)] via-amber-400 to-[var(--school-navy)] sm:block"
+        />
+        <div className="min-w-0 space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-[var(--school-navy)]">
+            {title}
+          </h1>
+          {description ? (
+            <p className="max-w-2xl text-sm leading-relaxed text-slate-600">{description}</p>
+          ) : null}
+        </div>
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </header>
@@ -54,6 +126,7 @@ export function StatTile({
   icon: Icon,
   active,
   onClick,
+  tone = "default",
 }: {
   label: string;
   value: string | number;
@@ -61,21 +134,22 @@ export function StatTile({
   icon: LucideIcon;
   active?: boolean;
   onClick?: () => void;
+  tone?: StatTone;
 }) {
+  const styles = statToneStyles[tone];
+
   const content = (
     <>
       <div
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors duration-200",
-          active
-            ? "bg-slate-900 text-white"
-            : "bg-slate-100 text-slate-600 group-hover:bg-slate-200/80"
+          active ? styles.activeIcon : styles.icon
         )}
       >
         <Icon className="size-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-slate-400">{label}</p>
+        <p className="text-xs font-medium text-slate-500">{label}</p>
         <p className="mt-0.5 text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
           {value}
         </p>
@@ -85,8 +159,8 @@ export function StatTile({
   );
 
   const className = cn(
-    "group w-full text-left shadow-none ring-slate-200/80 transition-all duration-200 hover:ring-slate-300/80",
-    active && "bg-slate-50/80 ring-slate-900/20"
+    "group w-full text-left shadow-none transition-all duration-200",
+    active ? styles.activeCard : styles.card
   );
 
   if (onClick) {

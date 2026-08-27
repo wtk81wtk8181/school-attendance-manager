@@ -75,28 +75,28 @@ export function StudentDetail({ id }: { id: string }) {
           value={formatPercent(stats.attendanceRate)}
           hint={`上課 ${state.academicYear.schoolDays} 天`}
           icon={Percent}
-          tone="success"
+          tone="emerald"
         />
         <StatCard
           label="計入缺席"
           value={`${formatDays(stats.countedDays)} 天`}
           hint={`上限 ${formatDays(stats.limit)} 天・預警線 ${formatDays(stats.warningThreshold)} 天`}
           icon={CalendarDays}
-          tone={stats.level === "over" ? "danger" : stats.level === "warning" ? "warning" : "default"}
+          tone={stats.level === "over" ? "rose" : stats.level === "warning" ? "amber" : "sky"}
         />
         <StatCard
           label="獲批請假"
           value={`${formatDays(stats.approvedLeaveDays)} 天`}
           hint="不影響出席率，不計入上限"
           icon={ShieldCheck}
-          tone="success"
+          tone="emerald"
         />
         <StatCard
           label="警告信"
           value={`${letters.length} 封`}
           hint={letters.some((item) => item.status === "issued") ? "尚有信件待校務處跟進" : "沒有待跟進信件"}
           icon={FileWarning}
-          tone={letters.some((item) => item.status === "issued") ? "warning" : "default"}
+          tone={letters.some((item) => item.status === "issued") ? "rose" : "default"}
         />
       </div>
 

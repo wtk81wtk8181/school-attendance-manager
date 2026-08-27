@@ -281,6 +281,7 @@ export default function WarningsPage() {
           value={counts.all}
           hint="存檔中的警告信總數"
           icon={Mail}
+          tone="blue"
           active={category === "all"}
           onClick={() => setCategory("all")}
         />
@@ -289,6 +290,7 @@ export default function WarningsPage() {
           value={counts.absence}
           hint="預警、超上限及缺席逾 3 次"
           icon={UserX}
+          tone="rose"
           active={category === "absence"}
           onClick={() => setCategory("absence")}
         />
@@ -297,6 +299,7 @@ export default function WarningsPage() {
           value={counts.late}
           hint="遲到逾 3 次"
           icon={Clock}
+          tone="amber"
           active={category === "late"}
           onClick={() => setCategory("late")}
         />
@@ -305,6 +308,7 @@ export default function WarningsPage() {
           value={counts.pending}
           hint="尚未登記校務處跟進"
           icon={FileWarning}
+          tone="violet"
         />
       </section>
 
