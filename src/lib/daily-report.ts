@@ -314,6 +314,18 @@ export function buildDailySchoolReport(
       early: staffNamesForKind(staffMembers, staffRecord, "early"),
     },
     staffLeaveLines: dayLeaves.map(formatStaffLeaveLine),
-    studentLeaveLines: dayStudentLeaves.map(formatStudentLeaveLine),
+    studentLeaveLines: dayStudentLeaves.map((leave) => {
+      const match = rows.find((row) => row.studentId === leave.studentId);
+      const days =
+        match?.countedDays ??
+        countedAbsenceDaysOnOrBefore(
+          absences.filter((row) => row.studentId === leave.studentId),
+          schoolDay
+        );
+      return formatStudentLeaveLine({
+        ...leave,
+        studentName: formatNameWithCountedDays(leave.studentName, days),
+      });
+    }),
   };
 }

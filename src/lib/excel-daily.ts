@@ -1,6 +1,10 @@
 import ExcelJS from "exceljs";
 import { SCHOOL_NAME } from "@/lib/seed";
-import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
+import {
+  formatDailyAbsenceLine,
+  type DailyClassBlock,
+  type DailySchoolReportPayload,
+} from "@/lib/daily-report";
 
 const THIN: ExcelJS.BorderStyle = "thin";
 const BLACK = { argb: "FF000000" };
@@ -79,8 +83,8 @@ export async function buildDailySchoolWorkbook(
 
   writeTitle(sheet, payload);
   writeClassHeaders(sheet);
-  writeClassBlocks(sheet, payload.classes.slice(0, 15), LEFT_COLS, CLASS_START_ROW);
-  writeClassBlocks(sheet, payload.classes.slice(15, 30), RIGHT_COLS, CLASS_START_ROW);
+  writeClassBlocks(sheet, payload.classes.slice(0, 15), LEFT_COLS, CLASS_START_ROW, payload);
+  writeClassBlocks(sheet, payload.classes.slice(15, 30), RIGHT_COLS, CLASS_START_ROW, payload);
   const lastRow = writeStatsFooter(sheet, payload, writeStaffFooter(sheet, payload));
   sheet.pageSetup.printArea = `A1:X${lastRow}`;
 
@@ -141,11 +145,30 @@ function writeClassHeaders(sheet: ExcelJS.Worksheet) {
   sheet.getRow(4).height = 28;
 }
 
+function classAbsenceText(
+  block: DailyClassBlock,
+  payload: DailySchoolReportPayload
+): string {
+  const classRows = (payload.rows ?? []).filter(
+    (row) =>
+      row.className === block.className &&
+      (row.statusKey === "absent" ||
+        row.statusKey === "leave" ||
+        row.statusKey === "half_absent" ||
+        row.statusKey === "early")
+  );
+  if (classRows.length > 0) {
+    return classRows.map(formatDailyAbsenceLine).join("\n");
+  }
+  return (block.absenceLines ?? []).join("\n");
+}
+
 function writeClassBlocks(
   sheet: ExcelJS.Worksheet,
   blocks: DailyClassBlock[],
   cols: typeof LEFT_COLS,
-  startRow: number
+  startRow: number,
+  payload: DailySchoolReportPayload
 ) {
   blocks.forEach((block, index) => {
     const row = startRow + index * ROWS_PER_CLASS;
@@ -167,7 +190,7 @@ function writeClassBlocks(
       cols.absences,
       end,
       cols.absencesEnd,
-      block.absenceLines.join("\n"),
+      classAbsenceText(block, payload),
       {
         font: { size: 8 },
         alignment: { horizontal: "left", vertical: "top", wrapText: true },

@@ -295,8 +295,11 @@ export function formatDays(days: number): string {
 }
 
 export function formatNameWithCountedDays(name: string, countedDays: number): string {
-  if (countedDays <= 0) return name;
-  return `${name}(${formatDays(countedDays)})`;
+  const days = Number(countedDays);
+  if (!Number.isFinite(days) || days <= 0) return name;
+  const suffix = `(${formatDays(days)})`;
+  if (name.endsWith(suffix)) return name;
+  return `${name}${suffix}`;
 }
 
 export function progressPercent(counted: number, limit: number): number {
