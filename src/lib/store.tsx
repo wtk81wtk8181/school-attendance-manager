@@ -42,6 +42,10 @@ import {
   ADMIN_JSON_SECTIONS,
   type AdminJsonSection,
 } from "@/lib/admin-json-patch";
+import {
+  buildAdminDemoAttendance,
+  mergeDemoAttendanceForDay,
+} from "@/lib/admin-demo-attendance";
 import { appearanceIssueId } from "@/lib/appearance-report";
 import type {
   AbsenceRecord,
@@ -170,6 +174,7 @@ interface StoreValue {
   recordDigestSend: (log: Omit<DigestLog, "id" | "createdAt">) => void;
   adminPatchState: (input: { section: string; rows: unknown[] }) => boolean;
   adminPatchSections: (sections: Record<string, unknown[]>) => boolean;
+  adminApplyDemoAttendance: (schoolDay: string) => boolean;
   refreshFromDatabase: () => Promise<void>;
   saveToDatabase: () => Promise<boolean>;
   reconnectDatabase: () => Promise<void>;
@@ -1969,6 +1974,47 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [currentUser]
   );
 
+  const adminApplyDemoAttendance = useCallback(
+    (schoolDay: string) => {
+      if (!currentUser || currentUser.role !== "office") {
+        toast.error("只有校務處職員可以使用後台管理。");
+        return false;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(schoolDay)) {
+        toast.error("請選擇有效的上課日。");
+        return false;
+      }
+      const staffMembers = memory.staffMembers ?? [];
+      if (staffMembers.length === 0) {
+        toast.error("教職員名單為空，無法產生示範資料。");
+        return false;
+      }
+
+      const updatedAt = nowIso();
+      const demo = buildAdminDemoAttendance(
+        memory.students,
+        staffMembers,
+        schoolDay,
+        updatedAt
+      );
+      patch((prev) =>
+        withAudit(
+          {
+            ...prev,
+            ...mergeDemoAttendanceForDay(prev, schoolDay, demo, updatedAt),
+          },
+          "後台示範出勤",
+          `${schoolDay}　每班 ${demo.summary.perClass} 人、教職員 ${demo.summary.staffCount} 人`
+        )
+      );
+      toast.success(
+        `已為 ${schoolDay} 產生示範資料：${demo.summary.studentRecords} 筆學生紀錄、${demo.summary.staffCount} 名教職員。`
+      );
+      return true;
+    },
+    [currentUser]
+  );
+
   const value = useMemo<StoreValue>(
     () => ({
       ready,
@@ -2003,6 +2049,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       recordDigestSend,
       adminPatchState,
       adminPatchSections,
+      adminApplyDemoAttendance,
       refreshFromDatabase: refreshFromDatabaseNow,
       saveToDatabase,
       reconnectDatabase,
@@ -2042,6 +2089,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       recordDigestSend,
       adminPatchState,
       adminPatchSections,
+      adminApplyDemoAttendance,
       refreshFromDatabaseNow,
       saveToDatabase,
       reconnectDatabase,

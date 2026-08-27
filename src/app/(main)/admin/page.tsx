@@ -11,10 +11,12 @@ import {
   Plus,
   Save,
   Trash2,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader, PageShell, PageSkeleton } from "@/components/page-shell";
@@ -83,7 +85,15 @@ function parseCell(text: string, original: unknown): unknown {
 }
 
 export default function AdminPage() {
-  const { currentUser, state, adminPatchState, adminPatchSections, saveToDatabase, ready } = useStore();
+  const {
+    currentUser,
+    state,
+    adminPatchState,
+    adminPatchSections,
+    adminApplyDemoAttendance,
+    saveToDatabase,
+    ready,
+  } = useStore();
   const [sectionKey, setSectionKey] = useState<keyof AppState>("students");
   const [draft, setDraft] = useState<Row[] | null>(null);
   const [page, setPage] = useState(0);
@@ -91,6 +101,8 @@ export default function AdminPage() {
   const [jsonPreview, setJsonPreview] = useState<AdminJsonPatchPreview | null>(null);
   const [jsonError, setJsonError] = useState("");
   const [jsonSaving, setJsonSaving] = useState(false);
+  const [demoDay, setDemoDay] = useState(hongKongToday());
+  const [demoBusy, setDemoBusy] = useState(false);
 
   const sectionRows = useMemo(() => {
     const value: unknown = state[sectionKey];
@@ -242,6 +254,30 @@ export default function AdminPage() {
     toast.success(`已匯出目前「${SECTIONS.find((item) => item.key === sectionKey)?.label ?? sectionKey}」JSON，修改後請先預覽再套用。`);
   }
 
+  async function runDemoAttendance() {
+    if (draft) {
+      toast.error("請先儲存或還原試算表的修改，再產生示範資料。");
+      return;
+    }
+    const confirmed = window.confirm(
+      `將為 ${demoDay} 隨機產生示範資料：每班 10 名學生（缺席、遲到、早退、半日缺席）及 7 名教職員請假／公假等。\n\n會覆寫該日既有的學生缺席及教職員每日缺席紀錄，其他日子不受影響。確定繼續？`
+    );
+    if (!confirmed) return;
+
+    const ok = adminApplyDemoAttendance(demoDay);
+    if (!ok) return;
+
+    setDemoBusy(true);
+    try {
+      const saved = await saveToDatabase();
+      if (!saved) {
+        toast.error("已產生本機示範資料，但未能確定寫入資料庫。請按頂部「確定儲存」再試。");
+      }
+    } finally {
+      setDemoBusy(false);
+    }
+  }
+
   return (
     <PageShell wide>
       <PageHeader
@@ -385,6 +421,34 @@ export default function AdminPage() {
               </div>
             </div>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-none">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wand2 className="size-5" />
+            示範出勤指令
+          </CardTitle>
+          <CardDescription>
+            為指定上課日隨機產生測試資料：每班 10 名學生（缺席、遲到、早退、半日缺席），以及 7 名教職員（病假、事假、公假、早退）。會覆寫該日既有的學生缺席及教職員每日缺席，其他日子不受影響。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="demo-day">上課日</Label>
+            <Input
+              id="demo-day"
+              type="date"
+              value={demoDay}
+              onChange={(event) => setDemoDay(event.target.value)}
+              className="w-44"
+            />
+          </div>
+          <Button disabled={demoBusy} onClick={() => void runDemoAttendance()}>
+            <Wand2 className="size-4" />
+            {demoBusy ? "產生中……" : "產生示範資料"}
+          </Button>
         </CardContent>
       </Card>
 
