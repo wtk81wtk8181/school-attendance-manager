@@ -31,8 +31,10 @@ import { CLASS_STREAMS, CLASS_TEACHERS } from "@/lib/roster";
 import {
   buildStudentStats,
   classLabel,
+  countedAbsenceDaysOnOrBefore,
   filterClassNames,
   formatDays,
+  formatNameWithCountedDays,
   formLabel,
   getDayAttendance,
   progressPercent,
@@ -486,14 +488,30 @@ export default function StudentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((item) => (
+                  {items.map((item) => {
+                    const dayStatus = getDayAttendance(
+                      state.absences,
+                      item.student.id,
+                      schoolDay
+                    );
+                    const countedUpTo = countedAbsenceDaysOnOrBefore(
+                      state.absences.filter((row) => row.studentId === item.student.id),
+                      schoolDay
+                    );
+                    const showCountedDays =
+                      dayStatus === "absent" ||
+                      dayStatus === "leave" ||
+                      dayStatus === "half_absent";
+                    return (
                     <TableRow key={item.student.id}>
                       <TableCell>
                         <Link
                           href={`/students/${item.student.id}`}
                           className="font-medium hover:underline"
                         >
-                          {item.student.name}
+                          {showCountedDays
+                            ? formatNameWithCountedDays(item.student.name, countedUpTo)
+                            : item.student.name}
                         </Link>
                         <p className="text-xs text-slate-400">
                           {item.student.studentNo}　{item.student.nameEn}
@@ -501,11 +519,7 @@ export default function StudentsPage() {
                       </TableCell>
                       <TableCell>
                         <AttendanceMark
-                          value={getDayAttendance(
-                            state.absences,
-                            item.student.id,
-                            schoolDay
-                          )}
+                          value={dayStatus}
                           record={state.absences.find(
                             (row) =>
                               row.studentId === item.student.id && row.date === schoolDay
@@ -556,7 +570,8 @@ export default function StudentsPage() {
                         <LevelBadge level={item.level} />
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

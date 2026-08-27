@@ -71,6 +71,19 @@ export function countedAbsenceDays(records: AbsenceRecord[]): number {
     .reduce((sum, record) => sum + record.days, 0);
 }
 
+/** 截至指定日期（含當日）的計入缺席天數；可附上當日尚未寫入的紀錄。 */
+export function countedAbsenceDaysOnOrBefore(
+  records: AbsenceRecord[],
+  date: string,
+  extra?: AbsenceRecord
+): number {
+  const list =
+    extra && !records.some((item) => item.id === extra.id)
+      ? [...records, extra]
+      : records;
+  return countedAbsenceDays(list.filter((item) => item.date <= date));
+}
+
 export function isCountedTowardAbsence(record: AbsenceRecord): boolean {
   return (
     record.reviewStatus !== "approved" &&
@@ -279,6 +292,11 @@ export function getDayAttendance(
 
 export function formatDays(days: number): string {
   return Number.isInteger(days) ? String(days) : days.toFixed(1);
+}
+
+export function formatNameWithCountedDays(name: string, countedDays: number): string {
+  if (countedDays <= 0) return name;
+  return `${name}(${formatDays(countedDays)})`;
 }
 
 export function progressPercent(counted: number, limit: number): number {

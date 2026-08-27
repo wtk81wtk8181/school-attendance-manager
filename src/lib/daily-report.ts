@@ -1,4 +1,10 @@
-import { attendanceStatusLabel, classLabel, formLabel } from "@/lib/rules";
+import {
+  attendanceStatusLabel,
+  classLabel,
+  countedAbsenceDaysOnOrBefore,
+  formatNameWithCountedDays,
+  formLabel,
+} from "@/lib/rules";
 import { formatSchoolReportDate } from "@/lib/format";
 import { allClassNames } from "@/lib/roster";
 import {
@@ -46,6 +52,7 @@ export interface DailyAbsenceRow {
   status: string;
   statusKey: Exclude<DayAttendance, "present">;
   days: number;
+  countedDays: number;
   reason: string;
   calledBy: string;
   calledAt: string;
@@ -125,6 +132,11 @@ export function buildDailyAbsenceRows(
         status: attendanceStatusLabel(item.eclassStatus),
         statusKey: item.eclassStatus,
         days: item.days,
+        countedDays: countedAbsenceDaysOnOrBefore(
+          absences.filter((row) => row.studentId === item.studentId),
+          schoolDay,
+          item
+        ),
         reason: item.reason,
         calledBy: item.calledBy?.trim() || "尚未致電",
         calledAt: item.calledAt?.trim() || "—",
@@ -140,11 +152,12 @@ export function buildDailyAbsenceRows(
 }
 
 export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
+  const name = formatNameWithCountedDays(row.name, row.countedDays);
   if (row.statusKey === "half_absent") {
-    return formatHalfAbsentReportLine(row.name, row.reason, row.returnedAt);
+    return formatHalfAbsentReportLine(name, row.reason, row.returnedAt);
   }
   if (row.statusKey === "early") {
-    return formatEarlyLeaveReportLine(row.name, row.reason, row.earlyAt, row.earlyPickup);
+    return formatEarlyLeaveReportLine(name, row.reason, row.earlyAt, row.earlyPickup);
   }
   const reason = row.reason.trim() || row.status;
   const half = row.days === 0.5 ? "（半日）" : "";
@@ -152,7 +165,7 @@ export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
     row.calledBy && row.calledBy !== "尚未致電" ? row.calledBy : "";
   const time = row.calledAt && row.calledAt !== "—" ? row.calledAt : "";
   const suffix = caller ? `(${caller})` : "";
-  return `${row.name}：${reason}${half}${suffix}${time}`;
+  return `${name}：${reason}${half}${suffix}${time}`;
 }
 
 function rate(numerator: number, denominator: number): number {

@@ -28,7 +28,9 @@ import {
   attendanceStatusLabel,
   buildStudentStats,
   classLabel,
+  countedAbsenceDaysOnOrBefore,
   filterClassNames,
+  formatNameWithCountedDays,
   formLabel,
   isCountedTowardAbsence,
 } from "@/lib/rules";
@@ -343,14 +345,23 @@ export default function ReportsPage() {
       ["日期", "班別", "學號", "姓名", "狀態", "日數", "原因", "致電人士", "致電時間", "文件", "是否提交", "審核", "計入缺席"],
       ...absences.map((item) => {
         const student = state.students.find((row) => row.id === item.studentId);
+        const displayName = student
+          ? formatNameWithCountedDays(
+              student.name,
+              countedAbsenceDaysOnOrBefore(
+                state.absences.filter((row) => row.studentId === item.studentId),
+                item.date
+              )
+            )
+          : "";
         return [
           item.date,
           student ? classLabel(student.className) : "",
           student?.studentNo ?? "",
-          student?.name ?? "",
+          displayName,
           attendanceStatusLabel(item.eclassStatus),
           item.days,
-          formatAbsenceRecordLine(student?.name ?? "", item),
+          formatAbsenceRecordLine(displayName || student?.name || "", item),
           item.calledBy ?? "",
           item.calledAt ?? "",
           documentLabels[item.documentType],
@@ -688,7 +699,7 @@ export default function ReportsPage() {
                 <TableRow key={row.id}>
                   <TableCell>{row.classLabel}</TableCell>
                   <TableCell>
-                    {row.name}
+                    {formatNameWithCountedDays(row.name, row.countedDays)}
                     <span className="ml-2 text-xs text-slate-400">
                       {row.studentNo}　{row.status}
                       {row.days === 0.5 ? "（半日）" : ""}

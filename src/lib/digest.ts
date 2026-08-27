@@ -1,6 +1,8 @@
 import {
   attendanceStatusLabel,
   classLabel,
+  countedAbsenceDaysOnOrBefore,
+  formatNameWithCountedDays,
   isCountedTowardAbsence,
 } from "@/lib/rules";
 import { formatAbsenceRecordLine } from "@/lib/attendance-extras";
@@ -134,17 +136,24 @@ export function buildDigest(
   for (const record of dayRecords) {
     const student = students.find((item) => item.id === record.studentId);
     if (!student) continue;
+    const displayName = formatNameWithCountedDays(
+      student.name,
+      countedAbsenceDaysOnOrBefore(
+        absences.filter((item) => item.studentId === student.id),
+        schoolDay
+      )
+    );
     rows.push({
       date: record.date,
       className: student.className,
       classLabel: classLabel(student.className),
       studentNo: student.studentNo,
-      name: student.name,
+      name: displayName,
       nameEn: student.nameEn,
       teacher: student.homeroomTeacherName,
       eclassStatus: attendanceStatusLabel(record.eclassStatus),
       days: record.days,
-      reason: formatAbsenceRecordLine(student.name, record),
+      reason: formatAbsenceRecordLine(displayName, record),
       documentType: documentLabels[record.documentType],
       documentSubmitted: record.documentSubmitted ? "已提交" : "未提交",
       reviewStatus: reviewLabels[record.reviewStatus],
