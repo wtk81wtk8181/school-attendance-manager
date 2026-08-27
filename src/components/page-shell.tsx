@@ -67,6 +67,75 @@ const statToneStyles: Record<
   },
 };
 
+export type AccentCardTone = StatTone | "navy";
+
+const accentCardTopBar: Record<AccentCardTone, string> = {
+  navy: "from-[var(--school-navy)] via-slate-600 to-slate-400",
+  default: "from-slate-700 to-slate-400",
+  blue: "from-blue-600 via-blue-500 to-sky-400",
+  emerald: "from-emerald-600 via-emerald-500 to-teal-400",
+  amber: "from-amber-500 via-amber-400 to-orange-400",
+  rose: "from-rose-600 via-rose-500 to-pink-400",
+  violet: "from-violet-600 via-violet-500 to-purple-400",
+  sky: "from-sky-600 via-sky-500 to-cyan-400",
+  gold: "from-[var(--school-gold)] via-amber-400 to-yellow-300",
+};
+
+const accentCardRing: Record<AccentCardTone, string> = {
+  navy: "ring-slate-200/90 hover:ring-slate-300/90",
+  default: "ring-slate-200/90 hover:ring-slate-300/90",
+  blue: "ring-blue-200/70 hover:ring-blue-300/80",
+  emerald: "ring-emerald-200/70 hover:ring-emerald-300/80",
+  amber: "ring-amber-200/70 hover:ring-amber-300/80",
+  rose: "ring-rose-200/70 hover:ring-rose-300/80",
+  violet: "ring-violet-200/70 hover:ring-violet-300/80",
+  sky: "ring-sky-200/70 hover:ring-sky-300/80",
+  gold: "ring-yellow-200/80 hover:ring-[var(--school-gold)]/50",
+};
+
+const accentCardSide: Record<AccentCardTone, string> = {
+  navy: "from-[var(--school-navy)]/80 to-slate-400/20",
+  default: "from-slate-600/70 to-slate-300/10",
+  blue: "from-blue-600/80 to-sky-400/10",
+  emerald: "from-emerald-600/80 to-teal-400/10",
+  amber: "from-amber-500/80 to-orange-400/10",
+  rose: "from-rose-600/80 to-pink-400/10",
+  violet: "from-violet-600/80 to-purple-400/10",
+  sky: "from-sky-600/80 to-cyan-400/10",
+  gold: "from-[var(--school-gold)]/90 to-amber-300/10",
+};
+
+export function AccentCard({
+  accent = "navy",
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof Card> & { accent?: AccentCardTone }) {
+  return (
+    <Card
+      className={cn(
+        "relative overflow-hidden border-0 bg-white/95 pt-1 shadow-sm ring-1 transition-all duration-200 hover:-translate-y-px hover:shadow-md",
+        accentCardRing[accent],
+        className
+      )}
+      {...props}
+    >
+      <div
+        aria-hidden
+        className={cn("absolute inset-x-0 top-0 h-1 bg-gradient-to-r", accentCardTopBar[accent])}
+      />
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-y-3 left-0 w-1 rounded-full bg-gradient-to-b",
+          accentCardSide[accent]
+        )}
+      />
+      {children}
+    </Card>
+  );
+}
+
 export function PageShell({
   children,
   className,

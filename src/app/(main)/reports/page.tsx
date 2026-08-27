@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Download, FileText, FileWarning, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -47,7 +47,7 @@ import { downloadBase64Xlsx, requestAppearanceReport, requestDailyReport, reques
 import { resolveSendRecipients, persistRecipientEmails } from "@/lib/email-utils";
 import { useStore } from "@/lib/store";
 import { EmptyState } from "@/components/empty-state";
-import { PageHeader, PageShell, PageSkeleton } from "@/components/page-shell";
+import { PageHeader, PageShell, PageSkeleton, AccentCard } from "@/components/page-shell";
 import type { FormLevel } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -409,7 +409,7 @@ export default function ReportsPage() {
         description="可按年級、班別與日期篩選，匯出學校格式每日缺席 Excel／PDF、羅小姐週報、出席及儀容百分率、缺席統計，以及警告信存檔清單。"
       />
 
-      <Card>
+      <AccentCard accent="navy">
         <CardHeader>
           <CardTitle>篩選</CardTitle>
           <CardDescription>班主任帳號只會匯出其負責班級。</CardDescription>
@@ -465,10 +465,10 @@ export default function ReportsPage() {
             <Input id="to" type="date" value={to} onChange={(event) => setTo(event.target.value)} />
           </div>
         </CardContent>
-      </Card>
+      </AccentCard>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="shadow-none">
+        <AccentCard accent="blue">
           <CardHeader>
             <CardTitle className="text-base">每月各班缺席率報告</CardTitle>
             <CardDescription>
@@ -508,8 +508,8 @@ export default function ReportsPage() {
               />
             ) : null}
           </CardContent>
-        </Card>
-        <Card className="shadow-none">
+        </AccentCard>
+        <AccentCard accent="emerald">
           <CardHeader>
             <CardTitle className="text-base">各班出席表現及儀容百份比</CardTitle>
             <CardDescription>
@@ -530,8 +530,8 @@ export default function ReportsPage() {
               ) : null}
             </div>
           </CardContent>
-        </Card>
-        <Card className="shadow-none">
+        </AccentCard>
+        <AccentCard accent="amber">
           <CardHeader>
             <CardTitle className="text-base">每日缺席報告</CardTitle>
             <CardDescription>
@@ -575,8 +575,8 @@ export default function ReportsPage() {
               />
             ) : null}
           </CardContent>
-        </Card>
-        <Card className="shadow-none">
+        </AccentCard>
+        <AccentCard accent="violet">
           <CardHeader>
             <CardTitle className="text-base">羅小姐報告</CardTitle>
             <CardDescription>
@@ -616,8 +616,8 @@ export default function ReportsPage() {
               />
             ) : null}
           </CardContent>
-        </Card>
-        <Card className="shadow-none">
+        </AccentCard>
+        <AccentCard accent="sky">
           <CardHeader>
             <CardTitle className="text-base">各班出席率</CardTitle>
             <CardDescription>現時篩選範圍共 {classSummaries.length} 班</CardDescription>
@@ -628,8 +628,8 @@ export default function ReportsPage() {
               下載 CSV
             </Button>
           </CardContent>
-        </Card>
-        <Card className="shadow-none">
+        </AccentCard>
+        <AccentCard accent="rose">
           <CardHeader>
             <CardTitle className="text-base">缺席記錄統計</CardTitle>
             <CardDescription>
@@ -642,8 +642,8 @@ export default function ReportsPage() {
               下載 CSV
             </Button>
           </CardContent>
-        </Card>
-        <Card className="shadow-none">
+        </AccentCard>
+        <AccentCard accent="gold">
           <CardHeader>
             <CardTitle className="text-base">警告信存檔</CardTitle>
             <CardDescription>共 {letters.length} 封，可於平台列印 PDF</CardDescription>
@@ -658,14 +658,14 @@ export default function ReportsPage() {
               開啟存檔
             </Button>
           </CardContent>
-        </Card>
+        </AccentCard>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+      <AccentCard accent="navy" className="p-4 sm:p-5">
         <DailyStaffSection date={reportDay} />
-      </div>
+      </AccentCard>
 
-      <div className="rounded-xl border border-slate-200 bg-white">
+      <AccentCard accent="amber">
         <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
           <div>
             <p className="font-medium">每日缺席名單預覽</p>
@@ -747,9 +747,9 @@ export default function ReportsPage() {
             </TableBody>
           </Table>
         )}
-      </div>
+      </AccentCard>
 
-      <div className="rounded-xl border border-slate-200 bg-white">
+      <AccentCard accent="sky">
         <div className="border-b px-4 py-3">
           <p className="font-medium">各班出席率</p>
           <p className="text-xs text-slate-400">只顯示每班人數與全班平均出席率</p>
@@ -772,8 +772,8 @@ export default function ReportsPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
-      <div className="rounded-xl border border-slate-200 bg-white">
+      </AccentCard>
+      <AccentCard accent="blue">
         <div className="border-b px-4 py-3">
           <p className="font-medium">每月各班缺席率（{monthlyReport.monthLabel}）</p>
           <p className="text-xs text-slate-400">
@@ -809,7 +809,7 @@ export default function ReportsPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </AccentCard>
     </PageShell>
   );
 }
