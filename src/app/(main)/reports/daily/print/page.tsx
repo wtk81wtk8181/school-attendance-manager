@@ -96,6 +96,14 @@ function DailyAbsencePrintBody() {
       <style>{`
         @media print {
           @page { size: A4 landscape; margin: 8mm; }
+          .daily-print-page {
+            page-break-after: always;
+            break-after: page;
+          }
+          .daily-print-page:last-child {
+            page-break-after: auto;
+            break-after: auto;
+          }
         }
       `}</style>
       <div className="no-print mx-auto mb-4 flex max-w-[297mm] flex-wrap items-center justify-between gap-3">

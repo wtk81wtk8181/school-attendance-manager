@@ -1,4 +1,8 @@
 import ExcelJS from "exceljs";
+import {
+  absenceColRanges,
+  excelAbsenceLayout,
+} from "@/lib/daily-absence-display";
 import { SCHOOL_NAME } from "@/lib/seed";
 import {
   formatDailyAbsenceLine,
@@ -25,7 +29,7 @@ const THIN_BORDER: Partial<ExcelJS.Borders> = {
   bottom: { style: THIN, color: BLACK },
 };
 
-const ROWS_PER_CLASS = 5;
+
 const CLASS_START_ROW = 5;
 const LAST_COL = 24;
 const LEFT_COLS = { class: 1, cap: 2, present: 3, early: 4, absences: 5, absencesEnd: 10, enroll: 11, withdraw: 12 };
@@ -60,9 +64,14 @@ export async function buildDailySchoolWorkbook(
   setupColumns(juniorSheet);
   writeTitle(juniorSheet, payload, "中一至中三");
   writeClassHeaders(juniorSheet);
-  writeClassBlocks(juniorSheet, junior.slice(0, JUNIOR_SPLIT), LEFT_COLS, CLASS_START_ROW, payload);
-  writeClassBlocks(juniorSheet, junior.slice(JUNIOR_SPLIT), RIGHT_COLS, CLASS_START_ROW, payload);
-  const juniorFooterStart = classSectionEndRow(Math.max(junior.slice(0, JUNIOR_SPLIT).length, junior.slice(JUNIOR_SPLIT).length));
+  const juniorLeft = junior.slice(0, JUNIOR_SPLIT);
+  const juniorRight = junior.slice(JUNIOR_SPLIT);
+  writeClassBlocks(juniorSheet, juniorLeft, LEFT_COLS, CLASS_START_ROW, payload);
+  writeClassBlocks(juniorSheet, juniorRight, RIGHT_COLS, CLASS_START_ROW, payload);
+  const juniorFooterStart = Math.max(
+    classSectionEndRow(CLASS_START_ROW, juniorLeft, payload),
+    classSectionEndRow(CLASS_START_ROW, juniorRight, payload)
+  );
   const juniorLastRow = writeStaffFooter(juniorSheet, payload, juniorFooterStart);
   juniorSheet.pageSetup.printArea = `A1:X${juniorLastRow}`;
 
@@ -70,9 +79,14 @@ export async function buildDailySchoolWorkbook(
   setupColumns(seniorSheet);
   writeTitle(seniorSheet, payload, "中四至中六");
   writeClassHeaders(seniorSheet);
-  writeClassBlocks(seniorSheet, senior.slice(0, JUNIOR_SPLIT), LEFT_COLS, CLASS_START_ROW, payload);
-  writeClassBlocks(seniorSheet, senior.slice(JUNIOR_SPLIT), RIGHT_COLS, CLASS_START_ROW, payload);
-  const seniorFooterStart = classSectionEndRow(Math.max(senior.slice(0, JUNIOR_SPLIT).length, senior.slice(JUNIOR_SPLIT).length));
+  const seniorLeft = senior.slice(0, JUNIOR_SPLIT);
+  const seniorRight = senior.slice(JUNIOR_SPLIT);
+  writeClassBlocks(seniorSheet, seniorLeft, LEFT_COLS, CLASS_START_ROW, payload);
+  writeClassBlocks(seniorSheet, seniorRight, RIGHT_COLS, CLASS_START_ROW, payload);
+  const seniorFooterStart = Math.max(
+    classSectionEndRow(CLASS_START_ROW, seniorLeft, payload),
+    classSectionEndRow(CLASS_START_ROW, seniorRight, payload)
+  );
   const seniorLastRow = writeStatsFooter(seniorSheet, payload, seniorFooterStart);
   seniorSheet.pageSetup.printArea = `A1:X${seniorLastRow}`;
 
@@ -88,7 +102,7 @@ function createDailySheet(workbook: ExcelJS.Workbook, name: string): ExcelJS.Wor
       orientation: "portrait",
       fitToPage: true,
       fitToWidth: 1,
-      fitToHeight: 1,
+      fitToHeight: 0,
       horizontalCentered: true,
       verticalCentered: true,
       margins: {
@@ -111,8 +125,16 @@ function setupColumns(sheet: ExcelJS.Worksheet) {
   sheet.getColumn(17).width = 11;
 }
 
-function classSectionEndRow(classCount: number): number {
-  return CLASS_START_ROW + classCount * ROWS_PER_CLASS + 1;
+function classSectionEndRow(
+  startRow: number,
+  blocks: DailyClassBlock[],
+  payload: DailySchoolReportPayload
+): number {
+  let row = startRow;
+  for (const block of blocks) {
+    row += excelAbsenceLayout(classAbsenceLines(block, payload)).rowSpan;
+  }
+  return row + 1;
 }
 
 function writeTitle(
@@ -167,10 +189,10 @@ function writeClassHeaders(sheet: ExcelJS.Worksheet) {
   sheet.getRow(4).height = 28;
 }
 
-function classAbsenceText(
+function classAbsenceLines(
   block: DailyClassBlock,
   payload: DailySchoolReportPayload
-): string {
+): string[] {
   const classRows = (payload.rows ?? []).filter(
     (row) =>
       row.className === block.className &&
@@ -180,9 +202,9 @@ function classAbsenceText(
         row.statusKey === "early")
   );
   if (classRows.length > 0) {
-    return classRows.map(formatDailyAbsenceLine).join("\n");
+    return classRows.map(formatDailyAbsenceLine);
   }
-  return (block.absenceLines ?? []).join("\n");
+  return block.absenceLines ?? [];
 }
 
 function writeClassBlocks(
@@ -192,38 +214,51 @@ function writeClassBlocks(
   startRow: number,
   payload: DailySchoolReportPayload
 ) {
-  blocks.forEach((block, index) => {
-    const row = startRow + index * ROWS_PER_CLASS;
-    const end = row + ROWS_PER_CLASS - 1;
+  let currentRow = startRow;
+
+  for (const block of blocks) {
+    const lines = classAbsenceLines(block, payload);
+    const layout = excelAbsenceLayout(lines);
+    const end = currentRow + layout.rowSpan - 1;
     const center = {
       font: { size: 9 },
       alignment: { horizontal: "center" as const, vertical: "middle" as const, wrapText: true },
     };
-    mergeValue(sheet, row, cols.class, end, cols.class, block.className, {
+    const absenceStyle = {
+      font: { size: layout.excelFontSize },
+      alignment: { horizontal: "left" as const, vertical: "top" as const, wrapText: true },
+    };
+
+    mergeValue(sheet, currentRow, cols.class, end, cols.class, block.className, {
       ...center,
       font: { bold: true, size: 10 },
     });
-    mergeValue(sheet, row, cols.cap, end, cols.cap, block.registered || "", center);
-    mergeValue(sheet, row, cols.present, end, cols.present, block.present, center);
-    mergeValue(sheet, row, cols.early, end, cols.early, block.earlyLeave || "", center);
-    mergeValue(
-      sheet,
-      row,
-      cols.absences,
-      end,
-      cols.absencesEnd,
-      classAbsenceText(block, payload),
-      {
-        font: { size: 8 },
-        alignment: { horizontal: "left", vertical: "top", wrapText: true },
-      }
-    );
-    mergeValue(sheet, row, cols.enroll, end, cols.enroll, "", center);
-    mergeValue(sheet, row, cols.withdraw, end, cols.withdraw, "", center);
-    for (let r = row; r <= end; r += 1) {
-      sheet.getRow(r).height = 15;
+    mergeValue(sheet, currentRow, cols.cap, end, cols.cap, block.registered || "", center);
+    mergeValue(sheet, currentRow, cols.present, end, cols.present, block.present, center);
+    mergeValue(sheet, currentRow, cols.early, end, cols.early, block.earlyLeave || "", center);
+
+    const ranges = absenceColRanges(cols.absences, cols.absencesEnd, layout.columnCount);
+    layout.columns.forEach((columnLines, index) => {
+      const [colStart, colEnd] = ranges[index] ?? ranges[ranges.length - 1];
+      mergeValue(
+        sheet,
+        currentRow,
+        colStart,
+        end,
+        colEnd,
+        columnLines.join("\n"),
+        absenceStyle
+      );
+    });
+
+    mergeValue(sheet, currentRow, cols.enroll, end, cols.enroll, "", center);
+    mergeValue(sheet, currentRow, cols.withdraw, end, cols.withdraw, "", center);
+
+    for (let row = currentRow; row <= end; row += 1) {
+      sheet.getRow(row).height = layout.rowHeight;
     }
-  });
+    currentRow = end + 1;
+  }
 }
 
 function writeStaffFooter(

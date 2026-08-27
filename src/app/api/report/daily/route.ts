@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { reportSendPayload, sendMail } from "@/lib/mailer";
 import { buildDailySchoolWorkbook } from "@/lib/excel-daily";
+import { buildDailySchoolPdf } from "@/lib/pdf-daily";
 import type { DailySchoolReportPayload } from "@/lib/daily-report";
 import { SCHOOL_NAME } from "@/lib/seed";
 import { isSiteRequestAuthorized } from "@/lib/site-auth";
@@ -23,23 +24,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "缺少每日缺席報告資料。" }, { status: 400 });
   }
 
-  const filename = `每日缺席報告-${body.payload.schoolDay}.xlsx`;
-  const buffer = await buildDailySchoolWorkbook(body.payload);
+  const excelFilename = `每日缺席報告-${body.payload.schoolDay}.xlsx`;
+  const pdfFilename = `每日缺席報告-${body.payload.schoolDay}.pdf`;
+  const excelBuffer = await buildDailySchoolWorkbook(body.payload);
   const enabledRecipients = (body.recipients ?? []).filter((item) => item.email);
 
   if (body.sendEmail) {
     try {
+      const pdfBuffer = await buildDailySchoolPdf(body.payload);
       await sendMail({
         fromName: `${SCHOOL_NAME}校務處`,
         subject: `【${SCHOOL_NAME}】${body.payload.schoolDay} 每日缺席報告`,
-        html: "<p>附上每日缺席報告，請看附件，謝謝。</p>",
+        html: "<p>附上每日缺席報告（Excel 及 PDF），請看附件，謝謝。</p>",
         recipients: enabledRecipients,
         attachments: [
           {
-            filename,
-            content: buffer,
+            filename: excelFilename,
+            content: excelBuffer,
             contentType:
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          },
+          {
+            filename: pdfFilename,
+            content: pdfBuffer,
+            contentType: "application/pdf",
           },
         ],
       });
@@ -54,8 +62,8 @@ export async function POST(request: Request) {
   return NextResponse.json(
     reportSendPayload({
       sendEmail: body.sendEmail,
-      filename,
-      buffer,
+      filename: excelFilename,
+      buffer: excelBuffer,
       recipientCount: enabledRecipients.length,
     })
   );

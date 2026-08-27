@@ -154,7 +154,13 @@ export function buildDailyAbsenceRows(
 export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
   const name = formatNameWithCountedDays(row.name, row.countedDays);
   if (row.statusKey === "half_absent") {
-    return formatHalfAbsentReportLine(name, row.reason, row.returnedAt);
+    return formatHalfAbsentReportLine(
+      name,
+      row.reason,
+      row.returnedAt,
+      row.calledBy,
+      row.calledAt
+    );
   }
   if (row.statusKey === "early") {
     return formatEarlyLeaveReportLine(name, row.reason, row.earlyAt, row.earlyPickup);

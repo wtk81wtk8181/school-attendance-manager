@@ -100,7 +100,9 @@ function cleanedReason(reason: string): string {
 export function formatHalfAbsentReportLine(
   name: string,
   reason: string,
-  returnedAt: string
+  returnedAt: string,
+  calledBy?: string,
+  calledAt?: string
 ): string {
   const body = cleanedReason(reason);
   const cause =
@@ -109,8 +111,12 @@ export function formatHalfAbsentReportLine(
       : body.endsWith("缺席")
         ? `因${body}`
         : `因${body}缺席`;
+  const caller =
+    calledBy?.trim() && calledBy !== "尚未致電" ? calledBy : "";
+  const callTime = calledAt?.trim() && calledAt !== "—" ? calledAt : "";
+  const callSuffix = caller ? `(${caller})${callTime}` : callTime;
   const time = returnedAt.trim() || "—";
-  return `${name}${cause}/(已於${time}回校)`;
+  return `${name}${cause}${callSuffix}/(已於${time}回校)`;
 }
 
 export function formatEarlyLeaveReportLine(
@@ -129,11 +135,17 @@ export function formatAbsenceRecordLine(
   name: string,
   record: Pick<
     AbsenceRecord,
-    "eclassStatus" | "reason" | "returnedAt" | "earlyAt" | "earlyPickup"
+    "eclassStatus" | "reason" | "returnedAt" | "earlyAt" | "earlyPickup" | "calledBy" | "calledAt"
   >
 ): string {
   if (record.eclassStatus === "half_absent") {
-    return formatHalfAbsentReportLine(name, record.reason, record.returnedAt ?? "");
+    return formatHalfAbsentReportLine(
+      name,
+      record.reason,
+      record.returnedAt ?? "",
+      record.calledBy,
+      record.calledAt
+    );
   }
   if (record.eclassStatus === "early") {
     return formatEarlyLeaveReportLine(
