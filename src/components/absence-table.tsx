@@ -24,7 +24,7 @@ import {
 import { useStore } from "@/lib/store";
 import type { AbsenceRecord, Student } from "@/lib/types";
 import { EmptyState } from "@/components/empty-state";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, ArrowDown, ArrowUp } from "lucide-react";
 
 export function AbsenceTable({
   records,
@@ -39,6 +39,7 @@ export function AbsenceTable({
 }) {
   const { state, currentUser } = useStore();
   const [editing, setEditing] = useState<AbsenceRecord | null>(null);
+  const [dateSort, setDateSort] = useState<"desc" | "asc">("desc");
   const canEdit = currentUser?.role === "office";
 
   const studentMap = useMemo(() => {
@@ -46,6 +47,16 @@ export function AbsenceTable({
     for (const student of state.students) map.set(student.id, student);
     return map;
   }, [state.students]);
+
+  const sortedRecords = useMemo(() => {
+    const copy = [...records];
+    copy.sort((a, b) => {
+      const byDate = a.date.localeCompare(b.date);
+      if (byDate !== 0) return dateSort === "desc" ? -byDate : byDate;
+      return a.studentId.localeCompare(b.studentId);
+    });
+    return copy;
+  }, [records, dateSort]);
 
   if (records.length === 0) {
     return (
@@ -65,7 +76,27 @@ export function AbsenceTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>日期</TableHead>
+            <TableHead>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 font-medium text-slate-700 hover:text-slate-900"
+                onClick={() =>
+                  setDateSort((current) => (current === "desc" ? "asc" : "desc"))
+                }
+                title={
+                  dateSort === "desc"
+                    ? "由近至遠（按一下改為由遠至近）"
+                    : "由遠至近（按一下改為由近至遠）"
+                }
+              >
+                日期
+                {dateSort === "desc" ? (
+                  <ArrowDown className="size-3.5" aria-hidden />
+                ) : (
+                  <ArrowUp className="size-3.5" aria-hidden />
+                )}
+              </button>
+            </TableHead>
             {showStudent ? <TableHead>學生</TableHead> : null}
             <TableHead>狀態</TableHead>
             <TableHead>日數</TableHead>
@@ -79,7 +110,7 @@ export function AbsenceTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {records.map((record) => {
+          {sortedRecords.map((record) => {
             const student = studentMap.get(record.studentId);
             const counted = isCountedTowardAbsence(record);
             return (
