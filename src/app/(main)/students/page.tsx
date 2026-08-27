@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Search, Users, Check } from "lucide-react";
 import { AttendanceMark } from "@/components/attendance-mark";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader, PageShell, PageSkeleton } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { LevelBadge } from "@/components/status-badges";
 import { Input } from "@/components/ui/input";
@@ -56,6 +57,7 @@ export default function StudentsPage() {
     pendingSave,
     usingDatabase,
     restoreHiddenStudent,
+    ready,
   } = useStore();
   const isOffice = currentUser?.role === "office";
   const [query, setQuery] = useState("");
@@ -152,18 +154,18 @@ export default function StudentsPage() {
     setSchoolDay(next);
   }
 
+  if (!ready) return <PageSkeleton tiles={4} lines={8} />;
+
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {currentUser?.role === "homeroom" ? "本班學生出勤" : "學生出勤"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {isOffice
-            ? "請先選班，再選擇上課日（包括已過去的日子），為該班標記出席、缺席、遲到、事假、半日缺席或早退。過往日子的更改同樣會寫入平台，標記後請按「確定儲存」。"
-            : "點選學生可查看缺席日期、文件與審核狀態。老師帳號為唯讀，可更換班別。"}
-        </p>
-      </div>
+    <PageShell>
+      <PageHeader
+        title={currentUser?.role === "homeroom" ? "本班學生出勤" : "學生出勤"}
+        description={
+          isOffice
+            ? "請先選班，再選擇上課日（包括已過去的日子），為該班標記出席、缺席、遲到、事假、半日缺席或早退。標記後請按「確定儲存」。"
+            : "點選學生可查看缺席日期、文件與審核狀態。老師帳號為唯讀，可更換班別。"
+        }
+      />
 
       {isOffice ? (
         <div
@@ -197,11 +199,11 @@ export default function StudentsPage() {
       ) : null}
 
       {isOffice ? (
-        <section className="space-y-2 rounded-xl border bg-white px-3 py-2.5">
+        <section className="space-y-2 rounded-xl border border-slate-200 bg-white px-3 py-3 sm:px-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-medium">
               按班點名
-              <span className="ml-2 text-xs font-normal text-muted-foreground">
+              <span className="ml-2 text-xs font-normal text-slate-400">
                 選班後可標記該班出勤。已過去的上課日仍可改選並補記，按「確定儲存」寫入平台。
               </span>
             </p>
@@ -227,13 +229,13 @@ export default function StudentsPage() {
               ] as const
             ).map((group) => (
               <div key={group.label} className="space-y-1.5">
-                <p className="text-xs font-semibold tracking-wide text-[var(--school-navy)]">
+                <p className="text-xs font-semibold tracking-wide text-slate-400">
                   {group.label}
                 </p>
                 <div className="space-y-1">
                   {group.forms.map((item) => (
                     <div key={item} className="flex items-center gap-2">
-                      <p className="w-9 shrink-0 text-[11px] font-medium text-[var(--school-navy)]">
+                      <p className="w-9 shrink-0 text-[11px] font-medium text-slate-600">
                         {formLabel(item)}
                       </p>
                       <div className="grid min-w-0 flex-1 grid-cols-5 gap-1">
@@ -249,17 +251,17 @@ export default function StudentsPage() {
                               type="button"
                               onClick={() => setKlass(className)}
                               className={cn(
-                                "rounded-md border px-1.5 py-0.5 text-center leading-tight transition-colors",
+                                "rounded-md border border-slate-200 px-1.5 py-1 text-center leading-tight transition-colors duration-200 sm:py-0.5",
                                 selected
-                                  ? "border-[var(--school-navy)] bg-[var(--school-navy)] text-white"
-                                  : "bg-[var(--school-paper)] hover:bg-muted"
+                                  ? "border-slate-900 bg-slate-900 text-white"
+                                  : "bg-slate-50 hover:bg-slate-100 hover:border-slate-300"
                               )}
                             >
                               <span className="text-xs font-semibold">{classLabel(className)}</span>
                               <span
                                 className={cn(
                                   "ml-1 text-[10px]",
-                                  selected ? "text-white/75" : "text-muted-foreground"
+                                  selected ? "text-white/75" : "text-slate-400"
                                 )}
                               >
                                 {count}
@@ -279,7 +281,7 @@ export default function StudentsPage() {
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center">
         <div className="relative flex-1">
-          <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
+          <Search className="absolute top-2.5 left-2.5 size-4 text-slate-400" />
           <Input
             className="pl-8"
             placeholder="搜尋姓名、英文名或學號"
@@ -352,17 +354,17 @@ export default function StudentsPage() {
       </div>
 
       {rows.length > 0 ? (
-        <div className="flex flex-col gap-3 rounded-xl border bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="text-sm font-medium">
               {klass !== "all" ? classLabel(klass) : "本班"}
               {selectedTeacher ? (
-                <span className="ml-2 font-normal text-muted-foreground">
+                <span className="ml-2 font-normal text-slate-400">
                   班主任 {selectedTeacher}
                 </span>
               ) : null}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-slate-400">
               {formatDate(schoolDay)}
               {isOffice
                 ? "　可改選過往上課日補記出勤；標記後請按「確定儲存」寫入平台"
@@ -417,7 +419,7 @@ export default function StudentsPage() {
       ) : null}
 
       {rows.length > 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-slate-400">
           {schoolDay}：出席 {selectedDayPresent}　缺席 {selectedDayAbsent}　半日缺席{" "}
           {selectedDayHalf}　遲到 {selectedDayLate}　事假 {selectedDayLeave}　早退 {selectedDayEarly}
           {hiddenInView.length > 0 ? `　已隱藏 ${hiddenInView.length} 人` : ""}
@@ -465,12 +467,12 @@ export default function StudentsPage() {
             <div className="flex items-end justify-between gap-2">
               <h2 className="text-base font-semibold">
                 {classLabel(className)}
-                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                <span className="ml-2 text-sm font-normal text-slate-400">
                   {CLASS_TEACHERS[className] ?? ""}　{items.length} 人
                 </span>
               </h2>
             </div>
-            <div className="rounded-xl border bg-white">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -493,7 +495,7 @@ export default function StudentsPage() {
                         >
                           {item.student.name}
                         </Link>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-slate-400">
                           {item.student.studentNo}　{item.student.nameEn}
                         </p>
                       </TableCell>
@@ -527,7 +529,7 @@ export default function StudentsPage() {
                         <div className="w-36">
                           <div className="mb-1 flex justify-between text-xs">
                             <span>{formatDays(item.countedDays)} 天</span>
-                            <span className="text-muted-foreground">
+                            <span className="text-slate-400">
                               / {formatDays(item.limit)}
                             </span>
                           </div>
@@ -561,6 +563,6 @@ export default function StudentsPage() {
           </section>
         ))
       )}
-    </div>
+    </PageShell>
   );
 }

@@ -244,7 +244,7 @@ export function DailyStaffSection({ date }: { date: string }) {
           {STAFF_ABSENCE_ROWS.map((row) => {
             const selected = new Set(staffIdsForKind(daily, row.kind));
             return (
-              <div key={row.kind} className="rounded-lg border bg-[var(--school-paper)]/50 p-3">
+              <div key={row.kind} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <p className="text-sm font-medium">{row.label}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {filteredMembers.length === 0 ? (

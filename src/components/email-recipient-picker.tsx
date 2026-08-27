@@ -62,7 +62,7 @@ export function EmailRecipientPicker({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border bg-[var(--school-paper)] p-3">
+    <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
       <div className="grid gap-1.5">
         <Label htmlFor={`${idPrefix}-email`}>新增電郵（Enter 或離開欄位後自動儲存）</Label>
         <Input

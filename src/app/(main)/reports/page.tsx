@@ -43,6 +43,8 @@ import { EmailRecipientPicker } from "@/components/email-recipient-picker";
 import { downloadBase64Xlsx, requestDailyReport, requestLoReport, requestMonthlyReport } from "@/lib/digest-client";
 import { resolveSendRecipients, persistRecipientEmails } from "@/lib/email-utils";
 import { useStore } from "@/lib/store";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader, PageShell, PageSkeleton } from "@/components/page-shell";
 import type { FormLevel } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -54,6 +56,7 @@ export default function ReportsPage() {
     currentUser,
     updateAbsenceDetails,
     upsertRecipient,
+    ready,
   } = useStore();
   const canEditDaily = currentUser?.role === "office";
   const today = hongKongToday();
@@ -353,16 +356,16 @@ export default function ReportsPage() {
     toast.success("已下載警告信存檔清單。");
   }
 
-  return (
-    <div className="mx-auto max-w-6xl space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">數據導出與報表</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          可按年級、班別與日期篩選，匯出學校格式每日缺席 Excel／PDF、羅小姐週報、出席率總表、缺席統計，以及警告信存檔清單。
-        </p>
-      </div>
+  if (!ready) return <PageSkeleton tiles={4} lines={6} />;
 
-      <Card className="shadow-none">
+  return (
+    <PageShell>
+      <PageHeader
+        title="數據導出與報表"
+        description="可按年級、班別與日期篩選，匯出學校格式每日缺席 Excel／PDF、羅小姐週報、出席率總表、缺席統計，以及警告信存檔清單。"
+      />
+
+      <Card>
         <CardHeader>
           <CardTitle>篩選</CardTitle>
           <CardDescription>班主任帳號只會匯出其負責班級。</CardDescription>
@@ -592,15 +595,15 @@ export default function ReportsPage() {
         </Card>
       </div>
 
-      <div className="rounded-xl border bg-white p-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
         <DailyStaffSection date={reportDay} />
       </div>
 
-      <div className="rounded-xl border bg-white">
+      <div className="rounded-xl border border-slate-200 bg-white">
         <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
           <div>
             <p className="font-medium">每日缺席名單預覽</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-400">
               {formatShortDate(reportDay)}
               {canEditDaily
                 ? "　職員可選擇或填寫請假原因、致電人士及致電時間"
@@ -613,9 +616,12 @@ export default function ReportsPage() {
           </Button>
         </div>
         {dailyRows.length === 0 ? (
-          <p className="px-4 py-8 text-sm text-muted-foreground">
-            該日沒有缺席或請假紀錄。可改選其他上課日。
-          </p>
+          <EmptyState
+            icon={FileText}
+            title="該日沒有缺席或請假紀錄"
+            description="可改選其他上課日再預覽或匯出。"
+            className="border-0 bg-transparent py-10"
+          />
         ) : (
           <Table>
             <TableHeader>
@@ -633,12 +639,12 @@ export default function ReportsPage() {
                   <TableCell>{row.classLabel}</TableCell>
                   <TableCell>
                     {row.name}
-                    <span className="ml-2 text-xs text-muted-foreground">
+                    <span className="ml-2 text-xs text-slate-400">
                       {row.studentNo}　{row.status}
                       {row.days === 0.5 ? "（半日）" : ""}
                     </span>
                     {row.statusKey === "half_absent" || row.statusKey === "early" ? (
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1 text-xs text-slate-400">
                         {formatDailyAbsenceLine(row)}
                       </p>
                     ) : null}
@@ -677,10 +683,10 @@ export default function ReportsPage() {
         )}
       </div>
 
-      <div className="rounded-xl border bg-white">
+      <div className="rounded-xl border border-slate-200 bg-white">
         <div className="border-b px-4 py-3">
           <p className="font-medium">各班出席率</p>
-          <p className="text-xs text-muted-foreground">只顯示每班人數與全班平均出席率</p>
+          <p className="text-xs text-slate-400">只顯示每班人數與全班平均出席率</p>
         </div>
         <Table>
           <TableHeader>
@@ -701,10 +707,10 @@ export default function ReportsPage() {
           </TableBody>
         </Table>
       </div>
-      <div className="rounded-xl border bg-white">
+      <div className="rounded-xl border border-slate-200 bg-white">
         <div className="border-b px-4 py-3">
           <p className="font-medium">每月各班缺席率（{monthlyReport.monthLabel}）</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-slate-400">
             {formatShortDate(monthRange(month).start)} 至{" "}
             {formatShortDate(monthRange(month).end)}　獲批請假不計入；遲到另行統計次數
           </p>
@@ -738,6 +744,6 @@ export default function ReportsPage() {
           </TableBody>
         </Table>
       </div>
-    </div>
+    </PageShell>
   );
 }

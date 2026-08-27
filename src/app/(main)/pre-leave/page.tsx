@@ -5,6 +5,7 @@ import { CalendarDays, Lock } from "lucide-react";
 import { DailyStaffSection } from "@/components/daily-staff-section";
 import { StudentLeaveSection } from "@/components/student-leave-section";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader, PageShell, PageSkeleton } from "@/components/page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,29 +15,31 @@ import { formatShortDate } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
 export default function PreLeavePage() {
-  const { currentUser } = useStore();
+  const { currentUser, ready } = useStore();
   const [date, setDate] = useState(hongKongToday());
+
+  if (!ready) return <PageSkeleton tiles={1} lines={5} />;
 
   if (currentUser?.role !== "office") {
     return (
-      <EmptyState
-        icon={Lock}
-        title="沒有編輯權限"
-        description="預先請假由校務處負責登記。老師請到總覽查看當日資料。"
-      />
+      <PageShell>
+        <EmptyState
+          icon={Lock}
+          title="沒有編輯權限"
+          description="預先請假由校務處負責登記。老師請到總覽查看當日資料。"
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">預先請假</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          學生及教職員均可提早登記請假；到請假當日會自動顯示於總覽、每日缺席報告及電郵。
-        </p>
-      </div>
+    <PageShell className="max-w-4xl">
+      <PageHeader
+        title="預先請假"
+        description="學生及教職員均可提早登記請假；到請假當日會自動顯示於總覽、每日缺席報告及電郵。"
+      />
 
-      <Card className="shadow-none">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <CalendarDays className="size-4" />
@@ -56,26 +59,39 @@ export default function PreLeavePage() {
               onChange={(event) => setDate(event.target.value)}
             />
           </div>
-          <p className="text-sm text-muted-foreground">目前預覽：{formatShortDate(date)}</p>
+          <p className="text-sm text-slate-400">目前預覽：{formatShortDate(date)}</p>
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="students">
-        <TabsList>
-          <TabsTrigger value="students">學生</TabsTrigger>
-          <TabsTrigger value="staff">教職員</TabsTrigger>
+      <Tabs defaultValue="students" className="gap-4">
+        <TabsList
+          variant="line"
+          className="h-auto w-full justify-start gap-0 overflow-x-auto border-b border-slate-200 bg-transparent p-0"
+        >
+          <TabsTrigger
+            value="students"
+            className="rounded-none px-4 py-2.5 text-slate-600 after:bg-slate-900 data-active:text-slate-900"
+          >
+            學生
+          </TabsTrigger>
+          <TabsTrigger
+            value="staff"
+            className="rounded-none px-4 py-2.5 text-slate-600 after:bg-slate-900 data-active:text-slate-900"
+          >
+            教職員
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="students" className="mt-4">
-          <div className="rounded-xl border bg-white p-4">
+        <TabsContent value="students" className="mt-0">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
             <StudentLeaveSection date={date} />
           </div>
         </TabsContent>
-        <TabsContent value="staff" className="mt-4">
-          <div className="rounded-xl border bg-white p-4">
+        <TabsContent value="staff" className="mt-0">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
             <DailyStaffSection date={date} />
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </PageShell>
   );
 }

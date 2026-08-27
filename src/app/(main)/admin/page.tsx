@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader, PageShell, PageSkeleton } from "@/components/page-shell";
 import {
   Select,
   SelectContent,
@@ -82,7 +83,7 @@ function parseCell(text: string, original: unknown): unknown {
 }
 
 export default function AdminPage() {
-  const { currentUser, state, adminPatchState, adminPatchSections, saveToDatabase } = useStore();
+  const { currentUser, state, adminPatchState, adminPatchSections, saveToDatabase, ready } = useStore();
   const [sectionKey, setSectionKey] = useState<keyof AppState>("students");
   const [draft, setDraft] = useState<Row[] | null>(null);
   const [page, setPage] = useState(0);
@@ -106,13 +107,17 @@ export default function AdminPage() {
     [rows, sectionKey]
   );
 
+  if (!ready) return <PageSkeleton tiles={0} lines={8} />;
+
   if (currentUser?.role !== "office") {
     return (
-      <EmptyState
-        icon={Lock}
-        title="沒有檢視權限"
-        description="後台管理只供校務處職員使用。"
-      />
+      <PageShell>
+        <EmptyState
+          icon={Lock}
+          title="沒有檢視權限"
+          description="後台管理只供校務處職員使用。"
+        />
+      </PageShell>
     );
   }
 
@@ -238,15 +243,13 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">後台管理</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          以試算表方式檢視及修改資料庫內的所有資料。修改後請按「儲存變更」才會同步至雲端。
-        </p>
-      </div>
+    <PageShell wide>
+      <PageHeader
+        title="後台管理"
+        description="以試算表方式檢視及修改資料庫內的所有資料。修改後請按「儲存變更」才會同步至雲端。"
+      />
 
-      <Card className="shadow-none">
+      <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -265,7 +268,7 @@ export default function AdminPage() {
                   if (value) selectSection(value as keyof AppState);
                 }}
               >
-                <SelectTrigger className="w-56">
+                <SelectTrigger className="w-full sm:w-56">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -296,9 +299,12 @@ export default function AdminPage() {
         </CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
-              此資料表暫時沒有資料。
-            </p>
+            <EmptyState
+              icon={Database}
+              title="此資料表暫時沒有資料"
+              description="可新增一列，或從 JSON 批量匯入。"
+              className="border-0 bg-transparent py-10"
+            />
           ) : (
             <div className="overflow-x-auto rounded border">
               <table className="w-full border-collapse text-xs">
@@ -318,7 +324,7 @@ export default function AdminPage() {
                     const rowIndex = pageStart + visibleIndex;
                     return (
                     <tr key={`${rowIndex}-${String(row.id ?? "")}`}>
-                      <td className="border px-2 py-1 text-muted-foreground">{rowIndex + 1}</td>
+                      <td className="border px-2 py-1 text-slate-400">{rowIndex + 1}</td>
                       {columns.map((column) => (
                         <td key={column} className="border p-0">
                           <Input
@@ -348,7 +354,7 @@ export default function AdminPage() {
           )}
           {rows.length > PAGE_SIZE ? (
             <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-              <p className="text-muted-foreground">
+              <p className="text-slate-400">
                 顯示第 {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, rows.length)} 列，
                 共 {rows.length} 列
               </p>
@@ -394,7 +400,7 @@ export default function AdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="rounded-md border bg-muted/30 p-3 text-xs leading-6 text-muted-foreground">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-600">
             <p className="font-medium text-foreground">支援兩種格式：</p>
             <p>1. 單一資料表：</p>
             <pre className="overflow-x-auto rounded bg-background p-2 text-[11px]">{`{
@@ -471,6 +477,6 @@ export default function AdminPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }

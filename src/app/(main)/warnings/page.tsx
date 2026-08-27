@@ -2,14 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  ArrowRight,
-  Clock,
-  FileWarning,
-  Mail,
-  UserX,
-} from "lucide-react";
+import { ArrowRight, Clock, FileWarning, Mail, UserX } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader, PageShell, StatTile } from "@/components/page-shell";
 import { WarningStatusBadge, WarningTypeBadge } from "@/components/status-badges";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,7 +28,6 @@ import {
 } from "@/lib/rules";
 import { useStore } from "@/lib/store";
 import type { Student, WarningLetter } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 type CategoryFilter = "all" | WarningCategory;
 
@@ -65,7 +59,7 @@ function filterByCategory<T extends { type: WarningLetter["type"] }>(
 
 function WarningsPageSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-1 sm:px-0">
+    <PageShell>
       <div className="space-y-3">
         <Skeleton className="h-8 w-32" />
         <Skeleton className="h-4 w-full max-w-2xl" />
@@ -105,66 +99,7 @@ function WarningsPageSkeleton() {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function StatTile({
-  label,
-  value,
-  hint,
-  icon: Icon,
-  active,
-  onClick,
-}: {
-  label: string;
-  value: number;
-  hint: string;
-  icon: React.ComponentType<{ className?: string }>;
-  active?: boolean;
-  onClick?: () => void;
-}) {
-  const content = (
-    <>
-      <div
-        className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors duration-200",
-          active
-            ? "bg-slate-900 text-white"
-            : "bg-slate-100 text-slate-600 group-hover:bg-slate-200/80"
-        )}
-      >
-        <Icon className="size-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-slate-400">{label}</p>
-        <p className="mt-0.5 text-2xl font-semibold tracking-tight text-slate-900">
-          {value}
-        </p>
-        <p className="mt-1 text-xs leading-relaxed text-slate-600">{hint}</p>
-      </div>
-    </>
-  );
-
-  const className = cn(
-    "group w-full text-left shadow-none ring-slate-200/80 transition-all duration-200 hover:ring-slate-300/80",
-    active && "ring-slate-900/20 bg-slate-50/80"
-  );
-
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} className="rounded-xl text-left">
-        <Card className={className}>
-          <CardContent className="flex items-start gap-3 p-4">{content}</CardContent>
-        </Card>
-      </button>
-    );
-  }
-
-  return (
-    <Card className={className}>
-      <CardContent className="flex items-start gap-3 p-4">{content}</CardContent>
-    </Card>
+    </PageShell>
   );
 }
 
@@ -324,19 +259,18 @@ export default function WarningsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-1 sm:px-0">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">警告信</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
-          缺席與遲到分開發出獨立警告信。缺席類包括達預警線、超過上限及缺席逾 3 次；遲到類為遲到逾 3 次。
-          {currentUser?.role === "homeroom" ? (
-            <span className="text-slate-400">
-              {" "}
-              班主任可預覽及列印，但不能登記跟進。
-            </span>
-          ) : null}
-        </p>
-      </header>
+    <PageShell>
+      <PageHeader
+        title="警告信"
+        description={
+          <>
+            缺席與遲到分開發出獨立警告信。缺席類包括達預警線、超過上限及缺席逾 3 次；遲到類為遲到逾 3 次。
+            {currentUser?.role === "homeroom" ? (
+              <span className="text-slate-400"> 班主任可預覽及列印，但不能登記跟進。</span>
+            ) : null}
+          </>
+        }
+      />
 
       <section
         aria-label="警告信統計"
@@ -454,6 +388,6 @@ export default function WarningsPage() {
           </TabsContent>
         ))}
       </Tabs>
-    </div>
+    </PageShell>
   );
 }

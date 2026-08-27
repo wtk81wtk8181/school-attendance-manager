@@ -74,10 +74,10 @@ function SideNav({
             href={item.href}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
+              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-200",
               active
-                ? "bg-white/12 text-white"
-                : "text-white/75 hover:bg-white/8 hover:text-white"
+                ? "bg-white/10 text-white"
+                : "text-slate-300 hover:bg-white/8 hover:text-white"
             )}
           >
             <item.icon className="size-4" />
@@ -123,28 +123,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const userInitial = currentUser?.name.slice(0, 1) ?? "";
 
   return (
-    <div className="flex min-h-full bg-[var(--school-paper)]">
+    <div className="flex min-h-full bg-slate-50">
       {currentUser?.role === "office" ? <DigestScheduler /> : null}
-      <aside className="no-print hidden w-60 shrink-0 flex-col bg-[var(--school-navy)] text-white md:flex">
+      <aside className="no-print hidden w-60 shrink-0 flex-col bg-slate-950 text-white md:flex">
         <div className="border-b border-white/10 py-4">
           <Link href="/dashboard" className="flex items-center gap-2.5 px-3 py-1">
             <SchoolLogoMark />
             <span className="leading-tight">
               <span className="block text-sm font-semibold tracking-wide">{SCHOOL_NAME}</span>
-              <span className="block text-[11px] text-white/70">出勤與請假管理</span>
+              <span className="block text-[11px] text-slate-400">出勤與請假管理</span>
             </span>
           </Link>
         </div>
         <div className="flex-1 py-4">
           <SideNav items={nav} pathname={pathname} />
         </div>
-        <p className="px-4 pb-4 text-[11px] text-white/50">
+        <p className="px-4 pb-4 text-[11px] text-slate-500">
           {state.academicYear.label} 學年　上課 {state.academicYear.schoolDays} 天
         </p>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="no-print sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-[var(--school-paper)]/90 px-4 backdrop-blur">
+        <header className="no-print sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-slate-200/80 bg-slate-50/90 px-3 py-2 backdrop-blur sm:gap-3 sm:px-4">
           <Button
             variant="ghost"
             size="icon"
@@ -154,13 +154,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="size-4" />
           </Button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">
+            <p className="truncate text-sm font-medium text-slate-900">
               {currentUser?.title}　{currentUser?.name}
               {currentUser?.role === "homeroom" && state.selectedClassName
                 ? `　${classLabel(state.selectedClassName)}`
                 : ""}
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="hidden truncate text-[11px] text-slate-400 sm:block">
               {usingDatabase
                 ? `雲端資料庫已連線・${state.students.length} 名學生・${state.absences.length} 筆缺席`
                 : "本機模式：另一部裝置看不到這裡的變更"}
@@ -178,13 +178,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   }}
                   className={
                     pendingSave
-                      ? "bg-[var(--school-navy)] text-white hover:bg-[var(--school-navy)]/90"
+                      ? "bg-slate-900 text-white hover:bg-slate-800"
                       : undefined
                   }
                   variant={pendingSave ? "default" : "outline"}
                 >
                   <Check className={saving ? "size-4 animate-pulse" : "size-4"} />
-                  {saving ? "儲存中……" : pendingSave ? "確定儲存" : "已儲存"}
+                  <span className="hidden sm:inline">{saving ? "儲存中……" : pendingSave ? "確定儲存" : "已儲存"}</span>
                 </Button>
               ) : null}
               <Button
@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }}
               >
                 <RefreshCw className={syncing ? "size-4 animate-spin" : "size-4"} />
-                同步資料
+                <span className="hidden sm:inline">同步資料</span>
               </Button>
             </>
           ) : (
@@ -211,17 +211,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               }}
             >
               <RefreshCw className={syncing ? "size-4 animate-spin" : "size-4"} />
-              連接資料庫
+              <span className="hidden sm:inline">連接資料庫</span>
             </Button>
           )}
           {currentUser?.role === "homeroom" && state.selectedClassName ? (
             <Button
-              size="lg"
+              size="sm"
               onClick={() => selectClass(null)}
-              className="h-11 gap-2 px-4 text-base font-semibold bg-[var(--school-navy)] text-white shadow-md hover:bg-[var(--school-navy)]/90 hover:text-white"
+              className="gap-2 bg-slate-900 text-white shadow-sm hover:bg-slate-800 hover:text-white sm:h-11 sm:px-4 sm:text-base sm:font-semibold"
             >
               <RefreshCw className="size-4" />
-              更換班別
+              <span className="hidden sm:inline">更換班別</span>
             </Button>
           ) : null}
 
@@ -252,7 +252,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <DropdownMenuSeparator />
               <ScrollArea className="h-72">
                 {visibleNotes.length === 0 ? (
-                  <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                  <p className="px-3 py-6 text-center text-sm text-slate-400">
                     目前沒有通知。
                   </p>
                 ) : (
@@ -260,7 +260,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <button
                       key={item.id}
                       className={cn(
-                        "block w-full px-3 py-2 text-left text-sm hover:bg-muted",
+                        "block w-full px-3 py-2 text-left text-sm transition-colors duration-200 hover:bg-slate-50",
                         !item.read && "bg-amber-50/70"
                       )}
                       onClick={() => {
@@ -269,11 +269,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         else if (item.studentId) router.push(`/students/${item.studentId}`);
                       }}
                     >
-                      <span className="block font-medium">{item.title}</span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                      <span className="block font-medium text-slate-900">{item.title}</span>
+                      <span className="mt-0.5 block text-xs text-slate-600">
                         {item.body}
                       </span>
-                      <span className="mt-1 block text-[11px] text-muted-foreground">
+                      <span className="mt-1 block text-[11px] text-slate-400">
                         {formatDateTime(item.createdAt)}
                       </span>
                     </button>
@@ -286,6 +286,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Button
             variant="outline"
             size="sm"
+            className="hidden md:inline-flex"
             onClick={() => router.push("/dashboard")}
           >
             <Home className="size-3.5" />
@@ -301,14 +302,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             }}
           >
             <LogOut className="size-3.5" />
-            退出登入
+            <span className="hidden sm:inline">退出登入</span>
           </Button>
-          <span className="hidden size-8 items-center justify-center rounded-full bg-[var(--school-navy)] text-xs font-medium text-white sm:flex">
+          <span className="hidden size-8 items-center justify-center rounded-full bg-slate-900 text-xs font-medium text-white lg:flex">
             {userInitial}
           </span>
         </header>
 
-        <main className="flex-1 p-4 md:p-6 print:p-0">
+        <main className="flex-1 p-4 md:p-8 print:p-0">
           {currentUser?.role === "homeroom" && !state.selectedClassName ? (
             <ClassPicker />
           ) : (
@@ -320,14 +321,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
           side="left"
-          className="w-64 border-none bg-[var(--school-navy)] p-0 text-white"
+          className="w-64 border-none bg-slate-950 p-0 text-white"
         >
           <SheetHeader className="border-b border-white/10 p-4">
             <SheetTitle className="flex items-center gap-2.5 text-white">
               <SchoolLogoMark />
               <span className="leading-tight">
                 <span className="block text-sm font-semibold">{SCHOOL_NAME}</span>
-                <span className="block text-[11px] font-normal text-white/70">出勤與請假管理</span>
+                <span className="block text-[11px] font-normal text-slate-400">出勤與請假管理</span>
               </span>
             </SheetTitle>
           </SheetHeader>

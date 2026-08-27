@@ -47,13 +47,13 @@ export function SiteLoginForm({ nextPath }: { nextPath: string }) {
     <AuthLandingShell subtitle="此平台僅供授權人士使用">
       <div className="space-y-6">
         <div className="space-y-1.5">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-[var(--school-navy)]">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-[#ede9fe] text-[#6d28d9]">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
               <LockKeyhole className="size-4" />
             </span>
             進入密碼
           </h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">
+          <p className="text-sm leading-relaxed text-slate-600">
             請輸入存取密碼後，才能進入出勤管理系統。
           </p>
         </div>
@@ -68,7 +68,7 @@ export function SiteLoginForm({ nextPath }: { nextPath: string }) {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="請輸入密碼"
-              className="h-11 border-[#e8e2ef] bg-[#faf9fc] focus-visible:border-[#7c3aed]/40 focus-visible:ring-[#7c3aed]/20"
+              className="h-11"
               required
             />
           </div>
@@ -78,7 +78,7 @@ export function SiteLoginForm({ nextPath }: { nextPath: string }) {
             </p>
           ) : null}
           <Button
-            className="h-11 w-full bg-[var(--school-navy)] text-base shadow-md hover:bg-[#152a47]"
+            className="h-11 w-full text-base"
             type="submit"
             disabled={loading}
           >

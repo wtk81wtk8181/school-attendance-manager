@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { PageSkeleton } from "@/components/page-shell";
 import { useStore, rehydrateStore } from "@/lib/store";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
@@ -24,8 +25,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <div className="flex min-h-full items-center justify-center text-sm text-muted-foreground">
-        載入校園數據中……
+      <div className="min-h-full bg-slate-50 p-6 md:p-8">
+        <PageSkeleton />
       </div>
     );
   }

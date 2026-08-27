@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AbsenceTable } from "@/components/absence-table";
 import { EmptyState } from "@/components/empty-state";
+import { PageShell } from "@/components/page-shell";
 import { LevelBadge, WarningStatusBadge, WarningTypeBadge } from "@/components/status-badges";
 import { StatCard } from "@/components/stat-card";
 import { formatDate, formatPercent } from "@/lib/format";
@@ -25,11 +26,13 @@ export function StudentDetail({ id }: { id: string }) {
 
   if (!student) {
     return (
-      <EmptyState
-        icon={AlertTriangle}
-        title="找不到這位學生"
-        description="你沒有權限檢視此學生，或學生編號不正確。班主任只能查看自己班級。"
-      />
+      <PageShell>
+        <EmptyState
+          icon={AlertTriangle}
+          title="找不到這位學生"
+          description="你沒有權限檢視此學生，或學生編號不正確。班主任只能查看自己班級。"
+        />
+      </PageShell>
     );
   }
 
@@ -42,20 +45,23 @@ export function StudentDetail({ id }: { id: string }) {
     .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt));
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <PageShell>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Button variant="ghost" size="sm" className="mb-2 -ml-2" render={<Link href="/students" />}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-2 -ml-2 text-slate-600 hover:text-slate-900"
+            render={<Link href="/students" />}
+          >
             <ArrowLeft className="size-3.5" />
             返回名單
           </Button>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             {student.name}
-            <span className="ml-2 text-base font-normal text-muted-foreground">
-              {student.nameEn}
-            </span>
+            <span className="ml-2 text-base font-normal text-slate-400">{student.nameEn}</span>
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-600">
             {classLabel(student.className)}　學號 {student.studentNo}　班主任 {student.homeroomTeacherName}
             {currentUser?.role === "homeroom" ? "　（唯讀）" : ""}
           </p>
@@ -115,7 +121,7 @@ export function StudentDetail({ id }: { id: string }) {
               style={{ width: `${progressPercent(stats.countedDays, stats.limit)}%` }}
             />
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-slate-400">
             {formatDays(stats.countedDays)} / {formatDays(stats.limit)} 天
             （待審核 {formatDays(stats.pendingDays)} 天仍暫時計入，批准後會剔除）
           </p>
@@ -142,17 +148,22 @@ export function StudentDetail({ id }: { id: string }) {
         </CardHeader>
         <CardContent className="space-y-2">
           {letters.length === 0 ? (
-            <p className="text-sm text-muted-foreground">尚未發出警告信。</p>
+            <EmptyState
+              icon={FileWarning}
+              title="尚未發出警告信"
+              description="此學生目前沒有警告信存檔。"
+              className="border-0 bg-transparent py-8"
+            />
           ) : (
             letters.map((letter) => (
               <Link
                 key={letter.id}
                 href={`/warnings/${letter.id}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2.5 hover:bg-muted/40"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2.5 transition-colors duration-200 hover:bg-slate-50"
               >
                 <div>
                   <p className="text-sm font-medium">發出日期 {formatDate(letter.issuedAt)}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-slate-400">
                     {formatWarningTrigger(letter.type, letter.triggerDays, letter.limitDays)}
                   </p>
                 </div>
@@ -165,6 +176,6 @@ export function StudentDetail({ id }: { id: string }) {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }

@@ -136,10 +136,10 @@ export function AttendanceMark({
                 onChange?.(option.value);
               }}
               className={cn(
-                "h-8 min-w-14 rounded-md px-2 text-xs font-semibold transition-colors",
+                "h-8 min-w-14 rounded-md px-2 text-xs font-semibold transition-colors duration-200",
                 selected
                   ? option.active
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  : "text-slate-400 hover:bg-slate-100 hover:text-slate-900",
                 disabled && "cursor-default opacity-80"
               )}
             >
@@ -155,7 +155,7 @@ export function AttendanceMark({
             回校時間
           </Label>
           {disabled ? (
-            <span className="text-muted-foreground">{record?.returnedAt || "—"}</span>
+            <span className="text-slate-400">{record?.returnedAt || "—"}</span>
           ) : (
             <Input
               id={`return-${record?.id ?? "new"}`}
@@ -186,7 +186,7 @@ export function AttendanceMark({
       ) : null}
 
       {value === "early" && record ? (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-slate-400">
           {record.reason?.trim() && record.reason !== "早退" ? `因${record.reason}` : ""}
           於{record.earlyAt || "—"}早退（{earlyPickupLabel(record.earlyPickup)}）
           {!disabled ? (

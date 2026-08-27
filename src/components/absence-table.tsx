@@ -53,6 +53,7 @@ export function AbsenceTable({
         icon={ClipboardList}
         title={emptyTitle}
         description={emptyDescription}
+        className="border-0 bg-transparent py-10"
       />
     );
   }
@@ -110,7 +111,7 @@ export function AbsenceTable({
                 <TableCell>
                   <div className="flex flex-col gap-1">
                     <DocumentBadge type={record.documentType} />
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-[11px] text-slate-400">
                       {record.documentSubmitted ? "已提交" : "未提交"}
                     </span>
                   </div>

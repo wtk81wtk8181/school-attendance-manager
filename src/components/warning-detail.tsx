@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/empty-state";
+import { PageShell } from "@/components/page-shell";
 import { WarningLetterBundle } from "@/components/warning-letter";
 import { WarningStatusBadge, WarningTypeBadge } from "@/components/status-badges";
 import { formatDateTime } from "@/lib/format";
@@ -27,18 +28,20 @@ export function WarningDetail({ id }: { id: string }) {
 
   if (!letter || !student) {
     return (
-      <EmptyState
-        icon={FileWarning}
-        title="找不到這封警告信"
-        description="文件不存在，或你沒有權限檢視該學生的信件。"
-      />
+      <PageShell>
+        <EmptyState
+          icon={FileWarning}
+          title="找不到這封警告信"
+          description="文件不存在，或你沒有權限檢視該學生的信件。"
+        />
+      </PageShell>
     );
   }
 
   const canEdit = currentUser?.role === "office";
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-1 sm:px-0">
+    <PageShell className="max-w-5xl space-y-6">
       <div className="no-print flex flex-wrap items-center justify-between gap-4">
         <div>
           <Button
@@ -102,7 +105,7 @@ export function WarningDetail({ id }: { id: string }) {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }
 
