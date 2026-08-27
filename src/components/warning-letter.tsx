@@ -4,12 +4,11 @@ import { formatDate, formatShortDate } from "@/lib/format";
 import type { Student, WarningLetter as WarningLetterRecord, WarningType } from "@/lib/types";
 
 type LetterLocale = "zh" | "en";
-type LetterFocus = "absence_days" | "absence_count" | "late_count" | "legacy_mixed";
+type LetterFocus = "absence_days" | "absence_count" | "late_count";
 
 function letterFocus(type: WarningType): LetterFocus {
   if (type === "frequent_late") return "late_count";
-  if (type === "frequent_absence") return "absence_count";
-  if (type === "frequent") return "legacy_mixed";
+  if (type === "frequent_absence" || type === "frequent") return "absence_count";
   return "absence_days";
 }
 
@@ -62,16 +61,12 @@ function ChineseLetter({
         ? "學生遲到預警通知書"
         : focus === "absence_count"
           ? "學生缺席次數預警通知書"
-          : focus === "legacy_mixed"
-            ? "學生出席預警通知書（缺席／遲到）"
-            : "學生缺席預警通知書";
+          : "學生缺席預警通知書";
 
   const opening =
     focus === "late_count"
       ? "於 2026-2027 學年之遲到情況，現特此通知。"
-      : focus === "legacy_mixed"
-        ? "於 2026-2027 學年之缺席及遲到情況，現特此通知。"
-        : "於 2026-2027 學年之缺席情況，現特此通知。";
+      : "於 2026-2027 學年之缺席情況，現特此通知。";
 
   const followUp =
     isLate
@@ -172,16 +167,12 @@ function EnglishLetter({
         ? "Lateness Alert Notice"
         : focus === "absence_count"
           ? "Absence Occurrence Alert Notice"
-          : focus === "legacy_mixed"
-            ? "Attendance Alert (Absence / Lateness)"
-            : "Absence Alert Notice";
+          : "Absence Alert Notice";
 
   const opening =
     focus === "late_count"
       ? "has attendance concerns regarding lateness in the 2026-2027 academic year. Please take note of this notice."
-      : focus === "legacy_mixed"
-        ? "has attendance concerns regarding absence and lateness in the 2026-2027 academic year. Please take note of this notice."
-        : "has attendance concerns regarding absence in the 2026-2027 academic year. Please take note of this notice.";
+      : "has attendance concerns regarding absence in the 2026-2027 academic year. Please take note of this notice.";
 
   const followUp =
     isLate

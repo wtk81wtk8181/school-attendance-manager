@@ -2,6 +2,7 @@ import { createSeed, OPERATIONAL_DATA_VERSION } from "@/lib/seed";
 import { normalizeAbsenceRecord } from "@/lib/attendance-extras";
 import { syncHomeroomTeachers } from "@/lib/roster";
 import { syncFormAHiddenStudents } from "@/lib/hidden-students";
+import { migrateLegacyWarnings } from "@/lib/rules";
 import { applyOfficialStaffRoster } from "@/lib/staff";
 import type {
   AbsenceRecord,
@@ -107,6 +108,8 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     replaceRoster ? seed.students : (shared.students ?? seed.students)
   );
 
+  const warnings = migrateLegacyWarnings(operational.warnings, operational.absences);
+
   return {
     ...seed,
     ...shared,
@@ -116,6 +119,7 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     currentUserId: null,
     selectedClassName: null,
     students,
+    warnings,
     digestRecipients: shared.digestRecipients ?? seed.digestRecipients,
     staffMembers: staffApplied.members,
     staffRemovals: mergeStaffRemovals(shared.staffRemovals, staffApplied.extraRemovals),
@@ -580,7 +584,10 @@ export function mergeSharedStates(
     academicYear: seed.academicYear,
     students,
     absences,
-    warnings: mergeWarnings(base.warnings, next.warnings),
+    warnings: migrateLegacyWarnings(
+      mergeWarnings(base.warnings, next.warnings),
+      absences
+    ),
     notifications: mergeNotifications(base.notifications, next.notifications),
     digestLogs: mergeDigestLogs(base.digestLogs, next.digestLogs),
     digestRecipients: mergeAllDigestRecipients(

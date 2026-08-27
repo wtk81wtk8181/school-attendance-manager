@@ -5,6 +5,7 @@ import type {
   FormLevel,
   Student,
   StudentStats,
+  WarningLetter,
   WarningType,
 } from "@/lib/types";
 
@@ -158,11 +159,7 @@ export function warningCategory(type: WarningType): WarningCategory {
 }
 
 export function isOccurrenceWarning(type: WarningType): boolean {
-  return (
-    type === "frequent_absence" ||
-    type === "frequent_late" ||
-    type === "frequent"
-  );
+  return type === "frequent_absence" || type === "frequent_late";
 }
 
 export function formatWarningTrigger(
@@ -171,10 +168,68 @@ export function formatWarningTrigger(
   limitDays: number
 ): string {
   if (type === "frequent_late") return `${formatDays(triggerDays)} 次（遲到）`;
-  if (type === "frequent_absence" || type === "frequent") {
-    return `${formatDays(triggerDays)} 次（缺席）`;
-  }
+  if (type === "frequent_absence") return `${formatDays(triggerDays)} 次（缺席）`;
   return `${formatDays(triggerDays)} / ${formatDays(limitDays)} 天`;
+}
+
+/** 將舊版合併「frequent」警告信拆成缺席／遲到獨立信件 */
+export function migrateLegacyWarnings(
+  warnings: WarningLetter[],
+  absences: AbsenceRecord[]
+): WarningLetter[] {
+  const existing = new Set(warnings.map((item) => `${item.studentId}:${item.type}`));
+  const migrated: WarningLetter[] = [];
+
+  for (const letter of warnings) {
+    if (letter.type !== "frequent") {
+      migrated.push(letter);
+      continue;
+    }
+
+    const records = absences.filter((item) => item.studentId === letter.studentId);
+    const absenceCount = absenceOccurrences(records);
+    const lateCount = lateOccurrences(records);
+    const splits: WarningLetter[] = [];
+
+    if (absenceCount > 0 && !existing.has(`${letter.studentId}:frequent_absence`)) {
+      splits.push({
+        ...letter,
+        id: letter.id.replace(/\bfrequent\b/, "frequent_absence"),
+        type: "frequent_absence",
+        triggerDays: absenceCount,
+        limitDays: FREQUENT_LIMIT,
+      });
+      existing.add(`${letter.studentId}:frequent_absence`);
+    }
+
+    if (lateCount > 0 && !existing.has(`${letter.studentId}:frequent_late`)) {
+      splits.push({
+        ...letter,
+        id: letter.id.replace(/\bfrequent\b/, "frequent_late"),
+        type: "frequent_late",
+        triggerDays: lateCount,
+        limitDays: FREQUENT_LIMIT,
+        followedUpBy: splits.length > 0 ? undefined : letter.followedUpBy,
+        followedUpAt: splits.length > 0 ? undefined : letter.followedUpAt,
+        followUpNotes: splits.length > 0 ? undefined : letter.followUpNotes,
+        status: splits.length > 0 ? "issued" : letter.status,
+      });
+      existing.add(`${letter.studentId}:frequent_late`);
+    }
+
+    if (splits.length === 0) {
+      migrated.push({
+        ...letter,
+        type: "frequent_absence",
+        triggerDays: Math.max(absenceCount, letter.triggerDays),
+        limitDays: FREQUENT_LIMIT,
+      });
+    } else {
+      migrated.push(...splits);
+    }
+  }
+
+  return migrated.sort((a, b) => b.issuedAt.localeCompare(a.issuedAt));
 }
 
 export function buildStudentStats(

@@ -33,7 +33,7 @@ const typeLabels: Record<WarningType, string> = {
   over_limit: "缺席已達／超過上限",
   frequent_absence: `缺席超過 ${FREQUENT_LIMIT} 次`,
   frequent_late: `遲到超過 ${FREQUENT_LIMIT} 次`,
-  frequent: `缺席／遲到合計超過 ${FREQUENT_LIMIT} 次（舊）`,
+  frequent: `缺席超過 ${FREQUENT_LIMIT} 次`,
 };
 
 function formatTriggerLine(item: WarningNotice): string {
