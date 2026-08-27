@@ -227,8 +227,13 @@ export default function ReportsPage() {
       });
 
       if (sendEmail) {
+        if (result.warning) {
+          toast.warning(result.warning);
+        }
         toast.success(
-          `已將 ${formatShortDate(reportDay)} 每日缺席報告電郵予 ${result.recipientCount} 位收件人。`
+          `已將 ${formatShortDate(reportDay)} 每日缺席報告電郵予 ${result.recipientCount} 位收件人${
+            result.pdfAttached ? "（含 PDF）" : "（Excel）"
+          }。`
         );
       } else {
         toast.success(`已產生 ${result.filename}`);

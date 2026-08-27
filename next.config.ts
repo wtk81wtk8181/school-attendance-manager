@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     "puppeteer-core",
     "@sparticuz/chromium",
   ],
+  outputFileTracingIncludes: {
+    "/api/report/daily": ["./node_modules/@sparticuz/chromium/**"],
+  },
 };
 
 export default nextConfig;

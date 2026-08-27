@@ -11,6 +11,8 @@ export interface DigestSendResult {
   filename: string;
   fileBase64: string;
   recipientCount: number;
+  pdfAttached?: boolean;
+  warning?: string;
   error?: string;
 }
 
@@ -44,7 +46,13 @@ async function postReport<P>(
     throw new Error(fallbackError);
   }
   if (!response.ok) {
-    throw new Error(data.error || fallbackError);
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    if (response.status === 504 || response.status === 502 || response.status === 503) {
+      throw new Error("伺服器處理逾時，未能確認電郵是否寄出。請到收件箱核對，或稍後再試。");
+    }
+    throw new Error(fallbackError);
   }
   return data;
 }

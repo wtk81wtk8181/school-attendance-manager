@@ -29,27 +29,49 @@ export async function POST(request: Request) {
   const excelBuffer = await buildDailySchoolWorkbook(body.payload);
   const enabledRecipients = (body.recipients ?? []).filter((item) => item.email);
 
+  let pdfAttached = false;
+  let warning: string | undefined;
+
   if (body.sendEmail) {
     try {
-      const pdfBuffer = await buildDailySchoolPdf(body.payload);
+      const attachments: Array<{
+        filename: string;
+        content: Buffer;
+        contentType: string;
+      }> = [
+        {
+          filename: excelFilename,
+          content: excelBuffer,
+          contentType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+      ];
+
+      let html = "<p>附上每日缺席報告（Excel 及 PDF），請看附件，謝謝。</p>";
+
+      try {
+        const pdfBuffer = await buildDailySchoolPdf(body.payload);
+        attachments.push({
+          filename: pdfFilename,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        });
+        pdfAttached = true;
+      } catch (pdfError) {
+        console.error("[daily-report] PDF generation failed:", pdfError);
+        warning =
+          pdfError instanceof Error
+            ? `PDF 未能產生（${pdfError.message}），已改為只附 Excel。`
+            : "PDF 未能產生，已改為只附 Excel。";
+        html = "<p>附上每日缺席報告 Excel，請看附件，謝謝。</p>";
+      }
+
       await sendMail({
         fromName: `${SCHOOL_NAME}校務處`,
         subject: `【${SCHOOL_NAME}】${body.payload.schoolDay} 每日缺席報告`,
-        html: "<p>附上每日缺席報告（Excel 及 PDF），請看附件，謝謝。</p>",
+        html,
         recipients: enabledRecipients,
-        attachments: [
-          {
-            filename: excelFilename,
-            content: excelBuffer,
-            contentType:
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          },
-          {
-            filename: pdfFilename,
-            content: pdfBuffer,
-            contentType: "application/pdf",
-          },
-        ],
+        attachments,
       });
     } catch (error) {
       return NextResponse.json(
@@ -59,12 +81,14 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json(
-    reportSendPayload({
+  return NextResponse.json({
+    ...reportSendPayload({
       sendEmail: body.sendEmail,
       filename: excelFilename,
       buffer: excelBuffer,
       recipientCount: enabledRecipients.length,
-    })
-  );
+    }),
+    pdfAttached,
+    warning,
+  });
 }

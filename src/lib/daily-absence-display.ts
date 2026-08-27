@@ -19,6 +19,17 @@ function columnCountForAbsence(lineCount: number): 1 | 2 | 3 {
   return 3;
 }
 
+export function pdfAbsenceFontSize(lineCount: number): number {
+  if (lineCount <= 6) return 9;
+  if (lineCount <= 10) return 8;
+  if (lineCount <= 14) return 7;
+  return 6;
+}
+
+export function pdfAbsenceColumnCount(lineCount: number): 1 | 2 | 3 {
+  return columnCountForAbsence(lineCount);
+}
+
 function charsPerColumnForCount(columnCount: 1 | 2 | 3): number {
   if (columnCount === 1) return 22;
   if (columnCount === 2) return 11;

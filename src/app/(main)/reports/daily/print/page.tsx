@@ -96,11 +96,15 @@ function DailyAbsencePrintBody() {
       <style>{`
         @media print {
           @page { size: A4 landscape; margin: 8mm; }
-          .daily-print-page {
+          .daily-print-shell {
+            width: 281mm;
+            height: 194mm;
+            max-height: 194mm;
+            overflow: hidden;
             page-break-after: always;
             break-after: page;
           }
-          .daily-print-page:last-child {
+          .daily-print-shell:last-child {
             page-break-after: auto;
             break-after: auto;
           }

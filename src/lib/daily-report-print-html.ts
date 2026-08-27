@@ -1,4 +1,9 @@
 import { formatPercentExact } from "@/lib/format";
+import {
+  pdfAbsenceColumnCount,
+  pdfAbsenceFontSize,
+  splitAbsenceLinesIntoColumns,
+} from "@/lib/daily-absence-display";
 import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
 import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
@@ -8,18 +13,31 @@ const JUNIOR_SPLIT = 8;
 const PRINT_CSS = `
   @page { size: A4 landscape; margin: 8mm; }
   * { box-sizing: border-box; }
-  body {
+  html, body {
     margin: 0;
+    padding: 0;
+    width: 281mm;
     font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
     color: #18181b;
     background: #fff;
   }
-  .daily-print-page {
+  .daily-print-shell {
+    width: 281mm;
+    height: 194mm;
+    max-height: 194mm;
+    overflow: hidden;
     page-break-after: always;
-    width: 100%;
-    padding: 0;
+    break-after: page;
+    position: relative;
   }
-  .daily-print-page:last-child { page-break-after: auto; }
+  .daily-print-shell:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+  .daily-print-page {
+    width: 281mm;
+    transform-origin: top left;
+  }
   .header {
     border-bottom: 2px solid #1b365d;
     padding-bottom: 8px;
@@ -99,7 +117,12 @@ const PRINT_CSS = `
     border-bottom: 1px solid #d4d4d8;
   }
   .metrics-table { font-size: 10px; }
-  .space-y { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .space-y { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .absence-cols {
+    display: grid;
+    gap: 4px;
+  }
+  .absence-line { line-height: 1.25; }
 `;
 
 function escapeHtml(value: string): string {
@@ -122,6 +145,31 @@ function renderHeader(payload: DailySchoolReportPayload, sectionTitle: string): 
   `;
 }
 
+function renderAbsenceCell(lines: string[]): string {
+  if (lines.length === 0) {
+    return '<span class="muted">—</span>';
+  }
+
+  const columnCount = pdfAbsenceColumnCount(lines.length);
+  const fontSize = pdfAbsenceFontSize(lines.length);
+  const columns = splitAbsenceLinesIntoColumns(lines, columnCount);
+
+  const renderColumn = (columnLines: string[]) =>
+    columnLines
+      .map((line) => `<div class="absence-line">${escapeHtml(line)}</div>`)
+      .join("");
+
+  if (columnCount === 1) {
+    return `<div style="font-size:${fontSize}px">${renderColumn(lines)}</div>`;
+  }
+
+  return `
+    <div class="absence-cols" style="font-size:${fontSize}px;grid-template-columns:repeat(${columnCount},minmax(0,1fr))">
+      ${columns.map((column) => `<div>${renderColumn(column)}</div>`).join("")}
+    </div>
+  `;
+}
+
 function renderClassColumn(blocks: DailyClassBlock[]): string {
   const rows = blocks
     .map(
@@ -131,11 +179,7 @@ function renderClassColumn(blocks: DailyClassBlock[]): string {
           <td class="center">${block.registered || ""}</td>
           <td class="center">${block.present}</td>
           <td class="center">${block.earlyLeave || ""}</td>
-          <td class="left">${
-            block.absenceLines.length > 0
-              ? block.absenceLines.map((line) => `<div>${escapeHtml(line)}</div>`).join("")
-              : '<span class="muted">—</span>'
-          }</td>
+          <td class="left">${renderAbsenceCell(block.absenceLines)}</td>
         </tr>
       `
     )
@@ -296,14 +340,16 @@ function renderJuniorPage(payload: DailySchoolReportPayload): string {
   const right = junior.slice(JUNIOR_SPLIT);
 
   return `
-    <article class="daily-print-page">
-      ${renderHeader(payload, "中一至中三")}
-      <div class="grid-2">
-        ${renderClassColumn(left)}
-        ${renderClassColumn(right)}
-      </div>
-      ${renderStaffSection(payload)}
-    </article>
+    <div class="daily-print-shell">
+      <article class="daily-print-page">
+        ${renderHeader(payload, "中一至中三")}
+        <div class="grid-2">
+          ${renderClassColumn(left)}
+          ${renderClassColumn(right)}
+        </div>
+        ${renderStaffSection(payload)}
+      </article>
+    </div>
   `;
 }
 
@@ -313,22 +359,24 @@ function renderSeniorPage(payload: DailySchoolReportPayload): string {
   const right = senior.slice(JUNIOR_SPLIT);
 
   return `
-    <article class="daily-print-page">
-      ${renderHeader(payload, "中四至中六")}
-      <div class="grid-2">
-        ${renderClassColumn(left)}
-        ${renderClassColumn(right)}
-      </div>
-      <div class="space-y">
-        ${renderFormStats(payload)}
-        ${renderClassMetrics("中四至中六", senior, "TOTAL", {
-          absent: payload.totalAbsent,
-          attendanceRate: payload.totalAttendanceRate,
-          late: payload.totalLate,
-          punctualityRate: payload.schoolPunctualityRate,
-        })}
-      </div>
-    </article>
+    <div class="daily-print-shell">
+      <article class="daily-print-page">
+        ${renderHeader(payload, "中四至中六")}
+        <div class="grid-2">
+          ${renderClassColumn(left)}
+          ${renderClassColumn(right)}
+        </div>
+        <div class="space-y">
+          ${renderFormStats(payload)}
+          ${renderClassMetrics("中四至中六", senior, "TOTAL", {
+            absent: payload.totalAbsent,
+            attendanceRate: payload.totalAttendanceRate,
+            late: payload.totalLate,
+            punctualityRate: payload.schoolPunctualityRate,
+          })}
+        </div>
+      </article>
+    </div>
   `;
 }
 

@@ -12,8 +12,12 @@ export function DailyAbsenceReport({
 }) {
   return (
     <>
-      <DailyJuniorReportPage payload={payload} className="daily-print-page" />
-      <DailySeniorReportPage payload={payload} className="daily-print-page" />
+      <div className="daily-print-shell">
+        <DailyJuniorReportPage payload={payload} className="daily-print-page" />
+      </div>
+      <div className="daily-print-shell">
+        <DailySeniorReportPage payload={payload} className="daily-print-page" />
+      </div>
     </>
   );
 }
