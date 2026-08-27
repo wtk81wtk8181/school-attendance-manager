@@ -160,6 +160,47 @@ function rate(numerator: number, denominator: number): number {
   return numerator / denominator;
 }
 
+const SAMPLE_REASONS = [
+  { reason: "病假", calledBy: "母親", calledAt: "08:12" },
+  { reason: "頭痛", calledBy: "父親", calledAt: "08:27" },
+  { reason: "事假", calledBy: "祖母", calledAt: "08:41" },
+  { reason: "覆診", calledBy: "母親", calledAt: "08:55" },
+  { reason: "肚痛", calledBy: "父親", calledAt: "09:08" },
+];
+
+/** 只供版面預覽：每班抽取學生標成缺席，不會寫入資料庫。 */
+export function buildSampleAbsencesPerClass(
+  students: Student[],
+  schoolDay: string,
+  perClass = 5
+): AbsenceRecord[] {
+  const records: AbsenceRecord[] = [];
+  for (const className of allClassNames()) {
+    const classStudents = students
+      .filter((item) => item.className === className)
+      .sort((a, b) => a.studentNo.localeCompare(b.studentNo))
+      .slice(0, perClass);
+    classStudents.forEach((student, index) => {
+      const sample = SAMPLE_REASONS[index % SAMPLE_REASONS.length];
+      records.push({
+        id: `sample-${className}-${student.id}`,
+        studentId: student.id,
+        date: schoolDay,
+        days: 1,
+        eclassStatus: "absent",
+        reason: sample.reason,
+        calledBy: sample.calledBy,
+        calledAt: sample.calledAt,
+        documentType: "none",
+        documentSubmitted: false,
+        reviewStatus: "pending",
+        source: "office",
+      });
+    });
+  }
+  return records;
+}
+
 export function buildDailySchoolReport(
   students: Student[],
   absences: AbsenceRecord[],

@@ -12,7 +12,7 @@ export function AuthLandingShell({
   wide?: boolean;
 }) {
   return (
-    <div className="relative flex min-h-full flex-1 flex-col overflow-hidden bg-slate-50">
+    <div className="relative flex min-h-dvh flex-1 flex-col overflow-hidden bg-slate-50">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[url('/school-background-light.jpg')] bg-cover bg-center bg-no-repeat opacity-30"

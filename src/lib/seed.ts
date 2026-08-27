@@ -63,6 +63,7 @@ export function createSeed(): AppState {
     studentLeaveRemovals: [],
     hiddenStudents: [],
     hiddenStudentRemovals: [],
+    appearanceRecords: [],
     auditLogs: [],
     dataVersion: OPERATIONAL_DATA_VERSION,
   };

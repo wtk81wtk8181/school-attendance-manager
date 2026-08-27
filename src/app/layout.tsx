@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="zh-Hant" className={`${notoSansTc.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans">
+    <html lang="zh-Hant" className={`${notoSansTc.variable} min-h-dvh antialiased`}>
+      <body className="flex min-h-dvh flex-col font-sans">
         <Providers>{children}</Providers>
       </body>
     </html>

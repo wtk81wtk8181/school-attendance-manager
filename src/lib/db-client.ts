@@ -25,6 +25,7 @@ import type {
   StudentLeaveRemoval,
   HiddenStudent,
   HiddenStudentRemoval,
+  AppearanceRecord,
   WarningLetter,
 } from "@/lib/types";
 
@@ -135,6 +136,7 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
       shared.hiddenStudentRemovals ?? seed.hiddenStudentRemovals
     ),
     hiddenStudentRemovals: shared.hiddenStudentRemovals ?? seed.hiddenStudentRemovals,
+    appearanceRecords: shared.appearanceRecords ?? seed.appearanceRecords,
     auditLogs: shared.auditLogs ?? seed.auditLogs,
     dataVersion: OPERATIONAL_DATA_VERSION,
   };
@@ -526,6 +528,22 @@ function mergeHiddenStudents(
     .sort((a, b) => b.hiddenAt.localeCompare(a.hiddenAt));
 }
 
+function mergeAppearanceRecords(
+  current: AppearanceRecord[] | undefined,
+  incoming: AppearanceRecord[] | undefined
+): AppearanceRecord[] {
+  const map = new Map<string, AppearanceRecord>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.id);
+    if (!existing || item.updatedAt >= existing.updatedAt) {
+      map.set(item.id, item);
+    }
+  }
+  return [...map.values()].sort(
+    (a, b) => a.yearMonth.localeCompare(b.yearMonth) || a.className.localeCompare(b.className)
+  );
+}
+
 const AUDIT_LOG_LIMIT = 500;
 
 function mergeAuditLogs(
@@ -623,6 +641,7 @@ export function mergeSharedStates(
       hiddenStudentRemovals
     ),
     hiddenStudentRemovals,
+    appearanceRecords: mergeAppearanceRecords(base.appearanceRecords, next.appearanceRecords),
     auditLogs: mergeAuditLogs(base.auditLogs, next.auditLogs),
     dataVersion: OPERATIONAL_DATA_VERSION,
     users: seed.users,

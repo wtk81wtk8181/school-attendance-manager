@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Percent,
   RefreshCw,
   Users,
 } from "lucide-react";
@@ -43,6 +44,7 @@ const officeNav = [
   { href: "/reviews", label: "文件審核", icon: ClipboardList },
   { href: "/warnings", label: "警告信", icon: FileWarning },
   { href: "/reports", label: "報表導出", icon: BarChart3 },
+  { href: "/appearance", label: "校服儀容", icon: Percent },
   { href: "/pre-leave", label: "預先請假", icon: CalendarClock },
   { href: "/changes", label: "最近變更", icon: History },
   { href: "/admin", label: "後台管理", icon: Database },
@@ -123,9 +125,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const userInitial = currentUser?.name.slice(0, 1) ?? "";
 
   return (
-    <div className="flex min-h-full bg-slate-50">
+    <div className="flex min-h-dvh items-stretch bg-slate-50">
       {currentUser?.role === "office" ? <DigestScheduler /> : null}
-      <aside className="no-print hidden w-60 shrink-0 flex-col bg-slate-950 text-white md:flex">
+      <aside className="no-print hidden min-h-dvh w-60 shrink-0 flex-col self-stretch bg-slate-950 text-white md:flex">
         <div className="border-b border-white/10 py-4">
           <Link href="/dashboard" className="flex items-center gap-2.5 px-3 py-1">
             <SchoolLogoMark />
@@ -143,7 +145,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </p>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
         <header className="no-print sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-slate-200/80 bg-slate-50/90 px-3 py-2 backdrop-blur sm:gap-3 sm:px-4">
           <Button
             variant="ghost"

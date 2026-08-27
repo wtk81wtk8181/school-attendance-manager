@@ -89,11 +89,11 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
-    @apply font-sans;
+    @apply min-h-dvh font-sans;
+  }
+  body {
+    @apply min-h-dvh bg-background text-foreground;
   }
 }
 

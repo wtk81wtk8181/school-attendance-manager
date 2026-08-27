@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { DailyAbsenceReport } from "@/components/daily-absence-report";
-import { buildDailySchoolReport } from "@/lib/daily-report";
+import { buildDailySchoolReport, buildSampleAbsencesPerClass } from "@/lib/daily-report";
 import { hongKongToday } from "@/lib/digest";
 import { classLabel, formLabel } from "@/lib/rules";
 import { useStore } from "@/lib/store";
@@ -27,6 +27,8 @@ function DailyAbsencePrintBody() {
   const schoolDay = searchParams.get("date") ?? hongKongToday();
   const form = searchParams.get("form") ?? "all";
   const klass = searchParams.get("klass") ?? "all";
+  const sampleCount = Number(searchParams.get("sample") ?? "0");
+  const isSample = Number.isFinite(sampleCount) && sampleCount > 0;
   const filteredStudents = useMemo(
     () =>
       visibleStudents.filter(
@@ -47,13 +49,15 @@ function DailyAbsencePrintBody() {
     () =>
       buildDailySchoolReport(
         filteredStudents,
-        state.absences,
+        isSample
+          ? buildSampleAbsencesPerClass(filteredStudents, schoolDay, sampleCount)
+          : state.absences,
         schoolDay,
         state.staffMembers,
         state.staffDailyAbsences,
         scope,
-        state.staffLeaveRecords,
-        state.studentLeaveRecords,
+        isSample ? [] : state.staffLeaveRecords,
+        isSample ? [] : state.studentLeaveRecords,
         state.hiddenStudents,
         state.hiddenStudentRemovals
       ),
@@ -61,6 +65,8 @@ function DailyAbsencePrintBody() {
       schoolDay,
       filteredStudents,
       scope,
+      isSample,
+      sampleCount,
       state.absences,
       state.staffDailyAbsences,
       state.staffLeaveRecords,
@@ -72,10 +78,10 @@ function DailyAbsencePrintBody() {
   );
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || isSample) return;
     const timer = window.setTimeout(() => window.print(), 400);
     return () => window.clearTimeout(timer);
-  }, [ready]);
+  }, [ready, isSample]);
 
   if (!ready) {
     return (
@@ -92,7 +98,14 @@ function DailyAbsencePrintBody() {
           @page { size: A4 landscape; margin: 8mm; }
         }
       `}</style>
-      <div className="no-print mx-auto mb-4 flex max-w-[297mm] justify-end">
+      <div className="no-print mx-auto mb-4 flex max-w-[297mm] flex-wrap items-center justify-between gap-3">
+        {isSample ? (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            版面預覽：每班假設 {sampleCount} 人缺席，不會寫入資料庫。
+          </p>
+        ) : (
+          <span />
+        )}
         <button
           type="button"
           onClick={() => window.print()}

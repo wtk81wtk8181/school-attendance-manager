@@ -2,6 +2,7 @@ import type { DigestPayload } from "@/lib/digest";
 import type { DailyReportPayload } from "@/lib/daily-report";
 import type { LoReportPayload } from "@/lib/lo-report";
 import type { MonthlyReportPayload } from "@/lib/monthly-report";
+import type { AppearanceReportPayload } from "@/lib/appearance-report";
 
 export interface DigestSendResult {
   ok: boolean;
@@ -50,6 +51,14 @@ export async function requestMonthlyReport(input: {
   sendEmail: boolean;
 }): Promise<DigestSendResult> {
   return postReport("/api/report/monthly", input, "無法產生每月缺席率報告。");
+}
+
+export async function requestAppearanceReport(input: {
+  payload: AppearanceReportPayload;
+  recipients: Array<{ name: string; email: string }>;
+  sendEmail: boolean;
+}): Promise<DigestSendResult> {
+  return postReport("/api/report/appearance", input, "無法產生儀容百分率報告。");
 }
 
 export async function requestDailyReport(input: {

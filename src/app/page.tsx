@@ -18,7 +18,7 @@ export default function LoginPage() {
 
   if (!ready) {
     return (
-      <div className="flex min-h-full items-center justify-center bg-slate-50 p-6">
+      <div className="flex min-h-dvh items-center justify-center bg-slate-50 p-6">
         <PageSkeleton tiles={2} lines={2} />
       </div>
     );

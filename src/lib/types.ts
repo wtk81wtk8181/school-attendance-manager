@@ -215,6 +215,15 @@ export interface AuditLog {
   detail: string;
 }
 
+/** 各班每月校服儀容百分率（0–1），於網頁輸入後匯出學校樣板 Excel */
+export interface AppearanceRecord {
+  id: string;
+  yearMonth: string;
+  className: string;
+  rate: number;
+  updatedAt: string;
+}
+
 export interface DigestSettings {
   enabled: boolean;
   sendTime: string;
@@ -266,6 +275,7 @@ export interface AppState {
   studentLeaveRemovals: StudentLeaveRemoval[];
   hiddenStudents: HiddenStudent[];
   hiddenStudentRemovals: HiddenStudentRemoval[];
+  appearanceRecords: AppearanceRecord[];
   auditLogs: AuditLog[];
   dataVersion: number;
 }

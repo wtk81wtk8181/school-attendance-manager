@@ -25,7 +25,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <div className="min-h-full bg-slate-50 p-6 md:p-8">
+      <div className="min-h-dvh bg-slate-50 p-6 md:p-8">
         <PageSkeleton />
       </div>
     );

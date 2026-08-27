@@ -37,10 +37,11 @@ import { DailyStaffSection } from "@/components/daily-staff-section";
 import { documentLabels, reviewLabels, warningStatusLabels, warningTypeLabels } from "@/components/status-badges";
 import { buildDailyAbsenceRows, buildDailySchoolReport, formatDailyAbsenceLine } from "@/lib/daily-report";
 import { buildLoReport } from "@/lib/lo-report";
+import { buildAppearanceReport } from "@/lib/appearance-report";
 import { hongKongToday, resolveDigestSchoolDay } from "@/lib/digest";
 import { buildMonthlyReport, currentYearMonth, monthRange } from "@/lib/monthly-report";
 import { EmailRecipientPicker } from "@/components/email-recipient-picker";
-import { downloadBase64Xlsx, requestDailyReport, requestLoReport, requestMonthlyReport } from "@/lib/digest-client";
+import { downloadBase64Xlsx, requestAppearanceReport, requestDailyReport, requestLoReport, requestMonthlyReport } from "@/lib/digest-client";
 import { resolveSendRecipients, persistRecipientEmails } from "@/lib/email-utils";
 import { useStore } from "@/lib/store";
 import { EmptyState } from "@/components/empty-state";
@@ -75,6 +76,7 @@ export default function ReportsPage() {
   const [monthlyBusy, setMonthlyBusy] = useState(false);
   const [dailyBusy, setDailyBusy] = useState(false);
   const [loBusy, setLoBusy] = useState(false);
+  const [appearanceBusy, setAppearanceBusy] = useState(false);
   const [monthlyEmail, setMonthlyEmail] = useState("");
   const [dailyEmail, setDailyEmail] = useState("");
   const [loEmail, setLoEmail] = useState("");
@@ -168,6 +170,14 @@ export default function ReportsPage() {
   );
 
   const monthlyReport = buildMonthlyReport(visibleStudents, state.absences, month);
+
+  const appearanceReport = buildAppearanceReport(
+    visibleStudents,
+    state.absences,
+    state.appearanceRecords,
+    month,
+    state.academicYear.label
+  );
 
   const loReport = buildLoReport(
     visibleStudents,
@@ -298,6 +308,23 @@ export default function ReportsPage() {
     }
   }
 
+  async function runAppearanceReport() {
+    setAppearanceBusy(true);
+    try {
+      const result = await requestAppearanceReport({
+        payload: appearanceReport,
+        sendEmail: false,
+        recipients: [],
+      });
+      toast.success(`已產生 ${result.filename}`);
+      downloadBase64Xlsx(result.filename, result.fileBase64);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法產生儀容百分率報告。");
+    } finally {
+      setAppearanceBusy(false);
+    }
+  }
+
   function exportAttendance() {
     downloadCsv(`各班出席率-${form}-${klass}.csv`, [
       ["班別", "人數", "出席率"],
@@ -362,7 +389,7 @@ export default function ReportsPage() {
     <PageShell>
       <PageHeader
         title="數據導出與報表"
-        description="可按年級、班別與日期篩選，匯出學校格式每日缺席 Excel／PDF、羅小姐週報、出席率總表、缺席統計，以及警告信存檔清單。"
+        description="可按年級、班別與日期篩選，匯出學校格式每日缺席 Excel／PDF、羅小姐週報、出席及儀容百分率、缺席統計，以及警告信存檔清單。"
       />
 
       <Card>
@@ -463,6 +490,29 @@ export default function ReportsPage() {
                 onExtraEmailChange={setMonthlyEmail}
               />
             ) : null}
+          </CardContent>
+        </Card>
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle className="text-base">各班出席表現及儀容百份比</CardTitle>
+            <CardDescription>
+              {appearanceReport.monthLabel}　校服儀容已填{" "}
+              {appearanceReport.classes.filter((item) => item.appearanceRate !== null).length}/
+              {appearanceReport.classes.length} 班。出席／守時由系統計算，儀容請到「校服儀容」輸入。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={appearanceBusy} onClick={() => void runAppearanceReport()}>
+                <Download className="size-4" />
+                生成 Excel
+              </Button>
+              {currentUser?.role === "office" ? (
+                <Button variant="outline" render={<Link href="/appearance" />}>
+                  輸入儀容
+                </Button>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
         <Card className="shadow-none">
