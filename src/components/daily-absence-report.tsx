@@ -1,5 +1,10 @@
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
 import { formatPercentExact } from "@/lib/format";
+import {
+  pdfAbsenceColumnCount,
+  pdfAbsenceFontSize,
+  splitAbsenceLinesIntoColumns,
+} from "@/lib/daily-absence-display";
 import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
 import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
 
@@ -264,6 +269,48 @@ function ClassMetricsTable({
   );
 }
 
+function AbsenceLinesCell({ lines }: { lines: string[] }) {
+  if (lines.length === 0) {
+    return <span className="text-zinc-400">—</span>;
+  }
+
+  const columnCount = pdfAbsenceColumnCount(lines.length);
+  const fontSize = pdfAbsenceFontSize(lines.length);
+  const columns = splitAbsenceLinesIntoColumns(lines, columnCount);
+
+  if (columnCount === 1) {
+    return (
+      <div style={{ fontSize }}>
+        {lines.map((line, index) => (
+          <p key={`${line}-${index}`} className="leading-tight">
+            {line}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="grid gap-1"
+      style={{
+        fontSize,
+        gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+      }}
+    >
+      {columns.map((column, columnIndex) => (
+        <div key={columnIndex}>
+          {column.map((line, index) => (
+            <p key={`${columnIndex}-${index}`} className="leading-tight">
+              {line}
+            </p>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ClassColumn({ blocks }: { blocks: DailyClassBlock[] }) {
   return (
     <section>
@@ -291,11 +338,7 @@ function ClassColumn({ blocks }: { blocks: DailyClassBlock[] }) {
                 {block.earlyLeave || ""}
               </td>
               <td className="border border-zinc-300 px-1 py-1">
-                {block.absenceLines.length > 0 ? (
-                  block.absenceLines.map((line) => <p key={line}>{line}</p>)
-                ) : (
-                  <span className="text-zinc-400">—</span>
-                )}
+                <AbsenceLinesCell lines={block.absenceLines} />
               </td>
             </tr>
           ))}

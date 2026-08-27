@@ -127,8 +127,7 @@ async function htmlToPdf(html: string): Promise<Buffer> {
       width: Math.round(mmToPx(PAGE_WIDTH_MM)),
       height: Math.round(mmToPx(PAGE_HEIGHT_MM)),
     });
-    await page.setContent(html, { waitUntil: "load", timeout: 45_000 });
-    await page.evaluate(() => document.fonts.ready);
+    await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await fitReportPages(page);
     const pdf = await page.pdf({
       format: "A4",

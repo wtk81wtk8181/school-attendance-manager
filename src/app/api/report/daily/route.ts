@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
   const excelFilename = `每日缺席報告-${body.payload.schoolDay}.xlsx`;
   const pdfFilename = `每日缺席報告-${body.payload.schoolDay}.pdf`;
-  const excelBuffer = await buildDailySchoolWorkbook(body.payload);
+  const excelPromise = buildDailySchoolWorkbook(body.payload);
   const enabledRecipients = (body.recipients ?? []).filter((item) => item.email);
 
   let pdfAttached = false;
@@ -34,6 +34,13 @@ export async function POST(request: Request) {
 
   if (body.sendEmail) {
     try {
+      const [excelBuffer, pdfResult] = await Promise.all([
+        excelPromise,
+        buildDailySchoolPdf(body.payload)
+          .then((buffer) => ({ ok: true as const, buffer }))
+          .catch((error) => ({ ok: false as const, error })),
+      ]);
+
       const attachments: Array<{
         filename: string;
         content: Buffer;
@@ -49,19 +56,18 @@ export async function POST(request: Request) {
 
       let html = "<p>附上每日缺席報告（Excel 及 PDF），請看附件，謝謝。</p>";
 
-      try {
-        const pdfBuffer = await buildDailySchoolPdf(body.payload);
+      if (pdfResult.ok) {
         attachments.push({
           filename: pdfFilename,
-          content: pdfBuffer,
+          content: pdfResult.buffer,
           contentType: "application/pdf",
         });
         pdfAttached = true;
-      } catch (pdfError) {
-        console.error("[daily-report] PDF generation failed:", pdfError);
+      } else {
+        console.error("[daily-report] PDF generation failed:", pdfResult.error);
         warning =
-          pdfError instanceof Error
-            ? `PDF 未能產生（${pdfError.message}），已改為只附 Excel。`
+          pdfResult.error instanceof Error
+            ? `PDF 未能產生（${pdfResult.error.message}），已改為只附 Excel。`
             : "PDF 未能產生，已改為只附 Excel。";
         html = "<p>附上每日缺席報告 Excel，請看附件，謝謝。</p>";
       }
@@ -80,6 +86,8 @@ export async function POST(request: Request) {
       );
     }
   }
+
+  const excelBuffer = await excelPromise;
 
   return NextResponse.json({
     ...reportSendPayload({
