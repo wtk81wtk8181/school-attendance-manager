@@ -12,7 +12,13 @@ export type DocumentType = "doctor" | "parent" | "none";
 
 export type ReviewStatus = "pending" | "approved" | "rejected";
 
-export type WarningType = "half_limit" | "over_limit" | "frequent";
+export type WarningType =
+  | "half_limit"
+  | "over_limit"
+  | "frequent_absence"
+  | "frequent_late"
+  /** @deprecated 舊版合併缺席／遲到，新信只會分開發出 */
+  | "frequent";
 
 export type WarningStatus = "issued" | "followed_up" | "archived";
 

@@ -319,8 +319,7 @@ export default function DashboardPage() {
           </div>
           <div className="rounded-md bg-muted/50 px-3 py-2">
             <p className="font-medium text-foreground/70">缺席上限</p>
-            <p>中一至中五：達 4 天發警告信；不可超過 9 天。</p>
-            <p>中六：達 2 天發警告信；不可超過 4.5 天。</p>
+            <p>缺席達預警線、超過上限或缺席逾 3 次會發出缺席警告信；遲到逾 3 次會另發遲到警告信。</p>
           </div>
         </CardContent>
       </Card>

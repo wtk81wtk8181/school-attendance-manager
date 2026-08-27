@@ -13,6 +13,7 @@ import {
   buildStudentStats,
   classLabel,
   formatDays,
+  formatWarningTrigger,
   progressPercent,
 } from "@/lib/rules";
 import { useStore } from "@/lib/store";
@@ -152,9 +153,7 @@ export function StudentDetail({ id }: { id: string }) {
                 <div>
                   <p className="text-sm font-medium">發出日期 {formatDate(letter.issuedAt)}</p>
                   <p className="text-xs text-muted-foreground">
-                    {letter.type === "frequent"
-                      ? `當時缺席＋遲到 ${formatDays(letter.triggerDays)} 次`
-                      : `當時計入缺席 ${formatDays(letter.triggerDays)} 天`}
+                    {formatWarningTrigger(letter.type, letter.triggerDays, letter.limitDays)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

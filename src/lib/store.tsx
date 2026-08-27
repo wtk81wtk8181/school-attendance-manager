@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, frequentOccurrences, neededWarningTypes } from "@/lib/rules";
+import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lateOccurrences, neededWarningTypes } from "@/lib/rules";
 import { studentsHomeroomTeachersChanged } from "@/lib/roster";
 import { formAHiddenStudentsChanged } from "@/lib/hidden-students";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
@@ -610,12 +610,9 @@ function applyWarnings(
 ): AppState {
   const records = state.absences.filter((item) => item.studentId === student.id);
   const counted = countedAbsenceDays(records);
-  const frequent = frequentOccurrences(records);
-  const lateCount = records.filter(
-    (item) => item.eclassStatus === "late" && item.reviewStatus !== "approved"
-  ).length;
-  const absentCount = frequent - lateCount;
-  const needed = neededWarningTypes(counted, student.form, frequent);
+  const absenceCount = absenceOccurrences(records);
+  const lateCount = lateOccurrences(records);
+  const needed = neededWarningTypes(counted, student.form, absenceCount, lateCount);
   const existing = new Set(
     state.warnings
       .filter((item) => item.studentId === student.id)
@@ -628,28 +625,44 @@ function applyWarnings(
   for (const type of needed) {
     if (existing.has(type)) continue;
     const id = `warn-${student.id}-${type}-${Date.now()}`;
+    const triggerDays =
+      type === "frequent_late"
+        ? lateCount
+        : type === "frequent_absence"
+          ? absenceCount
+          : counted;
+    const limitDays =
+      type === "frequent_late" || type === "frequent_absence"
+        ? FREQUENT_LIMIT
+        : student.form === 6
+          ? 4.5
+          : 9;
     const letter: WarningLetter = {
       id,
       studentId: student.id,
       type,
       issuedAt: nowIso(),
-      triggerDays: type === "frequent" ? frequent : counted,
-      limitDays: type === "frequent" ? FREQUENT_LIMIT : student.form === 6 ? 4.5 : 9,
+      triggerDays,
+      limitDays,
       status: "issued",
     };
     fresh.push(letter);
     const title =
       type === "over_limit"
         ? `缺席已達／超過上限：${student.name}（${classLabel(student.className)}）`
-        : type === "frequent"
-          ? `缺席／遲到超過 ${FREQUENT_LIMIT} 次：${student.name}（${classLabel(student.className)}）`
-          : `缺席預警：${student.name}（${classLabel(student.className)}）`;
+        : type === "frequent_late"
+          ? `遲到超過 ${FREQUENT_LIMIT} 次：${student.name}（${classLabel(student.className)}）`
+          : type === "frequent_absence"
+            ? `缺席超過 ${FREQUENT_LIMIT} 次：${student.name}（${classLabel(student.className)}）`
+            : `缺席預警：${student.name}（${classLabel(student.className)}）`;
     const body =
       type === "over_limit"
         ? `計入缺席 ${counted} 天，已自動發出警告信，請${actorName}跟進。`
-        : type === "frequent"
-          ? `本學年缺席 ${absentCount} 次、遲到 ${lateCount} 次，合計 ${frequent} 次（超過 ${FREQUENT_LIMIT} 次上限），已自動發出警告信並電郵通知指定收件人。`
-          : `計入缺席已達 ${counted} 天（上限一半），已發出警告信。`;
+        : type === "frequent_late"
+          ? `本學年遲到 ${lateCount} 次（超過 ${FREQUENT_LIMIT} 次上限），已自動發出遲到警告信並電郵通知指定收件人。`
+          : type === "frequent_absence"
+            ? `本學年缺席 ${absenceCount} 次（超過 ${FREQUENT_LIMIT} 次上限），已自動發出缺席警告信並電郵通知指定收件人。`
+            : `計入缺席已達 ${counted} 天（上限一半），已發出警告信。`;
     notes.unshift({
       id: `nt-${id}`,
       createdAt: nowIso(),
@@ -665,8 +678,7 @@ function applyWarnings(
   if (fresh.length > 0) {
     void notifyWarningsByEmail(state, student, fresh, {
       counted,
-      frequent,
-      absentCount,
+      absenceCount,
       lateCount,
     });
   }
@@ -685,7 +697,7 @@ async function notifyWarningsByEmail(
   state: AppState,
   student: Student,
   letters: WarningLetter[],
-  stats: { counted: number; frequent: number; absentCount: number; lateCount: number }
+  stats: { counted: number; absenceCount: number; lateCount: number }
 ) {
   const recipients = state.digestRecipients
     .filter((item) => item.enabled)
@@ -707,9 +719,9 @@ async function notifyWarningsByEmail(
           className: classLabel(student.className),
           teacher: student.homeroomTeacherName,
           countedAbsenceDays: stats.counted,
-          absentCount: stats.absentCount,
+          absentCount: stats.absenceCount,
           lateCount: stats.lateCount,
-          frequentCount: stats.frequent,
+          frequentCount: stats.absenceCount + stats.lateCount,
         },
         recipients,
       }),

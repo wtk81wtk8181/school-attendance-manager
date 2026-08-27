@@ -31,8 +31,17 @@ interface SendBody {
 const typeLabels: Record<WarningType, string> = {
   half_limit: "缺席預警（達上限一半）",
   over_limit: "缺席已達／超過上限",
-  frequent: `缺席／遲到合計超過 ${FREQUENT_LIMIT} 次`,
+  frequent_absence: `缺席超過 ${FREQUENT_LIMIT} 次`,
+  frequent_late: `遲到超過 ${FREQUENT_LIMIT} 次`,
+  frequent: `缺席／遲到合計超過 ${FREQUENT_LIMIT} 次（舊）`,
 };
+
+function formatTriggerLine(item: WarningNotice): string {
+  if (item.type === "frequent_late" || item.type === "frequent_absence" || item.type === "frequent") {
+    return `${item.triggerDays} 次 / 上限 ${item.limitDays} 次`;
+  }
+  return `${item.triggerDays} 天 / 上限 ${item.limitDays} 天`;
+}
 
 export async function POST(request: Request) {
   if (!(await isSiteRequestAuthorized(request))) {
@@ -70,14 +79,7 @@ export async function POST(request: Request) {
 function warningEmailHtml(body: SendBody): string {
   const { student } = body;
   const rows = body.warnings
-    .map(
-      (item) =>
-        `<li>${typeLabels[item.type]}：${
-          item.type === "frequent"
-            ? `合計 ${item.triggerDays} 次`
-            : `${item.triggerDays} 天 / 上限 ${item.limitDays} 天`
-        }</li>`
-    )
+    .map((item) => `<li>${typeLabels[item.type]}：${formatTriggerLine(item)}</li>`)
     .join("");
 
   return `

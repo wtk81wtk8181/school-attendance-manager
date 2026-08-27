@@ -1,9 +1,17 @@
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
 import { classLabel, formLabel, formLabelEn } from "@/lib/rules";
 import { formatDate, formatShortDate } from "@/lib/format";
-import type { Student, WarningLetter as WarningLetterRecord } from "@/lib/types";
+import type { Student, WarningLetter as WarningLetterRecord, WarningType } from "@/lib/types";
 
 type LetterLocale = "zh" | "en";
+type LetterFocus = "absence_days" | "absence_count" | "late_count" | "legacy_mixed";
+
+function letterFocus(type: WarningType): LetterFocus {
+  if (type === "frequent_late") return "late_count";
+  if (type === "frequent_absence") return "absence_count";
+  if (type === "frequent") return "legacy_mixed";
+  return "absence_days";
+}
 
 export function WarningLetterBundle({
   student,
@@ -43,8 +51,43 @@ function ChineseLetter({
   student: Student;
   letter: WarningLetterRecord;
 }) {
+  const focus = letterFocus(letter.type);
   const isOver = letter.type === "over_limit";
-  const isFrequent = letter.type === "frequent";
+  const isLate = focus === "late_count";
+
+  const title =
+    isOver
+      ? "學生缺席超過上限通知書"
+      : isLate
+        ? "學生遲到預警通知書"
+        : focus === "absence_count"
+          ? "學生缺席次數預警通知書"
+          : focus === "legacy_mixed"
+            ? "學生出席預警通知書（缺席／遲到）"
+            : "學生缺席預警通知書";
+
+  const opening =
+    focus === "late_count"
+      ? "於 2026-2027 學年之遲到情況，現特此通知。"
+      : focus === "legacy_mixed"
+        ? "於 2026-2027 學年之缺席及遲到情況，現特此通知。"
+        : "於 2026-2027 學年之缺席情況，現特此通知。";
+
+  const followUp =
+    isLate
+      ? `該生現時就讀${formLabel(student.form)}。請家長留意子弟守時情況，如遲到或有特殊原因，請盡早向校務處提交證明文件，並與班主任${student.homeroomTeacherName}老師聯絡。`
+      : `該生現時就讀${formLabel(student.form)}。請家長盡快向校務處補交相關證明文件，並與班主任${student.homeroomTeacherName}老師聯絡，共同跟進出勤情況。`;
+
+  const notes =
+    isLate
+      ? [
+          "獲批請假（醫生證明或家長信）不影響出席率。",
+          "經常遲到會影響守時紀錄及出席評核。",
+        ]
+      : [
+          "獲批請假（醫生證明或家長信）不計入缺席上限，亦不影響出席率。",
+          "未批准請假或無故缺席會計入缺席日數，並拉低出席率。",
+        ];
 
   return (
     <article className="letter-sheet mx-auto bg-white text-zinc-900">
@@ -56,13 +99,7 @@ function ChineseLetter({
           {SCHOOL_NAME}
         </h1>
         <p className="mt-2 text-sm text-zinc-600">學生發展部　學生出勤事務</p>
-        <h2 className="mt-4 text-xl font-semibold tracking-wide">
-          {isOver
-            ? "學生缺席超過上限通知書"
-            : isFrequent
-              ? "學生出席預警通知書（缺席／遲到）"
-              : "學生缺席預警通知書"}
-        </h2>
+        <h2 className="mt-4 text-xl font-semibold tracking-wide">{title}</h2>
         <p className="mt-1 text-xs text-zinc-500">中文版本</p>
       </header>
 
@@ -70,55 +107,40 @@ function ChineseLetter({
 
       <p className="mt-6">敬啟者：</p>
 
-      {isFrequent ? (
-        <p className="mt-4 leading-8">
-          本校紀錄顯示，貴子弟
-          <strong>
-            {student.name}（{student.nameEn}）
-          </strong>
-          ，班別
-          <strong>{classLabel(student.className)}</strong>
-          ，學號
-          <strong>{student.studentNo}</strong>
-          ，於 2026-2027 學年之缺席及遲到情況，現特此通知。
-        </p>
-      ) : (
-        <p className="mt-4 leading-8">
-          本校紀錄顯示，貴子弟
-          <strong>
-            {student.name}（{student.nameEn}）
-          </strong>
-          ，班別
-          <strong>{classLabel(student.className)}</strong>
-          ，學號
-          <strong>{student.studentNo}</strong>
-          ，於 2026-2027 學年之缺席情況，現特此通知。
-        </p>
-      )}
+      <p className="mt-4 leading-8">
+        本校紀錄顯示，貴子弟
+        <strong>
+          {student.name}（{student.nameEn}）
+        </strong>
+        ，班別
+        <strong>{classLabel(student.className)}</strong>
+        ，學號
+        <strong>{student.studentNo}</strong>
+        ，{opening}
+      </p>
 
       <div className="mt-4 rounded border border-zinc-200 bg-zinc-50 p-4 text-sm leading-7">
         <p className="font-medium">注意事項</p>
         <ul className="mt-2 list-disc pl-5">
-          <li>獲批請假（醫生證明或家長信）不計入缺席上限，亦不影響出席率。</li>
-          <li>未批准請假或無故缺席會計入缺席日數，並拉低出席率。</li>
+          {notes.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
       </div>
 
-      <p className="mt-4 leading-8">
-        {isFrequent
-          ? `該生現時就讀${formLabel(student.form)}。請家長留意子弟出勤情況，如遲到或有特殊原因缺席，請盡早向校務處提交醫生證明或家長信，並與班主任${student.homeroomTeacherName}老師聯絡。`
-          : `該生現時就讀${formLabel(student.form)}。請家長盡快向校務處補交相關證明文件，並與班主任${student.homeroomTeacherName}老師聯絡，共同跟進出勤情況。`}
-      </p>
+      <p className="mt-4 leading-8">{followUp}</p>
 
       <p className="mt-4 leading-8">
         {isOver
           ? "由於缺席情況需進一步跟進，學生部將啟動相關程序，或影響學年評核及相關安排。如有特殊原因，請盡快書面通知學校。"
-          : isFrequent
-            ? "現特此預先通知。如已備妥醫生證明或家長信，請交回校務處審核。"
-            : "現特此預先通知。如已備妥醫生證明或家長信，請交回校務處審核。"}
+          : "現特此預先通知。如已備妥醫生證明或家長信，請交回校務處審核。"}
       </p>
 
-      <p className="mt-4 leading-8">若果缺席日數過多，會影響升班。</p>
+      {!isLate ? (
+        <p className="mt-4 leading-8">若果缺席日數過多，會影響升班。</p>
+      ) : (
+        <p className="mt-4 leading-8">若果遲到次數過多，會影響守時評核及升班安排。</p>
+      )}
 
       <p className="mt-8">此致</p>
       <p>家長／監護人</p>
@@ -139,8 +161,43 @@ function EnglishLetter({
   student: Student;
   letter: WarningLetterRecord;
 }) {
+  const focus = letterFocus(letter.type);
   const isOver = letter.type === "over_limit";
-  const isFrequent = letter.type === "frequent";
+  const isLate = focus === "late_count";
+
+  const title =
+    isOver
+      ? "Notice of Absence Exceeding the Limit"
+      : isLate
+        ? "Lateness Alert Notice"
+        : focus === "absence_count"
+          ? "Absence Occurrence Alert Notice"
+          : focus === "legacy_mixed"
+            ? "Attendance Alert (Absence / Lateness)"
+            : "Absence Alert Notice";
+
+  const opening =
+    focus === "late_count"
+      ? "has attendance concerns regarding lateness in the 2026-2027 academic year. Please take note of this notice."
+      : focus === "legacy_mixed"
+        ? "has attendance concerns regarding absence and lateness in the 2026-2027 academic year. Please take note of this notice."
+        : "has attendance concerns regarding absence in the 2026-2027 academic year. Please take note of this notice.";
+
+  const followUp =
+    isLate
+      ? `Your child is currently in ${formLabelEn(student.form)}. Please pay attention to punctuality. If there is lateness for a special reason, please submit supporting documents to the School Office as soon as possible, and contact the class teacher, ${student.homeroomTeacherName}.`
+      : `Your child is currently in ${formLabelEn(student.form)}. Please submit supporting documents to the School Office as soon as possible, and contact the class teacher, ${student.homeroomTeacherName}, so that we may follow up together.`;
+
+  const notes =
+    isLate
+      ? [
+          "Approved leave (medical certificate or parent letter) does not affect the attendance rate.",
+          "Frequent lateness may affect punctuality records and attendance assessment.",
+        ]
+      : [
+          "Approved leave (medical certificate or parent letter) is not counted towards the absence limit and does not affect the attendance rate.",
+          "Unapproved leave or unexplained absence is counted and will lower the attendance rate.",
+        ];
 
   return (
     <article className="letter-sheet letter-sheet-en mx-auto bg-white text-zinc-900">
@@ -154,13 +211,7 @@ function EnglishLetter({
         <p className="mt-2 text-sm text-zinc-600">
           Student Development Department · Student Attendance
         </p>
-        <h2 className="mt-4 text-xl font-semibold tracking-wide">
-          {isOver
-            ? "Notice of Absence Exceeding the Limit"
-            : isFrequent
-              ? "Attendance Alert (Absence / Lateness)"
-              : "Absence Alert Notice"}
-        </h2>
+        <h2 className="mt-4 text-xl font-semibold tracking-wide">{title}</h2>
         <p className="mt-1 text-xs text-zinc-500">English version</p>
       </header>
 
@@ -168,54 +219,29 @@ function EnglishLetter({
 
       <p className="mt-6">Dear Parent / Guardian,</p>
 
-      {isFrequent ? (
-        <p className="mt-4 leading-8">
-          School records show that your child
-          <strong>
-            {" "}
-            {student.name} ({student.nameEn})
-          </strong>
-          , class
-          <strong> {classLabel(student.className)}</strong>
-          , student number
-          <strong> {student.studentNo}</strong>
-          , has attendance concerns regarding absence and lateness in the 2026-2027 academic
-          year. Please take note of this notice.
-        </p>
-      ) : (
-        <p className="mt-4 leading-8">
-          School records show that your child
-          <strong>
-            {" "}
-            {student.name} ({student.nameEn})
-          </strong>
-          , class
-          <strong> {classLabel(student.className)}</strong>
-          , student number
-          <strong> {student.studentNo}</strong>
-          , has attendance concerns regarding absence in the 2026-2027 academic year. Please take
-          note of this notice.
-        </p>
-      )}
+      <p className="mt-4 leading-8">
+        School records show that your child
+        <strong>
+          {" "}
+          {student.name} ({student.nameEn})
+        </strong>
+        , class
+        <strong> {classLabel(student.className)}</strong>
+        , student number
+        <strong> {student.studentNo}</strong>
+        , {opening}
+      </p>
 
       <div className="mt-4 rounded border border-zinc-200 bg-zinc-50 p-4 text-sm leading-7">
         <p className="font-medium">Notes</p>
         <ul className="mt-2 list-disc pl-5">
-          <li>
-            Approved leave (medical certificate or parent letter) is not counted towards the
-            absence limit and does not affect the attendance rate.
-          </li>
-          <li>
-            Unapproved leave or unexplained absence is counted and will lower the attendance rate.
-          </li>
+          {notes.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
       </div>
 
-      <p className="mt-4 leading-8">
-        {isFrequent
-          ? `Your child is currently in ${formLabelEn(student.form)}. Please pay attention to attendance. If there is lateness or absence for a special reason, please submit a medical certificate or parent letter to the School Office as soon as possible, and contact the class teacher, ${student.homeroomTeacherName}.`
-          : `Your child is currently in ${formLabelEn(student.form)}. Please submit supporting documents to the School Office as soon as possible, and contact the class teacher, ${student.homeroomTeacherName}, so that we may follow up together.`}
-      </p>
+      <p className="mt-4 leading-8">{followUp}</p>
 
       <p className="mt-4 leading-8">
         {isOver
@@ -224,7 +250,9 @@ function EnglishLetter({
       </p>
 
       <p className="mt-4 leading-8">
-        Excessive absence may affect promotion to the next form.
+        {isLate
+          ? "Excessive lateness may affect punctuality assessment and promotion arrangements."
+          : "Excessive absence may affect promotion to the next form."}
       </p>
 
       <p className="mt-8">Yours faithfully,</p>

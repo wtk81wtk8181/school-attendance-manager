@@ -120,28 +120,61 @@ export function alertLevel(
 export function neededWarningTypes(
   counted: number,
   form: FormLevel,
-  frequentCount = 0
+  absenceCount = 0,
+  lateCount = 0
 ): WarningType[] {
   const types: WarningType[] = [];
   if (counted >= getWarningThreshold(form)) types.push("half_limit");
   if (counted >= getAbsenceLimit(form)) types.push("over_limit");
-  if (frequentCount > FREQUENT_LIMIT) types.push("frequent");
+  if (absenceCount > FREQUENT_LIMIT) types.push("frequent_absence");
+  if (lateCount > FREQUENT_LIMIT) types.push("frequent_late");
   return types;
+}
+
+/** 未獲批的缺席紀錄次數（不含遲到） */
+export function absenceOccurrences(records: AbsenceRecord[]): number {
+  return records.filter(
+    (record) =>
+      record.reviewStatus !== "approved" &&
+      (record.eclassStatus === "absent" || record.eclassStatus === "half_absent")
+  ).length;
 }
 
 /** 缺陷次數：未獲批的缺席與遲到紀錄各計 1 次（獲批請假不計） */
 export function frequentOccurrences(records: AbsenceRecord[]): number {
-  return records.filter(
-    (record) =>
-      record.reviewStatus !== "approved" &&
-      (record.eclassStatus === "absent" ||
-        record.eclassStatus === "late" ||
-        record.eclassStatus === "half_absent")
-  ).length;
+  return absenceOccurrences(records) + lateOccurrences(records);
 }
 
 export function lateOccurrences(records: AbsenceRecord[]): number {
-  return records.filter((record) => record.eclassStatus === "late").length;
+  return records.filter(
+    (record) => record.eclassStatus === "late" && record.reviewStatus !== "approved"
+  ).length;
+}
+
+export type WarningCategory = "absence" | "late";
+
+export function warningCategory(type: WarningType): WarningCategory {
+  return type === "frequent_late" ? "late" : "absence";
+}
+
+export function isOccurrenceWarning(type: WarningType): boolean {
+  return (
+    type === "frequent_absence" ||
+    type === "frequent_late" ||
+    type === "frequent"
+  );
+}
+
+export function formatWarningTrigger(
+  type: WarningType,
+  triggerDays: number,
+  limitDays: number
+): string {
+  if (type === "frequent_late") return `${formatDays(triggerDays)} 次（遲到）`;
+  if (type === "frequent_absence" || type === "frequent") {
+    return `${formatDays(triggerDays)} 次（缺席）`;
+  }
+  return `${formatDays(triggerDays)} / ${formatDays(limitDays)} 天`;
 }
 
 export function buildStudentStats(
