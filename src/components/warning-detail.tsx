@@ -15,10 +15,11 @@ import { formatDateTime } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
 export function WarningDetail({ id }: { id: string }) {
-  const { state, visibleStudents, currentUser } = useStore();
+  const { state, warningStudents, currentUser } = useStore();
   const letter = state.warnings.find((item) => item.id === id);
   const student = letter
-    ? visibleStudents.find((item) => item.id === letter.studentId)
+    ? warningStudents.find((item) => item.id === letter.studentId) ??
+      state.students.find((item) => item.id === letter.studentId)
     : undefined;
   const reviewer = letter?.followedUpBy
     ? state.users.find((user) => user.id === letter.followedUpBy)

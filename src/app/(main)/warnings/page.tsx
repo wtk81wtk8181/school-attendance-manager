@@ -13,13 +13,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { isStudentHidden } from "@/lib/hidden-students";
 import { formatDate } from "@/lib/format";
 import { classLabel, formatDays } from "@/lib/rules";
 import { useStore } from "@/lib/store";
 
 export default function WarningsPage() {
-  const { state, visibleStudents, currentUser } = useStore();
-  const allowed = new Set(visibleStudents.map((item) => item.id));
+  const { state, warningStudents, currentUser } = useStore();
+  const allowed = new Set(warningStudents.map((item) => item.id));
   const letters = state.warnings
     .filter((item) => allowed.has(item.studentId))
     .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt));
@@ -57,13 +58,23 @@ export default function WarningsPage() {
               {letters.map((letter) => {
                 const student = state.students.find((item) => item.id === letter.studentId);
                 if (!student) return null;
+                const hidden = isStudentHidden(
+                  state.hiddenStudents,
+                  state.hiddenStudentRemovals,
+                  student.id
+                );
                 return (
                   <TableRow key={letter.id}>
                     <TableCell>{formatDate(letter.issuedAt)}</TableCell>
                     <TableCell>
-                      <Link href={`/students/${student.id}`} className="font-medium hover:underline">
+                      <span className="font-medium">
                         {classLabel(student.className)} {student.name}
-                      </Link>
+                        {hidden ? (
+                          <span className="ml-1.5 text-xs font-normal text-amber-800">
+                            （已隱藏）
+                          </span>
+                        ) : null}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <WarningTypeBadge type={letter.type} />

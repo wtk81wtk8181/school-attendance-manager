@@ -27,7 +27,7 @@ import { useStore } from "@/lib/store";
 import { formACases } from "@/lib/hidden-students";
 
 export default function DashboardPage() {
-  const { state, visibleStudents, currentUser } = useStore();
+  const { state, visibleStudents, warningStudents, currentUser } = useStore();
   const stats = visibleStudents.map((student) =>
     buildStudentStats(student, state.absences, state.academicYear.schoolDays)
   );
@@ -54,7 +54,7 @@ export default function DashboardPage() {
   const openLetters = state.warnings.filter(
     (item) =>
       item.status === "issued" &&
-      visibleStudents.some((student) => student.id === item.studentId)
+      warningStudents.some((student) => student.id === item.studentId)
   );
   const watchList = [...stats]
     .filter((item) => item.level !== "ok")

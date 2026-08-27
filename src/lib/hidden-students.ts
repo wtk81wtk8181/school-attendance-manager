@@ -123,6 +123,17 @@ export function visibleRosterStudents(
   return students.filter((student) => !hiddenIds.has(student.id));
 }
 
+/** 警告信仍須顯示已隱藏（Form A）學生，只按角色／班別篩選 */
+export function studentsForWarningLetters(
+  students: Student[],
+  currentUser: { role: string } | null,
+  selectedClassName: string | null
+): Student[] {
+  if (!currentUser) return [];
+  if (currentUser.role === "office") return students;
+  return students.filter((student) => student.className === selectedClassName);
+}
+
 export function formAHiddenStudents(
   hiddenStudents: HiddenStudent[] | undefined,
   removals: HiddenStudentRemoval[] | undefined

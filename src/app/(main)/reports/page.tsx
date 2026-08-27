@@ -50,6 +50,7 @@ export default function ReportsPage() {
   const {
     state,
     visibleStudents,
+    warningStudents,
     currentUser,
     updateAbsenceDetails,
     upsertRecipient,
@@ -96,6 +97,12 @@ export default function ReportsPage() {
     }
   }, [form, klass, classes]);
 
+  const filteredWarningStudents = warningStudents.filter((student) => {
+    const matchForm = form === "all" || String(student.form) === form;
+    const matchClass = klass === "all" || student.className === klass;
+    return matchForm && matchClass;
+  });
+
   const filteredStudents = visibleStudents.filter((student) => {
     const matchForm = form === "all" || String(student.form) === form;
     const matchClass = klass === "all" || student.className === klass;
@@ -134,7 +141,7 @@ export default function ReportsPage() {
   });
 
   const letters = state.warnings.filter((item) =>
-    filteredStudents.some((student) => student.id === item.studentId)
+    filteredWarningStudents.some((student) => student.id === item.studentId)
   );
 
   const dailyRows = buildDailyAbsenceRows(

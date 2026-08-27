@@ -32,6 +32,7 @@ import {
   consecutiveAbsentStreak,
   isStudentHidden,
   lastAbsentWeekday,
+  studentsForWarningLetters,
   visibleRosterStudents,
 } from "@/lib/hidden-students";
 import {
@@ -101,6 +102,7 @@ interface StoreValue {
   state: AppState;
   currentUser: User | null;
   visibleStudents: Student[];
+  warningStudents: Student[];
   login: (userId: string) => void;
   logout: () => void;
   selectClass: (className: string | null) => void;
@@ -804,6 +806,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     state.selectedClassName,
     state.students,
   ]);
+
+  const warningStudents = useMemo(
+    () =>
+      studentsForWarningLetters(
+        state.students,
+        currentUser,
+        state.selectedClassName
+      ),
+    [currentUser, state.selectedClassName, state.students]
+  );
 
   const login = useCallback((userId: string) => {
     patch((prev) => ({
@@ -1895,6 +1907,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       state,
       currentUser,
       visibleStudents,
+      warningStudents,
       login,
       logout,
       selectClass,
@@ -1932,6 +1945,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       state,
       currentUser,
       visibleStudents,
+      warningStudents,
       login,
       logout,
       selectClass,
