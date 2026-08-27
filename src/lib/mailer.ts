@@ -29,10 +29,17 @@ export async function sendMail(input: {
   }
 
   const nodemailer = await import("nodemailer");
+  const port = Number(process.env.SMTP_PORT || 587);
+  const secure =
+    process.env.SMTP_SECURE === "true" ||
+    (process.env.SMTP_SECURE !== "false" && port === 465);
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === "true",
+    port,
+    secure,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 25_000,
     auth:
       process.env.SMTP_USER && process.env.SMTP_PASS
         ? {
@@ -50,4 +57,20 @@ export async function sendMail(input: {
     html: input.html,
     attachments: input.attachments,
   });
+}
+
+export function reportSendPayload(input: {
+  sendEmail: boolean;
+  filename: string;
+  buffer: Buffer;
+  recipientCount: number;
+}) {
+  return {
+    ok: true as const,
+    mode: input.sendEmail ? ("smtp" as const) : ("export" as const),
+    emailed: Boolean(input.sendEmail && input.recipientCount > 0),
+    filename: input.filename,
+    fileBase64: input.sendEmail ? "" : input.buffer.toString("base64"),
+    recipientCount: input.recipientCount,
+  };
 }

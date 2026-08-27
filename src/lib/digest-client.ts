@@ -30,7 +30,19 @@ async function postReport<P>(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  const data = (await response.json()) as DigestSendResult;
+  const text = await response.text();
+  let data: DigestSendResult;
+  try {
+    data = JSON.parse(text) as DigestSendResult;
+  } catch {
+    if (response.status === 413) {
+      throw new Error("報告檔案太大，無法經電郵寄出。請改用下載 Excel。");
+    }
+    if (response.status === 504 || response.status === 502 || response.status === 503) {
+      throw new Error("伺服器處理逾時，未能確認電郵是否寄出。請到收件箱核對，或稍後再試。");
+    }
+    throw new Error(fallbackError);
+  }
   if (!response.ok) {
     throw new Error(data.error || fallbackError);
   }

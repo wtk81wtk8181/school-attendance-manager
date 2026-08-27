@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { buildAppearanceWorkbook } from "@/lib/excel-appearance";
 import { SCHOOL_NAME } from "@/lib/seed";
-import { sendMail } from "@/lib/mailer";
+import { reportSendPayload, sendMail } from "@/lib/mailer";
 import type { AppearanceReportPayload } from "@/lib/appearance-report";
 import { isSiteRequestAuthorized } from "@/lib/site-auth";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 interface SendBody {
   payload: AppearanceReportPayload;
@@ -48,14 +51,14 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({
-    ok: true,
-    mode: body.sendEmail ? "smtp" : "export",
-    emailed: Boolean(body.sendEmail && enabledRecipients.length > 0),
-    filename,
-    fileBase64: buffer.toString("base64"),
-    recipientCount: enabledRecipients.length,
-  });
+  return NextResponse.json(
+    reportSendPayload({
+      sendEmail: body.sendEmail,
+      filename,
+      buffer,
+      recipientCount: enabledRecipients.length,
+    })
+  );
 }
 
 function appearanceEmailHtml(

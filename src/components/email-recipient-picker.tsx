@@ -58,7 +58,8 @@ export function EmailRecipientPicker({
 
   function handleBlur() {
     if (!extraEmail.trim()) return;
-    saveTypedEmails(extraEmail);
+    // 不要清空輸入，否則按「確認寄出」時 blur 會先發生，剛輸入的電郵會丟失。
+    saveTypedEmails(extraEmail, false);
   }
 
   return (

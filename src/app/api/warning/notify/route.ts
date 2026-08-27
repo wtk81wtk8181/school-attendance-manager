@@ -5,6 +5,9 @@ import { sendMail } from "@/lib/mailer";
 import type { WarningType } from "@/lib/types";
 import { isSiteRequestAuthorized } from "@/lib/site-auth";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 interface WarningNotice {
   type: WarningType;
   triggerDays: number;
