@@ -38,43 +38,55 @@ export function WarningDetail({ id }: { id: string }) {
   const canEdit = currentUser?.role === "office";
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
-      <div className="no-print flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto max-w-5xl space-y-6 px-1 sm:px-0">
+      <div className="no-print flex flex-wrap items-center justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-2" render={<Link href="/warnings" />}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 text-slate-600 transition-colors duration-200 hover:text-slate-900"
+            render={<Link href="/warnings" />}
+          >
             <ArrowLeft className="size-3.5" />
             返回存檔
           </Button>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">警告信預覽（中英對照）</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+            警告信預覽（中英對照）
+          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <WarningTypeBadge type={letter.type} />
             <WarningStatusBadge status={letter.status} />
           </div>
         </div>
-        <Button onClick={() => window.print()}>
+        <Button
+          className="transition-colors duration-200"
+          onClick={() => window.print()}
+        >
           <Printer className="size-4" />
           下載／列印 PDF（中英）
         </Button>
       </div>
 
-      <div className="overflow-auto rounded-xl border bg-zinc-200/60 p-4 print:border-0 print:bg-white print:p-0">
+      <div className="overflow-auto rounded-xl border border-slate-200 bg-slate-100/60 p-4 transition-colors duration-200 print:border-0 print:bg-white print:p-0">
         <WarningLetterBundle student={student} letter={letter} />
       </div>
 
-      <Card className="no-print shadow-none">
+      <Card className="no-print shadow-none ring-slate-200/80 transition-all duration-200 hover:ring-slate-300/80">
         <CardHeader>
-          <CardTitle>校務處跟進</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-slate-900">校務處跟進</CardTitle>
+          <CardDescription className="text-slate-600">
             警告信發出後，職員須聯絡家長或班主任，並在此登記處理情況。
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {letter.followedUpAt ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-600">
               上次跟進：{reviewer?.name ?? "校務處"}　{formatDateTime(letter.followedUpAt)}
             </p>
           ) : (
-            <p className="text-sm text-amber-800">尚未登記跟進。</p>
+            <p className="text-sm text-slate-600">
+              <span className="font-medium text-slate-900">尚未登記跟進。</span>
+            </p>
           )}
           {canEdit ? (
             <FollowUpEditor
@@ -84,7 +96,7 @@ export function WarningDetail({ id }: { id: string }) {
               initialArchive={letter.status === "archived"}
             />
           ) : (
-            <p className="rounded-lg bg-muted p-3 text-sm leading-6">
+            <p className="rounded-lg bg-slate-50 p-3 text-sm leading-6 text-slate-600 ring-1 ring-slate-200/80">
               {letter.followUpNotes || "班主任帳號僅可預覽信件，跟進由校務處登記。"}
             </p>
           )}

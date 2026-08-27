@@ -70,19 +70,23 @@ export function DocumentBadge({ type }: { type: DocumentType }) {
   );
 }
 
+const warningTypeStyles: Record<WarningType, string> = {
+  half_limit: "bg-slate-100 text-slate-700 ring-slate-200/80",
+  over_limit: "bg-slate-900/5 text-slate-900 ring-slate-300/60",
+  frequent_absence: "bg-slate-100 text-slate-700 ring-slate-200/80",
+  frequent_late: "bg-slate-100 text-slate-700 ring-slate-200/80",
+  frequent: "bg-slate-100 text-slate-600 ring-slate-200/80",
+};
+
+const warningStatusStyles: Record<WarningStatus, string> = {
+  issued: "bg-amber-50/90 text-slate-900 ring-amber-200/70",
+  followed_up: "bg-slate-100 text-slate-700 ring-slate-200/80",
+  archived: "bg-slate-50 text-slate-400 ring-slate-200/70",
+};
+
 export function WarningTypeBadge({ type }: { type: WarningType }) {
   return (
-    <StatusPill
-      className={
-        type === "over_limit"
-          ? "bg-rose-50 text-rose-800 ring-rose-200"
-          : type === "frequent_late"
-            ? "bg-violet-50 text-violet-800 ring-violet-200"
-            : type === "frequent_absence" || type === "frequent"
-              ? "bg-purple-50 text-purple-800 ring-purple-200"
-              : "bg-amber-50 text-amber-800 ring-amber-200"
-      }
-    >
+    <StatusPill className={warningTypeStyles[type]}>
       {warningTypeLabels[type]}
     </StatusPill>
   );
@@ -90,15 +94,7 @@ export function WarningTypeBadge({ type }: { type: WarningType }) {
 
 export function WarningStatusBadge({ status }: { status: WarningStatus }) {
   return (
-    <StatusPill
-      className={
-        status === "issued"
-          ? "bg-amber-50 text-amber-800 ring-amber-200"
-          : status === "followed_up"
-            ? "bg-sky-50 text-sky-800 ring-sky-200"
-            : "bg-slate-50 text-slate-600 ring-slate-200"
-      }
-    >
+    <StatusPill className={warningStatusStyles[status]}>
       {warningStatusLabels[status]}
     </StatusPill>
   );
