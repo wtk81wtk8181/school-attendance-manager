@@ -23,19 +23,24 @@ const THIN_BORDER: Partial<ExcelJS.Borders> = {
 
 const ROWS_PER_CLASS = 5;
 const CLASS_START_ROW = 5;
+const LAST_COL = 24;
 const LEFT_COLS = { class: 1, cap: 2, present: 3, early: 4, absences: 5, absencesEnd: 10, enroll: 11, withdraw: 12 };
 const RIGHT_COLS = { class: 13, cap: 14, present: 15, early: 16, absences: 17, absencesEnd: 22, enroll: 23, withdraw: 24 };
+const FORM_LABEL = { start: 1, end: 3 };
 const FORM_COLS = [
-  { start: 17, end: 20 },
-  { start: 21, end: 24 },
-  { start: 25, end: 28 },
-  { start: 29, end: 32 },
-  { start: 33, end: 36 },
-  { start: 37, end: 40 },
+  { start: 4, end: 6 },
+  { start: 7, end: 9 },
+  { start: 10, end: 12 },
+  { start: 13, end: 15 },
+  { start: 16, end: 18 },
+  { start: 19, end: 21 },
 ];
-const TOTAL_START = 41;
-const TOTAL_END = 47;
-const CLASS_CODE_START = 16;
+const FORM_TOTAL = { start: 22, end: 24 };
+const CLASS_LABEL_END = 2;
+const CLASS_CODE_START = 3;
+const CLASS_TOTAL_START = 18;
+const CLASS_TOTAL_END = 24;
+const FOOTER_START_ROW = 80;
 
 export async function buildDailySchoolWorkbook(
   payload: DailySchoolReportPayload
@@ -54,20 +59,20 @@ export async function buildDailySchoolWorkbook(
       fitToHeight: 1,
       horizontalCentered: true,
       verticalCentered: true,
-      printArea: "A1:AU90",
+      printArea: "A1:X99",
       margins: {
-        left: 0.3,
-        right: 0.3,
-        top: 0.4,
-        bottom: 0.3,
-        header: 0.2,
-        footer: 0.2,
+        left: 0.25,
+        right: 0.25,
+        top: 0.35,
+        bottom: 0.25,
+        header: 0.15,
+        footer: 0.15,
       },
     },
   });
 
-  for (let col = 1; col <= 47; col += 1) {
-    sheet.getColumn(col).width = col <= 24 ? 7.2 : 4.2;
+  for (let col = 1; col <= LAST_COL; col += 1) {
+    sheet.getColumn(col).width = 7.2;
   }
   sheet.getColumn(5).width = 11;
   sheet.getColumn(17).width = 11;
@@ -76,22 +81,22 @@ export async function buildDailySchoolWorkbook(
   writeClassHeaders(sheet);
   writeClassBlocks(sheet, payload.classes.slice(0, 15), LEFT_COLS, CLASS_START_ROW);
   writeClassBlocks(sheet, payload.classes.slice(15, 30), RIGHT_COLS, CLASS_START_ROW);
-  writeStaffFooter(sheet, payload);
-  writeStatsFooter(sheet, payload);
+  const lastRow = writeStatsFooter(sheet, payload, writeStaffFooter(sheet, payload));
+  sheet.pageSetup.printArea = `A1:X${lastRow}`;
 
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
 
 function writeTitle(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload) {
-  mergeValue(sheet, 1, 1, 1, 47, `${SCHOOL_NAME}　學生缺席每日報告表`, {
+  mergeValue(sheet, 1, 1, 1, LAST_COL, `${SCHOOL_NAME}　學生缺席每日報告表`, {
     font: { bold: true, size: 16, color: { argb: "FFFFFFFF" } },
     alignment: { horizontal: "center", vertical: "middle" },
     fill: TITLE_FILL,
   });
   sheet.getRow(1).height = 24;
 
-  mergeValue(sheet, 2, 1, 2, 47, payload.dateLabel, {
+  mergeValue(sheet, 2, 1, 2, LAST_COL, payload.dateLabel, {
     font: { bold: true, size: 12 },
     alignment: { horizontal: "center", vertical: "middle" },
   });
@@ -176,107 +181,214 @@ function writeClassBlocks(
   });
 }
 
-function writeStaffFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload) {
-  mergeValue(sheet, 81, 1, 81, 12, "教職員缺席情況：", {
-    font: { bold: true, size: 10 },
-    alignment: { vertical: "middle" },
+function writeStaffFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload): number {
+  let row = FOOTER_START_ROW;
+  mergeValue(sheet, row, 1, row, LAST_COL, "教職員缺席情況", {
+    font: { bold: true, size: 9 },
+    alignment: { horizontal: "left", vertical: "middle" },
+    fill: HEADER_FILL,
   });
-  const rows: Array<[number, string, string[]]> = [
-    [83, "病假：", payload.staff.sick],
-    [85, "事假：", payload.staff.personal],
-    [87, "公假：", payload.staff.official],
-    [89, "早退：", payload.staff.early],
+  sheet.getRow(row).height = 16;
+  row += 1;
+
+  const pairs: Array<[string, string[]]> = [
+    ["病假：", payload.staff.sick],
+    ["事假：", payload.staff.personal],
+    ["公假：", payload.staff.official],
+    ["早退：", payload.staff.early],
   ];
-  for (const [row, label, names] of rows) {
-    mergeValue(sheet, row, 1, row, 2, label, {
-      font: { bold: true, size: 9 },
-      alignment: { vertical: "middle" },
-    });
-    mergeValue(sheet, row, 3, row, 12, names.join("、"), {
-      font: { size: 9 },
-      alignment: { vertical: "middle", wrapText: true },
-    });
-    sheet.getRow(row).height = 18;
+  for (let index = 0; index < pairs.length; index += 2) {
+    writeStaffPair(sheet, row, pairs[index], pairs[index + 1]);
+    sheet.getRow(row).height = 16;
+    row += 1;
+  }
+
+  if (payload.studentLeaveLines.length > 0) {
+    writeLeaveLine(sheet, row, "學生預假：", payload.studentLeaveLines.join("；"));
+    row += 1;
   }
   if (payload.staffLeaveLines.length > 0) {
-    mergeValue(sheet, 82, 1, 82, 2, "預假：", {
-      font: { bold: true, size: 8 },
-      alignment: { vertical: "middle" },
-    });
-    mergeValue(sheet, 82, 3, 82, 12, payload.staffLeaveLines.join("；"), {
-      font: { size: 8 },
-      alignment: { vertical: "middle", wrapText: true },
-    });
-    sheet.getRow(82).height = 14;
+    writeLeaveLine(sheet, row, "預假：", payload.staffLeaveLines.join("；"));
+    row += 1;
   }
-  if (payload.studentLeaveLines.length > 0) {
-    mergeValue(sheet, 80, 1, 80, 2, "學生預假：", {
-      font: { bold: true, size: 8 },
-      alignment: { vertical: "middle" },
-    });
-    mergeValue(sheet, 80, 3, 80, 12, payload.studentLeaveLines.join("；"), {
-      font: { size: 8 },
-      alignment: { vertical: "middle", wrapText: true },
-    });
-    sheet.getRow(80).height = 14;
-  }
+  return row + 1;
 }
 
-function writeStatsFooter(sheet: ExcelJS.Worksheet, payload: DailySchoolReportPayload) {
-  mergeValue(sheet, 81, 13, 81, 16, "級別", headerStyle());
+function writeStaffPair(
+  sheet: ExcelJS.Worksheet,
+  row: number,
+  left: [string, string[]],
+  right: [string, string[]]
+) {
+  mergeValue(sheet, row, 1, row, 2, left[0], {
+    font: { bold: true, size: 8 },
+    alignment: { vertical: "middle" },
+  });
+  mergeValue(sheet, row, 3, row, 12, left[1].join("、"), {
+    font: { size: 8 },
+    alignment: { vertical: "middle", wrapText: true },
+  });
+  mergeValue(sheet, row, 13, row, 14, right[0], {
+    font: { bold: true, size: 8 },
+    alignment: { vertical: "middle" },
+  });
+  mergeValue(sheet, row, 15, row, LAST_COL, right[1].join("、"), {
+    font: { size: 8 },
+    alignment: { vertical: "middle", wrapText: true },
+  });
+}
+
+function writeLeaveLine(sheet: ExcelJS.Worksheet, row: number, label: string, text: string) {
+  mergeValue(sheet, row, 1, row, 2, label, {
+    font: { bold: true, size: 8 },
+    alignment: { vertical: "middle" },
+  });
+  mergeValue(sheet, row, 3, row, LAST_COL, text, {
+    font: { size: 8 },
+    alignment: { vertical: "middle", wrapText: true },
+  });
+  sheet.getRow(row).height = 14;
+}
+
+function writeStatsFooter(
+  sheet: ExcelJS.Worksheet,
+  payload: DailySchoolReportPayload,
+  startRow: number
+): number {
+  mergeValue(sheet, startRow, FORM_LABEL.start, startRow, FORM_LABEL.end, "級別", headerStyle());
   payload.formStats.forEach((stat, index) => {
     const cols = FORM_COLS[index];
-    mergeValue(sheet, 81, cols.start, 81, cols.end, stat.label, headerStyle());
+    if (!cols) return;
+    mergeValue(sheet, startRow, cols.start, startRow, cols.end, stat.label, headerStyle());
   });
-  mergeValue(sheet, 81, TOTAL_START, 81, TOTAL_END, "總數", headerStyle());
+  mergeValue(sheet, startRow, FORM_TOTAL.start, startRow, FORM_TOTAL.end, "總數", headerStyle());
 
-  writeFormMetric(sheet, 82, "學生出席人數 :", payload.formStats.map((item) => item.present), payload.totalPresent, false);
-  writeFormMetric(sheet, 83, "學生註冊人數 :", payload.formStats.map((item) => item.registered), payload.totalRegistered, false);
   writeFormMetric(
     sheet,
-    84,
+    startRow + 1,
+    "學生出席人數 :",
+    payload.formStats.map((item) => item.present),
+    payload.totalPresent,
+    false
+  );
+  writeFormMetric(
+    sheet,
+    startRow + 2,
+    "學生註冊人數 :",
+    payload.formStats.map((item) => item.registered),
+    payload.totalRegistered,
+    false
+  );
+  writeFormMetric(
+    sheet,
+    startRow + 3,
     "學生出席百分比% :",
     payload.formStats.map((item) => item.attendanceRate),
     payload.totalAttendanceRate,
     true
   );
 
-  mergeValue(sheet, 86, 13, 86, 15, "", headerStyle());
-  payload.classes.forEach((block, index) => {
-    const col = CLASS_CODE_START + index;
-    mergeValue(sheet, 86, col, 86, col, block.className, headerStyle(8));
+  const junior = payload.classes.slice(0, 15);
+  const senior = payload.classes.slice(15, 30);
+  const juniorRow = writeClassMetricTable(sheet, startRow + 5, "中一至中三", junior, {
+    absent: sumBy(junior, (item) => item.absentCount),
+    attendanceRate: attendanceOf(junior),
+    late: sumBy(junior, (item) => item.lateCount),
+    punctualityRate: punctualityOf(junior),
+    totalLabel: "小計",
   });
-  mergeValue(sheet, 86, 46, 86, 47, "TOTAL", headerStyle());
+  return writeClassMetricTable(sheet, juniorRow + 1, "中四至中六", senior, {
+    absent: payload.totalAbsent,
+    attendanceRate: payload.totalAttendanceRate,
+    late: payload.totalLate,
+    punctualityRate: payload.schoolPunctualityRate,
+    totalLabel: "TOTAL",
+  });
+}
 
-  mergeValue(sheet, 88, 13, 88, 15, "出席百分比 :", labelStyle());
-  payload.classes.forEach((block, index) => {
+function writeClassMetricTable(
+  sheet: ExcelJS.Worksheet,
+  startRow: number,
+  title: string,
+  blocks: DailyClassBlock[],
+  totals: {
+    absent: number;
+    attendanceRate: number;
+    late: number;
+    punctualityRate: number;
+    totalLabel: string;
+  }
+): number {
+  mergeValue(sheet, startRow, 1, startRow, CLASS_LABEL_END, title, headerStyle());
+  blocks.forEach((block, index) => {
     const col = CLASS_CODE_START + index;
-    mergeValue(sheet, 87, col, 87, col, block.absentCount || "", centerStyle());
-    mergeValue(sheet, 88, col, 88, col, block.attendanceRate, {
+    mergeValue(sheet, startRow, col, startRow, col, block.className, headerStyle(8));
+  });
+  mergeValue(
+    sheet,
+    startRow,
+    CLASS_TOTAL_START,
+    startRow,
+    CLASS_TOTAL_END,
+    totals.totalLabel,
+    headerStyle()
+  );
+
+  writeClassMetricRow(
+    sheet,
+    startRow + 1,
+    "缺席人數",
+    blocks.map((item) => item.absentCount || ""),
+    totals.absent,
+    false
+  );
+  writeClassMetricRow(
+    sheet,
+    startRow + 2,
+    "出席百分比 :",
+    blocks.map((item) => item.attendanceRate),
+    totals.attendanceRate,
+    true
+  );
+  writeClassMetricRow(
+    sheet,
+    startRow + 3,
+    "學生遲到人數：",
+    blocks.map((item) => item.lateCount || 0),
+    totals.late,
+    false
+  );
+  writeClassMetricRow(
+    sheet,
+    startRow + 4,
+    "守時百分比 :",
+    blocks.map((item) => item.punctualityRate),
+    totals.punctualityRate,
+    true
+  );
+  return startRow + 4;
+}
+
+function writeClassMetricRow(
+  sheet: ExcelJS.Worksheet,
+  row: number,
+  label: string,
+  values: Array<number | string>,
+  total: number,
+  percent: boolean
+) {
+  mergeValue(sheet, row, 1, row, CLASS_LABEL_END, label, labelStyle());
+  values.forEach((value, index) => {
+    const col = CLASS_CODE_START + index;
+    mergeValue(sheet, row, col, row, col, value, {
       ...centerStyle(),
-      numFmt: "0.00%",
+      numFmt: percent ? "0.00%" : undefined,
     });
   });
-  mergeValue(sheet, 87, 46, 87, 47, payload.totalAbsent, centerStyle());
-  mergeValue(sheet, 88, 46, 88, 47, payload.totalAttendanceRate, {
+  mergeValue(sheet, row, CLASS_TOTAL_START, row, CLASS_TOTAL_END, total, {
     ...centerStyle(),
-    numFmt: "0.00%",
-  });
-
-  mergeValue(sheet, 89, 13, 89, 15, "學生遲到人數：", labelStyle());
-  mergeValue(sheet, 90, 13, 90, 15, "守時百分比 :", labelStyle());
-  payload.classes.forEach((block, index) => {
-    const col = CLASS_CODE_START + index;
-    mergeValue(sheet, 89, col, 89, col, block.lateCount || 0, centerStyle());
-    mergeValue(sheet, 90, col, 90, col, block.punctualityRate, {
-      ...centerStyle(),
-      numFmt: "0.00%",
-    });
-  });
-  mergeValue(sheet, 89, 46, 89, 47, payload.totalLate, centerStyle());
-  mergeValue(sheet, 90, 46, 90, 47, payload.schoolPunctualityRate, {
-    ...centerStyle(),
-    numFmt: "0.00%",
+    font: { bold: true, size: 8 },
+    numFmt: percent ? "0.00%" : undefined,
   });
 }
 
@@ -288,19 +400,38 @@ function writeFormMetric(
   total: number,
   percent: boolean
 ) {
-  mergeValue(sheet, row, 13, row, 16, label, labelStyle());
+  mergeValue(sheet, row, FORM_LABEL.start, row, FORM_LABEL.end, label, labelStyle());
   values.forEach((value, index) => {
     const cols = FORM_COLS[index];
+    if (!cols) return;
     mergeValue(sheet, row, cols.start, row, cols.end, value, {
       ...centerStyle(),
       numFmt: percent ? "0.00%" : undefined,
     });
   });
-  mergeValue(sheet, row, TOTAL_START, row, TOTAL_END, total, {
+  mergeValue(sheet, row, FORM_TOTAL.start, row, FORM_TOTAL.end, total, {
     ...centerStyle(),
     font: { bold: true, size: 9 },
     numFmt: percent ? "0.00%" : undefined,
   });
+}
+
+function sumBy(blocks: DailyClassBlock[], pick: (item: DailyClassBlock) => number): number {
+  return blocks.reduce((sum, item) => sum + pick(item), 0);
+}
+
+function attendanceOf(blocks: DailyClassBlock[]): number {
+  const registered = sumBy(blocks, (item) => item.registered);
+  const present = sumBy(blocks, (item) => item.present);
+  if (registered <= 0) return 1;
+  return present / registered;
+}
+
+function punctualityOf(blocks: DailyClassBlock[]): number {
+  const present = sumBy(blocks, (item) => item.present);
+  const late = sumBy(blocks, (item) => item.lateCount);
+  if (present <= 0) return 1;
+  return Math.max(0, present - late) / present;
 }
 
 function headerStyle(size = 9): CellStyle {
