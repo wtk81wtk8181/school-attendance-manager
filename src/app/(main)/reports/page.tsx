@@ -174,7 +174,8 @@ export default function ReportsPage() {
   const appearanceReport = buildAppearanceReport(
     visibleStudents,
     state.absences,
-    state.appearanceRecords,
+    state.appearanceIssues,
+    state.appearanceIssueRemovals,
     month,
     state.academicYear.label
   );
@@ -496,9 +497,8 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle className="text-base">各班出席表現及儀容百份比</CardTitle>
             <CardDescription>
-              {appearanceReport.monthLabel}　校服儀容已填{" "}
-              {appearanceReport.classes.filter((item) => item.appearanceRate !== null).length}/
-              {appearanceReport.classes.length} 班。出席／守時由系統計算，儀容請到「校服儀容」輸入。
+              {appearanceReport.monthLabel}　儀容有問題 {appearanceReport.totals.issueCount} 人，全校儀容正常{" "}
+              {formatPercentExact(appearanceReport.totals.appearanceRate)}。出席／守時由系統計算，儀容請到「校服儀容」按班標記。
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -509,7 +509,7 @@ export default function ReportsPage() {
               </Button>
               {currentUser?.role === "office" ? (
                 <Button variant="outline" render={<Link href="/appearance" />}>
-                  輸入儀容
+                  按班標記儀容
                 </Button>
               ) : null}
             </div>

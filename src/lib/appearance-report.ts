@@ -1,13 +1,19 @@
 import { allClassNames } from "@/lib/roster";
-import { isCountedTowardAbsence } from "@/lib/rules";
-import { buildMonthlyReport, monthRange } from "@/lib/monthly-report";
-import type { AbsenceRecord, AppearanceRecord, Student } from "@/lib/types";
+import { buildMonthlyReport } from "@/lib/monthly-report";
+import type {
+  AbsenceRecord,
+  AppearanceIssue,
+  AppearanceIssueRemoval,
+  Student,
+} from "@/lib/types";
 
 export interface AppearanceClassRow {
   className: string;
+  studentCount: number;
+  issueCount: number;
   punctualityRate: number;
   attendanceRate: number;
-  appearanceRate: number | null;
+  appearanceRate: number;
 }
 
 export interface AppearanceReportPayload {
@@ -17,30 +23,55 @@ export interface AppearanceReportPayload {
   monthLabel: string;
   classes: AppearanceClassRow[];
   totals: {
+    studentCount: number;
+    issueCount: number;
     punctualityRate: number;
     attendanceRate: number;
-    appearanceRate: number | null;
+    appearanceRate: number;
   };
+}
+
+export function appearanceIssueId(yearMonth: string, studentId: string) {
+  return `appear-${yearMonth}-${studentId}`;
+}
+
+export function hasAppearanceIssue(
+  issues: AppearanceIssue[] | undefined,
+  removals: AppearanceIssueRemoval[] | undefined,
+  studentId: string,
+  yearMonth: string
+): boolean {
+  const id = appearanceIssueId(yearMonth, studentId);
+  const record = (issues ?? []).find((item) => item.id === id);
+  if (!record) return false;
+  const removal = (removals ?? []).find((item) => item.id === id);
+  if (!removal) return true;
+  return record.updatedAt > removal.removedAt;
 }
 
 export function buildAppearanceReport(
   students: Student[],
   absences: AbsenceRecord[],
-  appearanceRecords: AppearanceRecord[] | undefined,
+  appearanceIssues: AppearanceIssue[] | undefined,
+  appearanceIssueRemovals: AppearanceIssueRemoval[] | undefined,
   yearMonth: string,
   academicYear: string
 ): AppearanceReportPayload {
   const monthly = buildMonthlyReport(students, absences, yearMonth);
   const byClass = new Map(monthly.classes.map((item) => [item.className, item]));
-  const appearanceByClass = new Map(
-    (appearanceRecords ?? [])
+  const flaggedIds = new Set(
+    (appearanceIssues ?? [])
+      .filter((item) =>
+        hasAppearanceIssue(appearanceIssues, appearanceIssueRemovals, item.studentId, yearMonth)
+      )
       .filter((item) => item.yearMonth === yearMonth)
-      .map((item) => [item.className, item.rate])
+      .map((item) => item.studentId)
   );
 
   const classes: AppearanceClassRow[] = allClassNames().map((className) => {
     const summary = byClass.get(className);
-    const studentCount = summary?.studentCount ?? 0;
+    const classStudents = students.filter((item) => item.className === className);
+    const studentCount = summary?.studentCount ?? classStudents.length;
     const schoolDays = summary?.schoolDaysInMonth ?? 0;
     const countedAbsenceDays = summary?.countedAbsenceDays ?? 0;
     const lateCount = summary?.lateCount ?? 0;
@@ -48,23 +79,21 @@ export function buildAppearanceReport(
     const punctualityRate =
       presentDays > 0 ? Math.max(0, (presentDays - lateCount) / presentDays) : 1;
     const attendanceRate = summary ? summary.attendanceRate / 100 : 1;
-    const rawAppearance = appearanceByClass.get(className);
-    const appearanceRate =
-      typeof rawAppearance === "number" && Number.isFinite(rawAppearance)
-        ? Math.min(1, Math.max(0, rawAppearance))
-        : null;
+    const issueCount = classStudents.filter((item) => flaggedIds.has(item.id)).length;
+    const appearanceRate = studentCount > 0 ? (studentCount - issueCount) / studentCount : 1;
 
     return {
       className,
+      studentCount,
+      issueCount,
       punctualityRate,
       attendanceRate,
       appearanceRate,
     };
   });
 
-  const appearanceValues = classes
-    .map((item) => item.appearanceRate)
-    .filter((value): value is number => value !== null);
+  const studentCount = classes.reduce((sum, item) => sum + item.studentCount, 0);
+  const issueCount = classes.reduce((sum, item) => sum + item.issueCount, 0);
   const month = Number(yearMonth.slice(5, 7));
 
   return {
@@ -74,19 +103,20 @@ export function buildAppearanceReport(
     monthLabel: `${month}月份`,
     classes,
     totals: {
+      studentCount,
+      issueCount,
       punctualityRate: average(classes.map((item) => item.punctualityRate)),
       attendanceRate: average(classes.map((item) => item.attendanceRate)),
-      appearanceRate:
-        appearanceValues.length === 0 ? null : average(appearanceValues),
+      appearanceRate: studentCount > 0 ? (studentCount - issueCount) / studentCount : 1,
     },
   };
 }
 
 export function appearanceMonthOptions(start: string, end: string): string[] {
-  const { start: rangeStart } = monthRange(start.slice(0, 7));
-  const last = monthRange(end.slice(0, 7)).end;
+  const begin = start.slice(0, 7);
+  const last = end.slice(0, 7);
   const months: string[] = [];
-  const [sy, sm] = rangeStart.split("-").map(Number);
+  const [sy, sm] = begin.split("-").map(Number);
   const cursor = new Date(sy, sm - 1, 1);
   const [ey, em] = last.split("-").map(Number);
   const limit = new Date(ey, em - 1, 1);

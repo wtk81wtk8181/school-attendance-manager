@@ -25,7 +25,8 @@ import type {
   StudentLeaveRemoval,
   HiddenStudent,
   HiddenStudentRemoval,
-  AppearanceRecord,
+  AppearanceIssue,
+  AppearanceIssueRemoval,
   WarningLetter,
 } from "@/lib/types";
 
@@ -136,7 +137,8 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
       shared.hiddenStudentRemovals ?? seed.hiddenStudentRemovals
     ),
     hiddenStudentRemovals: shared.hiddenStudentRemovals ?? seed.hiddenStudentRemovals,
-    appearanceRecords: shared.appearanceRecords ?? seed.appearanceRecords,
+    appearanceIssues: normalizeAppearanceIssues(shared),
+    appearanceIssueRemovals: shared.appearanceIssueRemovals ?? seed.appearanceIssueRemovals,
     auditLogs: shared.auditLogs ?? seed.auditLogs,
     dataVersion: OPERATIONAL_DATA_VERSION,
   };
@@ -528,19 +530,49 @@ function mergeHiddenStudents(
     .sort((a, b) => b.hiddenAt.localeCompare(a.hiddenAt));
 }
 
-function mergeAppearanceRecords(
-  current: AppearanceRecord[] | undefined,
-  incoming: AppearanceRecord[] | undefined
-): AppearanceRecord[] {
-  const map = new Map<string, AppearanceRecord>();
+function mergeAppearanceIssueRemovals(
+  current: AppearanceIssueRemoval[] | undefined,
+  incoming: AppearanceIssueRemoval[] | undefined
+): AppearanceIssueRemoval[] {
+  const map = new Map<string, AppearanceIssueRemoval>();
   for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    const existing = map.get(item.id);
+    if (!existing || item.removedAt >= existing.removedAt) {
+      map.set(item.id, item);
+    }
+  }
+  return [...map.values()];
+}
+
+function mergeAppearanceIssues(
+  current: AppearanceIssue[] | undefined,
+  incoming: AppearanceIssue[] | undefined,
+  removals: AppearanceIssueRemoval[]
+): AppearanceIssue[] {
+  const map = new Map<string, AppearanceIssue>();
+  for (const item of [...(current ?? []), ...(incoming ?? [])]) {
+    if (!item.studentId || !item.yearMonth) continue;
     const existing = map.get(item.id);
     if (!existing || item.updatedAt >= existing.updatedAt) {
       map.set(item.id, item);
     }
   }
-  return [...map.values()].sort(
-    (a, b) => a.yearMonth.localeCompare(b.yearMonth) || a.className.localeCompare(b.className)
+  return [...map.values()]
+    .filter((item) => {
+      const removal = removals.find((row) => row.id === item.id);
+      if (!removal) return true;
+      return item.updatedAt > removal.removedAt;
+    })
+    .sort(
+      (a, b) => a.yearMonth.localeCompare(b.yearMonth) || a.className.localeCompare(b.className)
+    );
+}
+
+function normalizeAppearanceIssues(shared: Partial<AppState>): AppearanceIssue[] {
+  return mergeAppearanceIssues(
+    shared.appearanceIssues,
+    undefined,
+    shared.appearanceIssueRemovals ?? []
   );
 }
 
@@ -587,6 +619,10 @@ export function mergeSharedStates(
   const hiddenStudentRemovals = mergeHiddenStudentRemovals(
     base.hiddenStudentRemovals,
     next.hiddenStudentRemovals
+  );
+  const appearanceIssueRemovals = mergeAppearanceIssueRemovals(
+    base.appearanceIssueRemovals,
+    next.appearanceIssueRemovals
   );
 
   const students = syncHomeroomTeachers(pickStudents(base.students, next.students, seed.students));
@@ -641,7 +677,12 @@ export function mergeSharedStates(
       hiddenStudentRemovals
     ),
     hiddenStudentRemovals,
-    appearanceRecords: mergeAppearanceRecords(base.appearanceRecords, next.appearanceRecords),
+    appearanceIssues: mergeAppearanceIssues(
+      base.appearanceIssues,
+      next.appearanceIssues,
+      appearanceIssueRemovals
+    ),
+    appearanceIssueRemovals,
     auditLogs: mergeAuditLogs(base.auditLogs, next.auditLogs),
     dataVersion: OPERATIONAL_DATA_VERSION,
     users: seed.users,

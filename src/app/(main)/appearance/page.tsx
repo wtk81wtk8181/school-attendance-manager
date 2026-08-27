@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Download, Lock, Percent, Save } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Download, Lock, Percent, Search } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader, PageShell, PageSkeleton } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -14,34 +15,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EmptyState } from "@/components/empty-state";
-import { PageHeader, PageShell, PageSkeleton } from "@/components/page-shell";
 import {
   appearanceMonthOptions,
   buildAppearanceReport,
+  hasAppearanceIssue,
 } from "@/lib/appearance-report";
-import { currentYearMonth } from "@/lib/monthly-report";
-import { allClassNames } from "@/lib/roster";
 import { downloadBase64Xlsx, requestAppearanceReport } from "@/lib/digest-client";
 import { formatPercentExact } from "@/lib/format";
+import { currentYearMonth } from "@/lib/monthly-report";
+import { CLASS_STREAMS, CLASS_TEACHERS } from "@/lib/roster";
+import { classLabel, filterClassNames, formLabel } from "@/lib/rules";
 import { useStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
+import type { FormLevel, Student } from "@/lib/types";
 import { toast } from "sonner";
 
-function rateToInput(rate: number | null): string {
-  if (rate === null) return "";
-  return (rate * 100).toFixed(2);
-}
-
-function parsePercentInput(text: string): number | null {
-  const trimmed = text.trim();
-  if (!trimmed) return null;
-  const value = Number(trimmed);
-  if (!Number.isFinite(value) || value < 0 || value > 100) return null;
-  return value / 100;
-}
-
 export default function AppearancePage() {
-  const { currentUser, state, saveAppearanceRates, ready } = useStore();
+  const {
+    currentUser,
+    state,
+    visibleStudents,
+    toggleAppearanceIssue,
+    ready,
+  } = useStore();
+  const isOffice = currentUser?.role === "office";
   const months = useMemo(
     () => appearanceMonthOptions(state.academicYear.start, state.academicYear.end),
     [state.academicYear.end, state.academicYear.start]
@@ -50,94 +47,96 @@ export default function AppearancePage() {
     const now = currentYearMonth();
     return months.includes(now) ? now : (months[0] ?? now);
   });
-  const [draft, setDraft] = useState<Record<string, string> | null>(null);
+  const [form, setForm] = useState("all");
+  const [klass, setKlass] = useState<string>(isOffice ? "1A" : "all");
+  const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const classes = useMemo(() => {
+    const all = [...new Set(visibleStudents.map((item) => item.className))].sort();
+    return filterClassNames(all, form);
+  }, [visibleStudents, form]);
+
+  useEffect(() => {
+    if (form !== "all" && klass !== "all" && !classes.includes(klass)) {
+      setKlass("all");
+    }
+  }, [form, klass, classes]);
 
   const report = useMemo(
     () =>
       buildAppearanceReport(
         state.students,
         state.absences,
-        state.appearanceRecords,
+        state.appearanceIssues,
+        state.appearanceIssueRemovals,
         month,
         state.academicYear.label
       ),
-    [month, state.absences, state.academicYear.label, state.appearanceRecords, state.students]
+    [
+      month,
+      state.absences,
+      state.academicYear.label,
+      state.appearanceIssueRemovals,
+      state.appearanceIssues,
+      state.students,
+    ]
   );
 
-  const inputs = useMemo(() => {
-    if (draft) return draft;
-    const next: Record<string, string> = {};
-    for (const row of report.classes) {
-      next[row.className] = rateToInput(row.appearanceRate);
+  const rows = visibleStudents
+    .filter((student) => {
+      const q = query.trim();
+      const matchQuery =
+        q.length === 0 ||
+        student.name.includes(q) ||
+        student.nameEn.toLowerCase().includes(q.toLowerCase()) ||
+        student.studentNo.includes(q);
+      const matchForm = form === "all" || String(student.form) === form;
+      const matchClass = klass === "all" || student.className === klass;
+      return matchQuery && matchForm && matchClass;
+    })
+    .sort(
+      (a, b) =>
+        a.className.localeCompare(b.className) || a.studentNo.localeCompare(b.studentNo)
+    );
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, Student[]>();
+    for (const student of rows) {
+      const list = map.get(student.className) ?? [];
+      list.push(student);
+      map.set(student.className, list);
     }
-    return next;
-  }, [draft, report.classes]);
+    return [...map.entries()];
+  }, [rows]);
 
-  if (!ready) return <PageSkeleton tiles={1} lines={8} />;
+  const selectedSummary = klass === "all" ? report.totals : report.classes.find((item) => item.className === klass);
+  const selectedTeacher = klass !== "all" ? CLASS_TEACHERS[klass] : undefined;
 
-  if (currentUser?.role !== "office") {
+  if (!ready) return <PageSkeleton tiles={2} lines={8} />;
+
+  if (currentUser?.role !== "office" && currentUser?.role !== "homeroom") {
     return (
       <PageShell>
         <EmptyState
           icon={Lock}
-          title="沒有編輯權限"
-          description="校服儀容百分率由校務處輸入，再匯出學校樣板報告。"
+          title="沒有檢視權限"
+          description="校服儀容由校務處按班標記。"
         />
       </PageShell>
     );
   }
 
-  function collectRates(): Record<string, number> | null {
-    const rates: Record<string, number> = {};
-    for (const className of allClassNames()) {
-      const parsed = parsePercentInput(inputs[className] ?? "");
-      if ((inputs[className] ?? "").trim() && parsed === null) {
-        toast.error(`${className} 的儀容百分率須為 0 至 100。`);
-        return null;
-      }
-      if (parsed !== null) rates[className] = parsed;
-    }
-    return rates;
-  }
-
-  function saveDraft() {
-    const rates = collectRates();
-    if (!rates) return false;
-    const saved = saveAppearanceRates(month, rates);
-    if (saved) setDraft(null);
-    return saved;
-  }
-
   async function exportReport() {
-    if (!saveDraft()) return;
     setBusy(true);
     try {
-      const payload = buildAppearanceReport(
-        state.students,
-        state.absences,
-        Object.entries(collectRates() ?? {}).map(([className, rate]) => ({
-          id: `appear-${month}-${className}`,
-          yearMonth: month,
-          className,
-          rate,
-          updatedAt: new Date().toISOString(),
-        })),
-        month,
-        state.academicYear.label
-      );
-      const filled = payload.classes.filter((item) => item.appearanceRate !== null).length;
       const result = await requestAppearanceReport({
-        payload,
+        payload: report,
         sendEmail: false,
         recipients: [],
       });
       downloadBase64Xlsx(result.filename, result.fileBase64);
-      toast.success(
-        filled === payload.classes.length
-          ? `已產生 ${result.filename}`
-          : `已產生 ${result.filename}（${filled}/${payload.classes.length} 班已填儀容）`
-      );
+      toast.success(`已產生 ${result.filename}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法產生儀容百分率報告。");
     } finally {
@@ -149,115 +148,239 @@ export default function AppearancePage() {
     <PageShell wide>
       <PageHeader
         title="校服儀容"
-        description="出席與守時百分率由系統按該月缺席／遲到計算；校服儀容百分率請在此輸入，再匯出學校樣板 Excel（含圖表）。"
+        description="請先選班，再標記該月儀容有問題的學生。未標記視為儀容正常；各班儀容正常百分率＝正常人數÷班人數，匯出報告時會自動套用。"
         actions={
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => void saveDraft()}>
-              <Save className="size-4" />
-              儲存儀容
-            </Button>
+          isOffice ? (
             <Button disabled={busy} onClick={() => void exportReport()}>
               <Download className="size-4" />
               {busy ? "產生中……" : "產生 Excel"}
             </Button>
-          </div>
+          ) : null
         }
       />
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Percent className="size-4" />
-            選擇月份
-          </CardTitle>
-          <CardDescription>
-            儀容欄請填 0 至 100，例如 99.50。空白班別在 Excel 會留空，圖表仍會顯示已填班別。
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <section className="space-y-3 rounded-xl border border-slate-200 bg-white px-3 py-3 sm:px-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="grid max-w-xs flex-1 gap-1.5">
             <Label htmlFor="appearance-month">月份</Label>
             <Input
               id="appearance-month"
               type="month"
               value={month}
-              onChange={(event) => {
-                setMonth(event.target.value || currentYearMonth());
-                setDraft(null);
-              }}
+              onChange={(event) => setMonth(event.target.value || currentYearMonth())}
             />
           </div>
-          <p className="text-sm text-slate-400">
-            {report.monthLabel}　已填儀容 {report.classes.filter((item) => item.appearanceRate !== null).length} /{" "}
-            {report.classes.length} 班
-          </p>
-        </CardContent>
-      </Card>
+          {selectedSummary ? (
+            <p className="text-sm text-slate-600">
+              {klass !== "all" ? classLabel(klass) : "全校"}
+              {selectedTeacher ? `　班主任 ${selectedTeacher}` : ""}
+              　{selectedSummary.studentCount} 人　有問題 {selectedSummary.issueCount} 人　儀容正常{" "}
+              <span className="font-semibold tabular-nums text-slate-900">
+                {formatPercentExact(selectedSummary.appearanceRate)}
+              </span>
+            </p>
+          ) : null}
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">各班百分率</CardTitle>
-          <CardDescription>
-            總百份比：守時 {formatPercentExact(report.totals.punctualityRate)}　出席{" "}
-            {formatPercentExact(report.totals.attendanceRate)}　儀容{" "}
-            {report.totals.appearanceRate === null
-              ? "—"
-              : formatPercentExact(report.totals.appearanceRate)}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>班別</TableHead>
-                <TableHead className="text-right">守時百分率</TableHead>
-                <TableHead className="text-right">出席百分率</TableHead>
-                <TableHead className="w-40">校服儀容百分率</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {report.classes.map((row) => (
-                <TableRow key={row.className}>
-                  <TableCell className="font-medium">{row.className}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatPercentExact(row.punctualityRate)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatPercentExact(row.attendanceRate)}
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      inputMode="decimal"
-                      placeholder="例如 99.50"
-                      value={inputs[row.className] ?? ""}
-                      onChange={(event) =>
-                        setDraft({
-                          ...inputs,
-                          [row.className]: event.target.value,
-                        })
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableRow className="font-medium">
-                <TableCell>總百份比</TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {formatPercentExact(report.totals.punctualityRate)}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {formatPercentExact(report.totals.attendanceRate)}
-                </TableCell>
-                <TableCell className="tabular-nums">
-                  {report.totals.appearanceRate === null
-                    ? "—"
-                    : formatPercentExact(report.totals.appearanceRate)}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        {isOffice ? (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
+              按班顯示
+              <span className="ml-2 text-xs font-normal text-slate-400">
+                選班後只顯示該班名單，方便逐人標記。
+              </span>
+            </p>
+            {(
+              [
+                { label: "初中", forms: [1, 2, 3] as FormLevel[] },
+                { label: "高中", forms: [4, 5, 6] as FormLevel[] },
+              ] as const
+            ).map((group) => (
+              <div key={group.label} className="space-y-1.5">
+                <p className="text-xs font-semibold tracking-wide text-slate-400">
+                  {group.label}
+                </p>
+                <div className="space-y-1">
+                  {group.forms.map((item) => (
+                    <div key={item} className="flex items-center gap-2">
+                      <p className="w-9 shrink-0 text-[11px] font-medium text-slate-600">
+                        {formLabel(item)}
+                      </p>
+                      <div className="grid min-w-0 flex-1 grid-cols-5 gap-1">
+                        {CLASS_STREAMS.map((stream) => {
+                          const className = `${item}${stream}`;
+                          const selected = klass === className;
+                          const classRow = report.classes.find((row) => row.className === className);
+                          const count = state.students.filter(
+                            (student) => student.className === className
+                          ).length;
+                          return (
+                            <button
+                              key={className}
+                              type="button"
+                              onClick={() => {
+                                setForm("all");
+                                setKlass(className);
+                              }}
+                              className={cn(
+                                "rounded-md border border-slate-200 px-1.5 py-1 text-center leading-tight transition-colors duration-200 sm:py-0.5",
+                                selected
+                                  ? "border-slate-900 bg-slate-900 text-white"
+                                  : "bg-slate-50 hover:border-slate-300 hover:bg-slate-100"
+                              )}
+                            >
+                              <span className="text-xs font-semibold">{classLabel(className)}</span>
+                              <span
+                                className={cn(
+                                  "ml-1 text-[10px]",
+                                  selected ? "text-white/75" : "text-slate-400"
+                                )}
+                              >
+                                {count}
+                              </span>
+                              {classRow && classRow.issueCount > 0 ? (
+                                <span
+                                  className={cn(
+                                    "mt-0.5 block text-[10px] tabular-nums",
+                                    selected ? "text-amber-200" : "text-amber-700"
+                                  )}
+                                >
+                                  正常 {formatPercentExact(classRow.appearanceRate, 0)}
+                                </span>
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setKlass("all")}
+              className={cn(
+                "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors duration-200",
+                klass === "all"
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300"
+              )}
+            >
+              全部班別
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      <div className="relative">
+        <Search className="absolute top-2.5 left-2.5 size-4 text-slate-400" />
+        <Input
+          className="pl-8"
+          placeholder="搜尋姓名、英文名或學號"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </div>
+
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={Percent}
+          title="沒有符合的學生"
+          description="請先選班，或調整搜尋。"
+        />
+      ) : (
+        grouped.map(([className, items]) => {
+          const classRow = report.classes.find((item) => item.className === className);
+          const issueCount = items.filter((student) =>
+            hasAppearanceIssue(
+              state.appearanceIssues,
+              state.appearanceIssueRemovals,
+              student.id,
+              month
+            )
+          ).length;
+          return (
+            <section key={className} className="space-y-2">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <h2 className="text-base font-semibold">
+                  {classLabel(className)}
+                  <span className="ml-2 text-sm font-normal text-slate-400">
+                    {CLASS_TEACHERS[className] ?? ""}　{items.length} 人　有問題 {issueCount} 人
+                  </span>
+                </h2>
+                <p className="text-sm tabular-nums text-slate-600">
+                  儀容正常 {formatPercentExact(classRow?.appearanceRate ?? 1)}
+                </p>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>學生</TableHead>
+                      <TableHead>班別</TableHead>
+                      <TableHead>該月儀容</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((student) => {
+                      const issue = hasAppearanceIssue(
+                        state.appearanceIssues,
+                        state.appearanceIssueRemovals,
+                        student.id,
+                        month
+                      );
+                      return (
+                        <TableRow key={student.id} className={issue ? "bg-amber-50/80" : undefined}>
+                          <TableCell>
+                            <p className="font-medium">{student.name}</p>
+                            <p className="text-xs text-slate-400">
+                              {student.studentNo}　{student.nameEn}
+                            </p>
+                          </TableCell>
+                          <TableCell>{classLabel(student.className)}</TableCell>
+                          <TableCell>
+                            <div className="inline-flex rounded-lg border bg-white p-0.5">
+                              <button
+                                type="button"
+                                disabled={!isOffice}
+                                onClick={() => toggleAppearanceIssue(student.id, month, false)}
+                                className={cn(
+                                  "h-8 min-w-16 rounded-md px-2 text-xs font-semibold transition-colors duration-200",
+                                  !issue
+                                    ? "bg-emerald-600 text-white hover:bg-emerald-600"
+                                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-900",
+                                  !isOffice && "cursor-default opacity-80"
+                                )}
+                              >
+                                正常
+                              </button>
+                              <button
+                                type="button"
+                                disabled={!isOffice}
+                                onClick={() => toggleAppearanceIssue(student.id, month, true)}
+                                className={cn(
+                                  "h-8 min-w-16 rounded-md px-2 text-xs font-semibold transition-colors duration-200",
+                                  issue
+                                    ? "bg-amber-600 text-white hover:bg-amber-600"
+                                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-900",
+                                  !isOffice && "cursor-default opacity-80"
+                                )}
+                              >
+                                有問題
+                              </button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </section>
+          );
+        })
+      )}
     </PageShell>
   );
 }

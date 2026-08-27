@@ -42,6 +42,7 @@ import {
   ADMIN_JSON_SECTIONS,
   type AdminJsonSection,
 } from "@/lib/admin-json-patch";
+import { appearanceIssueId } from "@/lib/appearance-report";
 import type {
   AbsenceRecord,
   AppState,
@@ -59,7 +60,7 @@ import type {
   Student,
   User,
   WarningLetter,
-  AppearanceRecord,
+  AppearanceIssue,
 } from "@/lib/types";
 
 const ADMIN_EDITABLE_SECTIONS = new Set<string>(ADMIN_JSON_SECTIONS);
@@ -153,7 +154,7 @@ interface StoreValue {
   }) => { added: number; skipped: number };
   removeStudentLeave: (id: string) => void;
   restoreHiddenStudent: (studentId: string) => void;
-  saveAppearanceRates: (yearMonth: string, rates: Record<string, number>) => boolean;
+  toggleAppearanceIssue: (studentId: string, yearMonth: string, issue: boolean) => void;
   toggleStaffAbsence: (
     date: string,
     kind: StaffAbsenceKind,
@@ -1701,42 +1702,55 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [currentUser]
   );
 
-  const saveAppearanceRates = useCallback(
-    (yearMonth: string, rates: Record<string, number>) => {
+  const toggleAppearanceIssue = useCallback(
+    (studentId: string, yearMonth: string, issue: boolean) => {
       if (currentUser?.role !== "office") {
-        toast.error("只有校務處可以輸入校服儀容百分率。");
-        return false;
+        toast.error("只有校務處可以標記校服儀容。");
+        return;
       }
-      if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
-        toast.error("月份格式不正確。");
-        return false;
-      }
-      const updatedAt = nowIso();
-      const entries = Object.entries(rates).filter(([, rate]) =>
-        Number.isFinite(rate) && rate >= 0 && rate <= 1
-      );
+      if (!/^\d{4}-\d{2}$/.test(yearMonth)) return;
       patch((prev) => {
-        const kept = (prev.appearanceRecords ?? []).filter(
-          (item) => item.yearMonth !== yearMonth
-        );
-        const nextRecords: AppearanceRecord[] = [
-          ...kept,
-          ...entries.map(([className, rate]) => ({
-            id: `appear-${yearMonth}-${className}`,
+        const student = prev.students.find((item) => item.id === studentId);
+        if (!student) return prev;
+        const id = appearanceIssueId(yearMonth, studentId);
+        const updatedAt = nowIso();
+        if (issue) {
+          const nextIssue: AppearanceIssue = {
+            id,
+            studentId,
+            studentName: student.name,
+            className: student.className,
             yearMonth,
-            className,
-            rate,
             updatedAt,
-          })),
-        ];
+          };
+          return withAudit(
+            {
+              ...prev,
+              appearanceIssues: [
+                nextIssue,
+                ...(prev.appearanceIssues ?? []).filter((item) => item.id !== id),
+              ],
+              appearanceIssueRemovals: (prev.appearanceIssueRemovals ?? []).filter(
+                (item) => item.id !== id
+              ),
+            },
+            "標記儀容有問題",
+            `${student.className}　${student.name}　${yearMonth}`
+          );
+        }
         return withAudit(
-          { ...prev, appearanceRecords: nextRecords },
-          "更新校服儀容百分率",
-          `${yearMonth}　${entries.length} 班`
+          {
+            ...prev,
+            appearanceIssues: (prev.appearanceIssues ?? []).filter((item) => item.id !== id),
+            appearanceIssueRemovals: [
+              { id, removedAt: updatedAt },
+              ...(prev.appearanceIssueRemovals ?? []).filter((item) => item.id !== id),
+            ],
+          },
+          "取消儀容有問題",
+          `${student.className}　${student.name}　${yearMonth}`
         );
       });
-      toast.success(`已儲存 ${yearMonth} 校服儀容百分率（${entries.length} 班）。`);
-      return true;
     },
     [currentUser]
   );
@@ -1983,7 +1997,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStudentLeaves,
       removeStudentLeave,
       restoreHiddenStudent,
-      saveAppearanceRates,
+      toggleAppearanceIssue,
       toggleStaffAbsence,
       toggleStaffAbsences,
       recordDigestSend,
@@ -2022,7 +2036,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStudentLeaves,
       removeStudentLeave,
       restoreHiddenStudent,
-      saveAppearanceRates,
+      toggleAppearanceIssue,
       toggleStaffAbsence,
       toggleStaffAbsences,
       recordDigestSend,

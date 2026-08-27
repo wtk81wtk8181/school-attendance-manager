@@ -64,8 +64,7 @@ function appearanceEmailHtml(
 ) {
   const lines = payload.classes
     .map((item) => {
-      const appearance =
-        item.appearanceRate === null ? "—" : `${(item.appearanceRate * 100).toFixed(2)}%`;
+      const appearance = `${(item.appearanceRate * 100).toFixed(2)}%`;
       return `<tr><td>${item.className}</td><td>${(item.punctualityRate * 100).toFixed(2)}%</td><td>${(item.attendanceRate * 100).toFixed(2)}%</td><td>${appearance}</td></tr>`;
     })
     .join("");
@@ -73,7 +72,7 @@ function appearanceEmailHtml(
   return `
     <p>各位同事：</p>
     <p>附件為 <strong>${SCHOOL_NAME}</strong>（${payload.monthLabel}）<strong>各班出席表現及儀容百份比報告</strong>。</p>
-    <p>出席百分率及守時百分率由系統按該月缺席／遲到計算；校服儀容百分率於平台輸入。</p>
+    <p>出席百分率及守時百分率由系統按該月缺席／遲到計算；校服儀容百分率＝該班儀容正常人數÷班人數（於平台按班標記有問題學生後自動計算）。</p>
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px">
       <thead>
         <tr><th>班別</th><th>守時百分率</th><th>出席百分率</th><th>校服儀容百分率</th></tr>

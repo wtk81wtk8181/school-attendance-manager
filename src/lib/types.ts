@@ -215,13 +215,19 @@ export interface AuditLog {
   detail: string;
 }
 
-/** 各班每月校服儀容百分率（0–1），於網頁輸入後匯出學校樣板 Excel */
-export interface AppearanceRecord {
+/** 該月儀容有問題的學生；未標記者視為儀容正常 */
+export interface AppearanceIssue {
   id: string;
-  yearMonth: string;
+  studentId: string;
+  studentName: string;
   className: string;
-  rate: number;
+  yearMonth: string;
   updatedAt: string;
+}
+
+export interface AppearanceIssueRemoval {
+  id: string;
+  removedAt: string;
 }
 
 export interface DigestSettings {
@@ -275,7 +281,8 @@ export interface AppState {
   studentLeaveRemovals: StudentLeaveRemoval[];
   hiddenStudents: HiddenStudent[];
   hiddenStudentRemovals: HiddenStudentRemoval[];
-  appearanceRecords: AppearanceRecord[];
+  appearanceIssues: AppearanceIssue[];
+  appearanceIssueRemovals: AppearanceIssueRemoval[];
   auditLogs: AuditLog[];
   dataVersion: number;
 }
