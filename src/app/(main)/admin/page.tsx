@@ -101,7 +101,6 @@ export default function AdminPage() {
   const [sectionKey, setSectionKey] = useState<keyof AppState>("students");
   const [draft, setDraft] = useState<Row[] | null>(null);
   const [memoDraft, setMemoDraft] = useState("");
-  const [memoInitialized, setMemoInitialized] = useState(false);
   const [memoSaving, setMemoSaving] = useState(false);
   const [page, setPage] = useState(0);
   const [jsonInput, setJsonInput] = useState("");
@@ -136,17 +135,8 @@ export default function AdminPage() {
   );
 
   useEffect(() => {
-    if (!memoInitialized) {
-      setMemoDraft(state.adminMemo ?? "");
-      setMemoInitialized(true);
-    }
-  }, [memoInitialized, state.adminMemo]);
-
-  useEffect(() => {
-    if (!memoInitialized) return;
-    if (memoDraft === (state.adminMemo ?? "")) return;
     setMemoDraft(state.adminMemo ?? "");
-  }, [memoDraft, memoInitialized, state.adminMemo]);
+  }, [state.adminMemo]);
 
   if (!ready) return <PageSkeleton tiles={0} lines={8} />;
 
