@@ -1,5 +1,5 @@
 import { allClassNames } from "@/lib/roster";
-import { buildMonthlyReport } from "@/lib/monthly-report";
+import { buildMonthlyReport, monthRange } from "@/lib/monthly-report";
 import type {
   AbsenceRecord,
   AppearanceIssue,
@@ -31,22 +31,96 @@ export interface AppearanceReportPayload {
   };
 }
 
-export function appearanceIssueId(yearMonth: string, studentId: string) {
+export function appearanceIssueId(date: string, studentId: string) {
+  return `appear-${date}-${studentId}`;
+}
+
+function legacyAppearanceIssueId(yearMonth: string, studentId: string) {
   return `appear-${yearMonth}-${studentId}`;
 }
 
+function isActiveAppearanceIssue(
+  record: AppearanceIssue,
+  removals: AppearanceIssueRemoval[] | undefined
+): boolean {
+  const removal = (removals ?? []).find((item) => item.id === record.id);
+  if (!removal) return true;
+  return record.updatedAt > removal.removedAt;
+}
+
+export function hasAppearanceIssueOnDate(
+  issues: AppearanceIssue[] | undefined,
+  removals: AppearanceIssueRemoval[] | undefined,
+  studentId: string,
+  date: string
+): boolean {
+  const id = appearanceIssueId(date, studentId);
+  const record = (issues ?? []).find(
+    (item) => item.id === id || (item.studentId === studentId && item.date === date)
+  );
+  if (!record) return false;
+  return isActiveAppearanceIssue(record, removals);
+}
+
+/** 該月內任一日被標記為有問題，或仍保留舊版每月標記 */
+export function hasAppearanceIssueInMonth(
+  issues: AppearanceIssue[] | undefined,
+  removals: AppearanceIssueRemoval[] | undefined,
+  studentId: string,
+  yearMonth: string
+): boolean {
+  const { start, end } = monthRange(yearMonth);
+  const dailyIssue = (issues ?? []).some(
+    (item) =>
+      item.studentId === studentId &&
+      !!item.date &&
+      item.date >= start &&
+      item.date <= end &&
+      isActiveAppearanceIssue(item, removals)
+  );
+  if (dailyIssue) return true;
+
+  const legacyId = legacyAppearanceIssueId(yearMonth, studentId);
+  const legacy = (issues ?? []).find(
+    (item) =>
+      item.id === legacyId ||
+      (item.studentId === studentId && item.yearMonth === yearMonth && !item.date)
+  );
+  if (!legacy) return false;
+  return isActiveAppearanceIssue(legacy, removals);
+}
+
+/** @deprecated 請改用 hasAppearanceIssueOnDate 或 hasAppearanceIssueInMonth */
 export function hasAppearanceIssue(
   issues: AppearanceIssue[] | undefined,
   removals: AppearanceIssueRemoval[] | undefined,
   studentId: string,
   yearMonth: string
 ): boolean {
-  const id = appearanceIssueId(yearMonth, studentId);
-  const record = (issues ?? []).find((item) => item.id === id);
-  if (!record) return false;
-  const removal = (removals ?? []).find((item) => item.id === id);
-  if (!removal) return true;
-  return record.updatedAt > removal.removedAt;
+  return hasAppearanceIssueInMonth(issues, removals, studentId, yearMonth);
+}
+
+export function countAppearanceIssueDaysInMonth(
+  issues: AppearanceIssue[] | undefined,
+  removals: AppearanceIssueRemoval[] | undefined,
+  studentId: string,
+  yearMonth: string
+): number {
+  const { start, end } = monthRange(yearMonth);
+  const dates = new Set(
+    (issues ?? [])
+      .filter(
+        (item) =>
+          item.studentId === studentId &&
+          !!item.date &&
+          item.date >= start &&
+          item.date <= end &&
+          isActiveAppearanceIssue(item, removals)
+      )
+      .map((item) => item.date)
+  );
+  if (dates.size > 0) return dates.size;
+  return hasAppearanceIssueInMonth(issues, removals, studentId, yearMonth) ? 1 : 0;
 }
 
 export function buildAppearanceReport(
@@ -60,12 +134,16 @@ export function buildAppearanceReport(
   const monthly = buildMonthlyReport(students, absences, yearMonth);
   const byClass = new Map(monthly.classes.map((item) => [item.className, item]));
   const flaggedIds = new Set(
-    (appearanceIssues ?? [])
-      .filter((item) =>
-        hasAppearanceIssue(appearanceIssues, appearanceIssueRemovals, item.studentId, yearMonth)
+    students
+      .filter((student) =>
+        hasAppearanceIssueInMonth(
+          appearanceIssues,
+          appearanceIssueRemovals,
+          student.id,
+          yearMonth
+        )
       )
-      .filter((item) => item.yearMonth === yearMonth)
-      .map((item) => item.studentId)
+      .map((student) => student.id)
   );
 
   const classes: AppearanceClassRow[] = allClassNames().map((className) => {

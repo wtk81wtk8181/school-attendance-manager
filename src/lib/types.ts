@@ -215,14 +215,17 @@ export interface AuditLog {
   detail: string;
 }
 
-/** 該月儀容有問題的學生；未標記者視為儀容正常 */
+/** 該日上課日儀容有問題的學生；未標記者視為儀容正常 */
 export interface AppearanceIssue {
   id: string;
   studentId: string;
   studentName: string;
   className: string;
-  yearMonth: string;
+  /** YYYY-MM-DD 上課日 */
+  date?: string;
   updatedAt: string;
+  /** @deprecated 舊版每月標記，僅作向後相容 */
+  yearMonth?: string;
 }
 
 export interface AppearanceIssueRemoval {
@@ -283,6 +286,8 @@ export interface AppState {
   hiddenStudentRemovals: HiddenStudentRemoval[];
   appearanceIssues: AppearanceIssue[];
   appearanceIssueRemovals: AppearanceIssueRemoval[];
+  /** 後台留言版備註（全體共用） */
+  adminMemo: string;
   auditLogs: AuditLog[];
   dataVersion: number;
 }

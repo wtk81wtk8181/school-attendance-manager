@@ -158,7 +158,7 @@ interface StoreValue {
   }) => { added: number; skipped: number };
   removeStudentLeave: (id: string) => void;
   restoreHiddenStudent: (studentId: string) => void;
-  toggleAppearanceIssue: (studentId: string, yearMonth: string, issue: boolean) => void;
+  toggleAppearanceIssue: (studentId: string, date: string, issue: boolean) => void;
   toggleStaffAbsence: (
     date: string,
     kind: StaffAbsenceKind,
@@ -175,6 +175,7 @@ interface StoreValue {
   adminPatchState: (input: { section: string; rows: unknown[] }) => boolean;
   adminPatchSections: (sections: Record<string, unknown[]>) => boolean;
   adminApplyDemoAttendance: (schoolDay: string) => boolean;
+  updateAdminMemo: (text: string) => void;
   refreshFromDatabase: () => Promise<void>;
   saveToDatabase: () => Promise<boolean>;
   reconnectDatabase: () => Promise<void>;
@@ -1708,16 +1709,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   const toggleAppearanceIssue = useCallback(
-    (studentId: string, yearMonth: string, issue: boolean) => {
+    (studentId: string, date: string, issue: boolean) => {
       if (currentUser?.role !== "office") {
         toast.error("只有校務處可以標記校服儀容。");
         return;
       }
-      if (!/^\d{4}-\d{2}$/.test(yearMonth)) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
       patch((prev) => {
         const student = prev.students.find((item) => item.id === studentId);
         if (!student) return prev;
-        const id = appearanceIssueId(yearMonth, studentId);
+        const id = appearanceIssueId(date, studentId);
         const updatedAt = nowIso();
         if (issue) {
           const nextIssue: AppearanceIssue = {
@@ -1725,7 +1726,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             studentId,
             studentName: student.name,
             className: student.className,
-            yearMonth,
+            date,
             updatedAt,
           };
           return withAudit(
@@ -1740,7 +1741,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               ),
             },
             "標記儀容有問題",
-            `${student.className}　${student.name}　${yearMonth}`
+            `${student.className}　${student.name}　${date}`
           );
         }
         return withAudit(
@@ -1753,7 +1754,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ],
           },
           "取消儀容有問題",
-          `${student.className}　${student.name}　${yearMonth}`
+          `${student.className}　${student.name}　${date}`
         );
       });
     },
@@ -2015,6 +2016,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [currentUser]
   );
 
+  const updateAdminMemo = useCallback(
+    (text: string) => {
+      if (!currentUser) {
+        toast.error("請先登入。");
+        return;
+      }
+      patch((prev) => ({
+        ...prev,
+        adminMemo: text,
+      }));
+    },
+    [currentUser]
+  );
+
   const value = useMemo<StoreValue>(
     () => ({
       ready,
@@ -2050,6 +2065,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       adminPatchState,
       adminPatchSections,
       adminApplyDemoAttendance,
+      updateAdminMemo,
       refreshFromDatabase: refreshFromDatabaseNow,
       saveToDatabase,
       reconnectDatabase,
@@ -2090,6 +2106,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       adminPatchState,
       adminPatchSections,
       adminApplyDemoAttendance,
+      updateAdminMemo,
       refreshFromDatabaseNow,
       saveToDatabase,
       reconnectDatabase,

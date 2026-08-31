@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,6 +8,7 @@ import {
   Database,
   Eye,
   Lock,
+  MessageSquare,
   Plus,
   Save,
   Trash2,
@@ -19,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/empty-state";
+import { Checkbox } from "@/components/ui/checkbox";
 import { PageHeader, PageShell, PageSkeleton } from "@/components/page-shell";
 import {
   Select,
@@ -91,11 +93,16 @@ export default function AdminPage() {
     adminPatchState,
     adminPatchSections,
     adminApplyDemoAttendance,
+    updateAdminMemo,
     saveToDatabase,
     ready,
+    pendingSave,
   } = useStore();
   const [sectionKey, setSectionKey] = useState<keyof AppState>("students");
   const [draft, setDraft] = useState<Row[] | null>(null);
+  const [memoDraft, setMemoDraft] = useState("");
+  const [memoInitialized, setMemoInitialized] = useState(false);
+  const [memoSaving, setMemoSaving] = useState(false);
   const [page, setPage] = useState(0);
   const [jsonInput, setJsonInput] = useState("");
   const [jsonPreview, setJsonPreview] = useState<AdminJsonPatchPreview | null>(null);
@@ -103,6 +110,7 @@ export default function AdminPage() {
   const [jsonSaving, setJsonSaving] = useState(false);
   const [demoDay, setDemoDay] = useState(hongKongToday());
   const [demoBusy, setDemoBusy] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(() => new Set());
 
   const sectionRows = useMemo(() => {
     const value: unknown = state[sectionKey];
@@ -114,10 +122,31 @@ export default function AdminPage() {
   const safePage = Math.min(page, pageCount - 1);
   const pageStart = safePage * PAGE_SIZE;
   const visibleRows = rows.slice(pageStart, pageStart + PAGE_SIZE);
+  const pageRowIndexes = useMemo(
+    () => visibleRows.map((_, index) => pageStart + index),
+    [pageStart, visibleRows]
+  );
+  const allPageSelected =
+    pageRowIndexes.length > 0 && pageRowIndexes.every((index) => selectedRows.has(index));
+  const somePageSelected =
+    pageRowIndexes.some((index) => selectedRows.has(index)) && !allPageSelected;
   const columns = useMemo(
     () => collectAdminColumns(String(sectionKey), rows),
     [rows, sectionKey]
   );
+
+  useEffect(() => {
+    if (!memoInitialized) {
+      setMemoDraft(state.adminMemo ?? "");
+      setMemoInitialized(true);
+    }
+  }, [memoInitialized, state.adminMemo]);
+
+  useEffect(() => {
+    if (!memoInitialized) return;
+    if (memoDraft === (state.adminMemo ?? "")) return;
+    setMemoDraft(state.adminMemo ?? "");
+  }, [memoDraft, memoInitialized, state.adminMemo]);
 
   if (!ready) return <PageSkeleton tiles={0} lines={8} />;
 
@@ -140,6 +169,51 @@ export default function AdminPage() {
     }
     setSectionKey(key);
     setPage(0);
+    setSelectedRows(new Set());
+  }
+
+  function toggleRowSelection(rowIndex: number, selected: boolean) {
+    setSelectedRows((current) => {
+      const next = new Set(current);
+      if (selected) next.add(rowIndex);
+      else next.delete(rowIndex);
+      return next;
+    });
+  }
+
+  function togglePageSelection(selected: boolean) {
+    setSelectedRows((current) => {
+      const next = new Set(current);
+      for (const rowIndex of pageRowIndexes) {
+        if (selected) next.add(rowIndex);
+        else next.delete(rowIndex);
+      }
+      return next;
+    });
+  }
+
+  function selectAllRows() {
+    setSelectedRows(new Set(rows.map((_, index) => index)));
+  }
+
+  function clearRowSelection() {
+    setSelectedRows(new Set());
+  }
+
+  function deleteSelectedRows() {
+    if (selectedRows.size === 0) {
+      toast.error("請先勾選要刪除的列。");
+      return;
+    }
+    const confirmed = window.confirm(
+      `確定刪除已選的 ${selectedRows.size} 列？刪除後請按「儲存變更」才會寫入資料庫。`
+    );
+    if (!confirmed) return;
+    const base = draft ?? sectionRows.map((row) => ({ ...row }));
+    const indexes = new Set(selectedRows);
+    setDraft(base.filter((_, index) => !indexes.has(index)));
+    setSelectedRows(new Set());
+    toast.success(`已從試算表移除 ${indexes.size} 列，請記得儲存變更。`);
   }
 
   function updateCell(rowIndex: number, column: string, text: string) {
@@ -177,12 +251,23 @@ export default function AdminPage() {
   function deleteRow(rowIndex: number) {
     const base = draft ?? sectionRows.map((row) => ({ ...row }));
     setDraft(base.filter((_, index) => index !== rowIndex));
+    setSelectedRows((current) => {
+      const next = new Set<number>();
+      for (const index of current) {
+        if (index < rowIndex) next.add(index);
+        else if (index > rowIndex) next.add(index - 1);
+      }
+      return next;
+    });
   }
 
   function save() {
     if (!draft) return;
     const ok = adminPatchState({ section: sectionKey, rows: draft });
-    if (ok) setDraft(null);
+    if (ok) {
+      setDraft(null);
+      setSelectedRows(new Set());
+    }
   }
 
   function previewJsonPatch() {
@@ -278,6 +363,21 @@ export default function AdminPage() {
     }
   }
 
+  async function saveMemo() {
+    updateAdminMemo(memoDraft);
+    setMemoSaving(true);
+    try {
+      const saved = await saveToDatabase();
+      if (!saved && pendingSave) {
+        toast.message("備註已儲存於本機，稍後會同步至資料庫。");
+      } else if (saved) {
+        toast.success("備註已儲存。");
+      }
+    } finally {
+      setMemoSaving(false);
+    }
+  }
+
   return (
     <PageShell wide>
       <PageHeader
@@ -295,6 +395,7 @@ export default function AdminPage() {
               </CardTitle>
               <CardDescription>
                 共 {rows.length} 列{draft ? "（有未儲存修改）" : ""}
+                {selectedRows.size > 0 ? `　已選 ${selectedRows.size} 列` : ""}
               </CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -319,13 +420,40 @@ export default function AdminPage() {
                 <Plus className="size-4" />
                 新增一列
               </Button>
+              {rows.length > 0 ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={selectAllRows}>
+                    全選全部
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearRowSelection}
+                    disabled={selectedRows.size === 0}
+                  >
+                    清除選取
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={deleteSelectedRows}
+                    disabled={selectedRows.size === 0}
+                  >
+                    <Trash2 className="size-4" />
+                    批量刪除{selectedRows.size > 0 ? `（${selectedRows.size}）` : ""}
+                  </Button>
+                </>
+              ) : null}
               {draft && (
                 <>
                   <Button size="sm" onClick={save}>
                     <Save className="size-4" />
                     儲存變更
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
+                  <Button variant="ghost" size="sm" onClick={() => {
+                    setDraft(null);
+                    setSelectedRows(new Set());
+                  }}>
                     還原
                   </Button>
                 </>
@@ -346,6 +474,13 @@ export default function AdminPage() {
               <table className="w-full border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-100">
+                    <th className="border px-2 py-1.5 text-center">
+                      <Checkbox
+                        checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
+                        onCheckedChange={(checked) => togglePageSelection(checked === true)}
+                        aria-label="全選本頁"
+                      />
+                    </th>
                     <th className="border px-2 py-1.5 text-left">#</th>
                     {columns.map((column) => (
                       <th key={column} className="border px-2 py-1.5 text-left whitespace-nowrap">
@@ -360,6 +495,15 @@ export default function AdminPage() {
                     const rowIndex = pageStart + visibleIndex;
                     return (
                     <tr key={`${rowIndex}-${String(row.id ?? "")}`}>
+                      <td className="border px-2 py-1 text-center">
+                        <Checkbox
+                          checked={selectedRows.has(rowIndex)}
+                          onCheckedChange={(checked) =>
+                            toggleRowSelection(rowIndex, checked === true)
+                          }
+                          aria-label={`選取第 ${rowIndex + 1} 列`}
+                        />
+                      </td>
                       <td className="border px-2 py-1 text-slate-400">{rowIndex + 1}</td>
                       {columns.map((column) => (
                         <td key={column} className="border p-0">
@@ -538,6 +682,39 @@ export default function AdminPage() {
                 取消預覽
               </Button>
             ) : null}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-none">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="size-5" />
+            備註
+          </CardTitle>
+          <CardDescription>
+            共用留言版，任何登入同事都可以在此留下文字備忘，內容會同步至雲端資料庫。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Textarea
+            value={memoDraft}
+            onChange={(event) => setMemoDraft(event.target.value)}
+            placeholder="在此輸入任何備註、提醒或留言……"
+            className="min-h-36 text-sm leading-6"
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-slate-400">
+              {memoDraft.length > 0 ? `共 ${memoDraft.length} 字` : "尚無內容"}
+            </p>
+            <Button
+              size="sm"
+              disabled={memoSaving || memoDraft === (state.adminMemo ?? "")}
+              onClick={() => void saveMemo()}
+            >
+              <Save className="size-4" />
+              {memoSaving ? "儲存中……" : "儲存備註"}
+            </Button>
           </div>
         </CardContent>
       </Card>

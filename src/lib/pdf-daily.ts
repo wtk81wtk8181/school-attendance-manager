@@ -2,8 +2,8 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import type { DailySchoolReportPayload } from "@/lib/daily-report";
 
-const PAGE_HEIGHT_MM = 194;
-const PAGE_WIDTH_MM = 281;
+const PAGE_HEIGHT_MM = 281;
+const PAGE_WIDTH_MM = 194;
 
 function mmToPx(mm: number): number {
   return (mm * 96) / 25.4;
@@ -131,7 +131,7 @@ async function htmlToPdf(html: string): Promise<Buffer> {
     await fitReportPages(page);
     const pdf = await page.pdf({
       format: "A4",
-      landscape: true,
+      landscape: false,
       printBackground: true,
       preferCSSPageSize: true,
       margin: { top: "8mm", right: "8mm", bottom: "8mm", left: "8mm" },

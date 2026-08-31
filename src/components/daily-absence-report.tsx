@@ -8,8 +8,6 @@ import {
 import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
 import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
 
-const JUNIOR_SPLIT = 8;
-
 export function DailyAbsenceReport({
   payload,
 }: {
@@ -35,8 +33,6 @@ export function DailyJuniorReportPage({
   className?: string;
 }) {
   const junior = payload.classes.slice(0, 15);
-  const left = junior.slice(0, JUNIOR_SPLIT);
-  const right = junior.slice(JUNIOR_SPLIT);
 
   return (
     <article
@@ -44,9 +40,8 @@ export function DailyJuniorReportPage({
     >
       <ReportHeader payload={payload} sectionTitle="中一至中三" />
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-2">
-        <ClassColumn blocks={left} />
-        <ClassColumn blocks={right} />
+      <div className="mt-3">
+        <ClassTable blocks={junior} />
       </div>
 
       <StaffSection payload={payload} />
@@ -62,8 +57,6 @@ export function DailySeniorReportPage({
   className?: string;
 }) {
   const senior = payload.classes.slice(15, 30);
-  const left = senior.slice(0, JUNIOR_SPLIT);
-  const right = senior.slice(JUNIOR_SPLIT);
 
   return (
     <article
@@ -71,9 +64,8 @@ export function DailySeniorReportPage({
     >
       <ReportHeader payload={payload} sectionTitle="中四至中六" />
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-2">
-        <ClassColumn blocks={left} />
-        <ClassColumn blocks={right} />
+      <div className="mt-3">
+        <ClassTable blocks={senior} />
       </div>
 
       <div className="mt-4 space-y-3">
@@ -311,7 +303,7 @@ function AbsenceLinesCell({ lines }: { lines: string[] }) {
   );
 }
 
-function ClassColumn({ blocks }: { blocks: DailyClassBlock[] }) {
+function ClassTable({ blocks }: { blocks: DailyClassBlock[] }) {
   return (
     <section>
       <table className="w-full border-collapse text-[11px]">

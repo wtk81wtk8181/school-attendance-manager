@@ -8,23 +8,21 @@ import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
 import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
 
-const JUNIOR_SPLIT = 8;
-
 const PRINT_CSS = `
-  @page { size: A4 landscape; margin: 8mm; }
+  @page { size: A4 portrait; margin: 8mm; }
   * { box-sizing: border-box; }
   html, body {
     margin: 0;
     padding: 0;
-    width: 281mm;
+    width: 194mm;
     font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
     color: #18181b;
     background: #fff;
   }
   .daily-print-shell {
-    width: 281mm;
-    height: 194mm;
-    max-height: 194mm;
+    width: 194mm;
+    height: 281mm;
+    max-height: 281mm;
     overflow: hidden;
     page-break-after: always;
     break-after: page;
@@ -35,7 +33,7 @@ const PRINT_CSS = `
     break-after: auto;
   }
   .daily-print-page {
-    width: 281mm;
+    width: 194mm;
     transform-origin: top left;
   }
   .header {
@@ -51,18 +49,18 @@ const PRINT_CSS = `
   }
   .header-school {
     margin: 2px 0 0;
-    font-size: 22px;
+    font-size: 18px;
     letter-spacing: 0.12em;
     color: #1b365d;
   }
   .header-title {
-    margin: 4px 0 0;
-    font-size: 14px;
+    margin: 3px 0 0;
+    font-size: 13px;
     font-weight: 600;
   }
   .header-date {
     margin: 2px 0 0;
-    font-size: 12px;
+    font-size: 11px;
   }
   .header-section {
     margin: 4px 0 0;
@@ -70,16 +68,13 @@ const PRINT_CSS = `
     font-weight: 600;
     color: #1b365d;
   }
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 12px;
+  .class-stack {
+    margin-top: 10px;
   }
   .table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 11px;
+    font-size: 10px;
   }
   .table th, .table td {
     border: 1px solid #d4d4d8;
@@ -95,7 +90,7 @@ const PRINT_CSS = `
   .table .left { text-align: left; }
   .table .muted { color: #a1a1aa; }
   .staff-box, .stats-box, .metrics-box {
-    margin-top: 16px;
+    margin-top: 10px;
     border: 1px solid #d4d4d8;
     border-radius: 4px;
     overflow: hidden;
@@ -116,7 +111,7 @@ const PRINT_CSS = `
     background: #f8fafc;
     border-bottom: 1px solid #d4d4d8;
   }
-  .metrics-table { font-size: 10px; }
+  .metrics-table { font-size: 8px; }
   .space-y { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
   .absence-cols {
     display: grid;
@@ -336,16 +331,13 @@ function renderClassMetrics(
 
 function renderJuniorPage(payload: DailySchoolReportPayload): string {
   const junior = payload.classes.slice(0, 15);
-  const left = junior.slice(0, JUNIOR_SPLIT);
-  const right = junior.slice(JUNIOR_SPLIT);
 
   return `
     <div class="daily-print-shell">
       <article class="daily-print-page">
         ${renderHeader(payload, "中一至中三")}
-        <div class="grid-2">
-          ${renderClassColumn(left)}
-          ${renderClassColumn(right)}
+        <div class="class-stack">
+          ${renderClassColumn(junior)}
         </div>
         ${renderStaffSection(payload)}
       </article>
@@ -355,16 +347,13 @@ function renderJuniorPage(payload: DailySchoolReportPayload): string {
 
 function renderSeniorPage(payload: DailySchoolReportPayload): string {
   const senior = payload.classes.slice(15, 30);
-  const left = senior.slice(0, JUNIOR_SPLIT);
-  const right = senior.slice(JUNIOR_SPLIT);
 
   return `
     <div class="daily-print-shell">
       <article class="daily-print-page">
         ${renderHeader(payload, "中四至中六")}
-        <div class="grid-2">
-          ${renderClassColumn(left)}
-          ${renderClassColumn(right)}
+        <div class="class-stack">
+          ${renderClassColumn(senior)}
         </div>
         <div class="space-y">
           ${renderFormStats(payload)}

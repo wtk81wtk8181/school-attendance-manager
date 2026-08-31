@@ -16,13 +16,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  appearanceMonthOptions,
   buildAppearanceReport,
-  hasAppearanceIssue,
+  countAppearanceIssueDaysInMonth,
+  hasAppearanceIssueInMonth,
+  hasAppearanceIssueOnDate,
 } from "@/lib/appearance-report";
+import { hongKongToday } from "@/lib/digest";
 import { downloadBase64Xlsx, requestAppearanceReport } from "@/lib/digest-client";
-import { formatPercentExact } from "@/lib/format";
-import { currentYearMonth } from "@/lib/monthly-report";
+import { formatPercentExact, formatShortDate } from "@/lib/format";
 import { CLASS_STREAMS, CLASS_TEACHERS } from "@/lib/roster";
 import { classLabel, filterClassNames, formLabel } from "@/lib/rules";
 import { useStore } from "@/lib/store";
@@ -39,14 +40,9 @@ export default function AppearancePage() {
     ready,
   } = useStore();
   const isOffice = currentUser?.role === "office";
-  const months = useMemo(
-    () => appearanceMonthOptions(state.academicYear.start, state.academicYear.end),
-    [state.academicYear.end, state.academicYear.start]
-  );
-  const [month, setMonth] = useState(() => {
-    const now = currentYearMonth();
-    return months.includes(now) ? now : (months[0] ?? now);
-  });
+  const today = hongKongToday();
+  const [day, setDay] = useState(today);
+  const month = day.slice(0, 7);
   const [form, setForm] = useState("all");
   const [klass, setKlass] = useState<string>(isOffice ? "1A" : "all");
   const [query, setQuery] = useState("");
@@ -148,7 +144,7 @@ export default function AppearancePage() {
     <PageShell wide>
       <PageHeader
         title="校服儀容"
-        description="請先選班，再標記該月儀容有問題的學生。未標記視為儀容正常；各班儀容正常百分率＝正常人數÷班人數，匯出報告時會自動套用。"
+        description="請先選班上課日，再逐人標記當日儀容。未標記視為正常；該月內曾出現問題的學生會計入每月儀容百分率報告。"
         actions={
           isOffice ? (
             <Button disabled={busy} onClick={() => void exportReport()}>
@@ -162,19 +158,22 @@ export default function AppearancePage() {
       <section className="space-y-3 rounded-xl border border-slate-200 bg-white px-3 py-3 sm:px-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="grid max-w-xs flex-1 gap-1.5">
-            <Label htmlFor="appearance-month">月份</Label>
+            <Label htmlFor="appearance-day">上課日</Label>
             <Input
-              id="appearance-month"
-              type="month"
-              value={month}
-              onChange={(event) => setMonth(event.target.value || currentYearMonth())}
+              id="appearance-day"
+              type="date"
+              min={state.academicYear.start}
+              max={state.academicYear.end >= today ? today : state.academicYear.end}
+              value={day}
+              onChange={(event) => setDay(event.target.value || today)}
             />
           </div>
           {selectedSummary ? (
             <p className="text-sm text-slate-600">
-              {klass !== "all" ? classLabel(klass) : "全校"}
+              {formatShortDate(day)}　{klass !== "all" ? classLabel(klass) : "全校"}
               {selectedTeacher ? `　班主任 ${selectedTeacher}` : ""}
-              　{selectedSummary.studentCount} 人　有問題 {selectedSummary.issueCount} 人　儀容正常{" "}
+              　{selectedSummary.studentCount} 人　{month.replace("-", "年")}月有問題{" "}
+              {selectedSummary.issueCount} 人　儀容正常{" "}
               <span className="font-semibold tabular-nums text-slate-900">
                 {formatPercentExact(selectedSummary.appearanceRate)}
               </span>
@@ -187,7 +186,7 @@ export default function AppearancePage() {
             <p className="text-sm font-medium">
               按班顯示
               <span className="ml-2 text-xs font-normal text-slate-400">
-                選班後只顯示該班名單，方便逐人標記。
+                選班後只顯示該班名單，方便逐人標記當日儀容。
               </span>
             </p>
             {(
@@ -292,8 +291,16 @@ export default function AppearancePage() {
       ) : (
         grouped.map(([className, items]) => {
           const classRow = report.classes.find((item) => item.className === className);
-          const issueCount = items.filter((student) =>
-            hasAppearanceIssue(
+          const issueCountToday = items.filter((student) =>
+            hasAppearanceIssueOnDate(
+              state.appearanceIssues,
+              state.appearanceIssueRemovals,
+              student.id,
+              day
+            )
+          ).length;
+          const issueCountMonth = items.filter((student) =>
+            hasAppearanceIssueInMonth(
               state.appearanceIssues,
               state.appearanceIssueRemovals,
               student.id,
@@ -306,11 +313,14 @@ export default function AppearancePage() {
                 <h2 className="text-base font-semibold">
                   {classLabel(className)}
                   <span className="ml-2 text-sm font-normal text-slate-400">
-                    {CLASS_TEACHERS[className] ?? ""}　{items.length} 人　有問題 {issueCount} 人
+                    {CLASS_TEACHERS[className] ?? ""}　{items.length} 人　當日有問題 {issueCountToday} 人
+                    {issueCountMonth > issueCountToday
+                      ? `　本月累計 ${issueCountMonth} 人`
+                      : ""}
                   </span>
                 </h2>
                 <p className="text-sm tabular-nums text-slate-600">
-                  儀容正常 {formatPercentExact(classRow?.appearanceRate ?? 1)}
+                  本月儀容正常 {formatPercentExact(classRow?.appearanceRate ?? 1)}
                 </p>
               </div>
               <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -319,19 +329,29 @@ export default function AppearancePage() {
                     <TableRow>
                       <TableHead>學生</TableHead>
                       <TableHead>班別</TableHead>
-                      <TableHead>該月儀容</TableHead>
+                      <TableHead>當日儀容</TableHead>
+                      <TableHead>本月累計</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {items.map((student) => {
-                      const issue = hasAppearanceIssue(
+                      const issueToday = hasAppearanceIssueOnDate(
+                        state.appearanceIssues,
+                        state.appearanceIssueRemovals,
+                        student.id,
+                        day
+                      );
+                      const issueDaysInMonth = countAppearanceIssueDaysInMonth(
                         state.appearanceIssues,
                         state.appearanceIssueRemovals,
                         student.id,
                         month
                       );
                       return (
-                        <TableRow key={student.id} className={issue ? "bg-amber-50/80" : undefined}>
+                        <TableRow
+                          key={student.id}
+                          className={issueToday ? "bg-amber-50/80" : undefined}
+                        >
                           <TableCell>
                             <p className="font-medium">{student.name}</p>
                             <p className="text-xs text-slate-400">
@@ -344,10 +364,10 @@ export default function AppearancePage() {
                               <button
                                 type="button"
                                 disabled={!isOffice}
-                                onClick={() => toggleAppearanceIssue(student.id, month, false)}
+                                onClick={() => toggleAppearanceIssue(student.id, day, false)}
                                 className={cn(
                                   "h-8 min-w-16 rounded-md px-2 text-xs font-semibold transition-colors duration-200",
-                                  !issue
+                                  !issueToday
                                     ? "bg-emerald-600 text-white hover:bg-emerald-600"
                                     : "text-slate-400 hover:bg-slate-100 hover:text-slate-900",
                                   !isOffice && "cursor-default opacity-80"
@@ -358,10 +378,10 @@ export default function AppearancePage() {
                               <button
                                 type="button"
                                 disabled={!isOffice}
-                                onClick={() => toggleAppearanceIssue(student.id, month, true)}
+                                onClick={() => toggleAppearanceIssue(student.id, day, true)}
                                 className={cn(
                                   "h-8 min-w-16 rounded-md px-2 text-xs font-semibold transition-colors duration-200",
-                                  issue
+                                  issueToday
                                     ? "bg-amber-600 text-white hover:bg-amber-600"
                                     : "text-slate-400 hover:bg-slate-100 hover:text-slate-900",
                                   !isOffice && "cursor-default opacity-80"
@@ -370,6 +390,15 @@ export default function AppearancePage() {
                                 有問題
                               </button>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            {issueDaysInMonth > 0 ? (
+                              <span className="text-sm font-medium text-amber-700 tabular-nums">
+                                {issueDaysInMonth} 日
+                              </span>
+                            ) : (
+                              <span className="text-sm text-slate-400">—</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       );

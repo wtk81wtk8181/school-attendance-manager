@@ -3,6 +3,7 @@ import type { DailyReportPayload } from "@/lib/daily-report";
 import type { LoReportPayload } from "@/lib/lo-report";
 import type { MonthlyReportPayload } from "@/lib/monthly-report";
 import type { AppearanceReportPayload } from "@/lib/appearance-report";
+import type { WongReportPayload } from "@/lib/wong-report";
 
 export interface DigestSendResult {
   ok: boolean;
@@ -95,6 +96,14 @@ export async function requestLoReport(input: {
   sendEmail: boolean;
 }): Promise<DigestSendResult> {
   return postReport("/api/report/lo", input, "無法產生羅小姐報告。");
+}
+
+export async function requestWongReport(input: {
+  payload: WongReportPayload;
+  recipients: Array<{ name: string; email: string }>;
+  sendEmail: boolean;
+}): Promise<DigestSendResult> {
+  return postReport("/api/report/wong", input, "無法產生黃sir每月報告。");
 }
 
 export function downloadBase64Xlsx(filename: string, base64: string) {

@@ -41,9 +41,17 @@ import { buildDailyAbsenceRows, buildDailySchoolReport, formatDailyAbsenceLine }
 import { buildLoReport } from "@/lib/lo-report";
 import { buildAppearanceReport } from "@/lib/appearance-report";
 import { hongKongToday, resolveDigestSchoolDay } from "@/lib/digest";
+import { buildWongReport } from "@/lib/wong-report";
 import { buildMonthlyReport, currentYearMonth, monthRange } from "@/lib/monthly-report";
 import { EmailRecipientPicker } from "@/components/email-recipient-picker";
-import { downloadBase64Xlsx, requestAppearanceReport, requestDailyReport, requestLoReport, requestMonthlyReport } from "@/lib/digest-client";
+import {
+  downloadBase64Xlsx,
+  requestAppearanceReport,
+  requestDailyReport,
+  requestLoReport,
+  requestMonthlyReport,
+  requestWongReport,
+} from "@/lib/digest-client";
 import { resolveSendRecipients, persistRecipientEmails } from "@/lib/email-utils";
 import { useStore } from "@/lib/store";
 import { EmptyState } from "@/components/empty-state";
@@ -79,6 +87,7 @@ export default function ReportsPage() {
   const [dailyBusy, setDailyBusy] = useState(false);
   const [loBusy, setLoBusy] = useState(false);
   const [appearanceBusy, setAppearanceBusy] = useState(false);
+  const [wongBusy, setWongBusy] = useState(false);
   const [monthlyEmail, setMonthlyEmail] = useState("");
   const [dailyEmail, setDailyEmail] = useState("");
   const [loEmail, setLoEmail] = useState("");
@@ -172,6 +181,13 @@ export default function ReportsPage() {
   );
 
   const monthlyReport = buildMonthlyReport(visibleStudents, state.absences, month);
+
+  const wongReport = buildWongReport(
+    visibleStudents,
+    state.absences,
+    month,
+    state.academicYear.label
+  );
 
   const appearanceReport = buildAppearanceReport(
     visibleStudents,
@@ -330,6 +346,23 @@ export default function ReportsPage() {
       toast.error(error instanceof Error ? error.message : "無法產生儀容百分率報告。");
     } finally {
       setAppearanceBusy(false);
+    }
+  }
+
+  async function runWongReport() {
+    setWongBusy(true);
+    try {
+      const result = await requestWongReport({
+        payload: wongReport,
+        sendEmail: false,
+        recipients: [],
+      });
+      toast.success(`已產生 ${result.filename}`);
+      downloadBase64Xlsx(result.filename, result.fileBase64);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法產生黃sir每月報告。");
+    } finally {
+      setWongBusy(false);
     }
   }
 
@@ -509,12 +542,37 @@ export default function ReportsPage() {
             ) : null}
           </CardContent>
         </AccentCard>
+        <AccentCard accent="default">
+          <CardHeader>
+            <CardTitle className="text-base">黃sir每月報告</CardTitle>
+            <CardDescription>
+              {wongReport.monthLabel}　{wongReport.classes.length} 班　有紀錄{" "}
+              {wongReport.totals.studentsWithIssues} 人　未有醫生紙{" "}
+              {wongReport.totals.missingDoctorCount} 人（Excel 黃色標示）
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="wong-report-month">月份</Label>
+              <Input
+                id="wong-report-month"
+                type="month"
+                value={month}
+                onChange={(event) => setMonth(event.target.value || currentYearMonth())}
+              />
+            </div>
+            <Button disabled={wongBusy} onClick={() => void runWongReport()}>
+              <Download className="size-4" />
+              生成 Excel
+            </Button>
+          </CardContent>
+        </AccentCard>
         <AccentCard accent="emerald">
           <CardHeader>
             <CardTitle className="text-base">各班出席表現及儀容百份比</CardTitle>
             <CardDescription>
               {appearanceReport.monthLabel}　儀容有問題 {appearanceReport.totals.issueCount} 人，全校儀容正常{" "}
-              {formatPercentExact(appearanceReport.totals.appearanceRate)}。出席／守時由系統計算，儀容請到「校服儀容」按班標記。
+              {formatPercentExact(appearanceReport.totals.appearanceRate)}。出席／守時由系統計算，儀容請到「校服儀容」按日上課日標記。
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

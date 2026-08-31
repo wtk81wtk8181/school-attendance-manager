@@ -95,11 +95,11 @@ function DailyAbsencePrintBody() {
     <div className="daily-school-print min-h-full bg-zinc-200/70 p-4 print:bg-white print:p-0">
       <style>{`
         @media print {
-          @page { size: A4 landscape; margin: 8mm; }
+          @page { size: A4 portrait; margin: 8mm; }
           .daily-print-shell {
-            width: 281mm;
-            height: 194mm;
-            max-height: 194mm;
+            width: 194mm;
+            height: 281mm;
+            max-height: 281mm;
             overflow: hidden;
             page-break-after: always;
             break-after: page;
@@ -110,7 +110,7 @@ function DailyAbsencePrintBody() {
           }
         }
       `}</style>
-      <div className="no-print mx-auto mb-4 flex max-w-[297mm] flex-wrap items-center justify-between gap-3">
+      <div className="no-print mx-auto mb-4 flex max-w-[210mm] flex-wrap items-center justify-between gap-3">
         {isSample ? (
           <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             版面預覽：每班假設 {sampleCount} 人缺席，不會寫入資料庫。

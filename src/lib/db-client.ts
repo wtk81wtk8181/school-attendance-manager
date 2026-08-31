@@ -139,6 +139,7 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     hiddenStudentRemovals: shared.hiddenStudentRemovals ?? seed.hiddenStudentRemovals,
     appearanceIssues: normalizeAppearanceIssues(shared),
     appearanceIssueRemovals: shared.appearanceIssueRemovals ?? seed.appearanceIssueRemovals,
+    adminMemo: shared.adminMemo ?? seed.adminMemo,
     auditLogs: shared.auditLogs ?? seed.auditLogs,
     dataVersion: OPERATIONAL_DATA_VERSION,
   };
@@ -551,7 +552,7 @@ function mergeAppearanceIssues(
 ): AppearanceIssue[] {
   const map = new Map<string, AppearanceIssue>();
   for (const item of [...(current ?? []), ...(incoming ?? [])]) {
-    if (!item.studentId || !item.yearMonth) continue;
+    if (!item.studentId || (!item.date && !item.yearMonth)) continue;
     const existing = map.get(item.id);
     if (!existing || item.updatedAt >= existing.updatedAt) {
       map.set(item.id, item);
@@ -564,7 +565,9 @@ function mergeAppearanceIssues(
       return item.updatedAt > removal.removedAt;
     })
     .sort(
-      (a, b) => a.yearMonth.localeCompare(b.yearMonth) || a.className.localeCompare(b.className)
+      (a, b) =>
+        (a.date || a.yearMonth || "").localeCompare(b.date || b.yearMonth || "") ||
+        a.className.localeCompare(b.className)
     );
 }
 
@@ -683,6 +686,7 @@ export function mergeSharedStates(
       appearanceIssueRemovals
     ),
     appearanceIssueRemovals,
+    adminMemo: typeof next.adminMemo === "string" ? next.adminMemo : base.adminMemo,
     auditLogs: mergeAuditLogs(base.auditLogs, next.auditLogs),
     dataVersion: OPERATIONAL_DATA_VERSION,
     users: seed.users,
