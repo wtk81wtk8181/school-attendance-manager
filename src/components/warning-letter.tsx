@@ -62,30 +62,92 @@ function issueSummaryEn(stats: LetterStats, focus: LetterFocus): string {
   return parts.join(" and ") || "0 day(s) of absence";
 }
 
-function slipTotalZh(stats: LetterStats, focus: LetterFocus, triggerDays: number): string {
-  if (focus === "late_count") return `${stats.lateCount} 次`;
-  if (focus === "absence_count") return `${stats.absenceCount} 次`;
-  return `${triggerDays} 日`;
+function resolveLetterDisplay(letter: WarningLetterRecord, stats: LetterStats) {
+  const focus = letterFocus(letter.type);
+  const trigger = letter.triggerDays;
+
+  const countedDays = Math.max(
+    stats.countedDays,
+    focus === "absence_days" || focus === "absence_count" || letter.type === "over_limit"
+      ? trigger
+      : 0
+  );
+  const absenceCount = Math.max(
+    stats.absenceCount,
+    focus === "absence_count" ? trigger : 0
+  );
+  const lateCount = Math.max(stats.lateCount, focus === "late_count" ? trigger : 0);
+
+  const displayStats: LetterStats = {
+    countedDays,
+    absenceCount,
+    lateCount,
+    approvedLeaveDays: stats.approvedLeaveDays,
+  };
+
+  return {
+    focus,
+    displayStats,
+    summaryZh: issueSummaryZh(displayStats, focus),
+    summaryEn: issueSummaryEn(displayStats, focus),
+    slipDays: Math.max(countedDays, trigger),
+  };
 }
 
-function slipTotalEn(stats: LetterStats, focus: LetterFocus, triggerDays: number): string {
-  if (focus === "late_count") return `${stats.lateCount}`;
-  if (focus === "absence_count") return `${stats.absenceCount}`;
-  return `${triggerDays}`;
+function LetterHeaderZh({
+  academicYear,
+  issuedAt,
+}: {
+  academicYear: string;
+  issuedAt: string;
+}) {
+  return (
+    <header className="border-b border-zinc-300 pb-4">
+      <p className="text-center text-xs tracking-[0.25em] text-zinc-600">
+        {SCHOOL_NAME_EN}
+      </p>
+      <h1 className="mt-1 text-center font-serif text-3xl tracking-widest text-zinc-900">
+        {SCHOOL_NAME}
+      </h1>
+      <div className="mx-auto mt-3 flex max-w-md items-center justify-between text-sm text-zinc-700">
+        <span>學生出勤事務</span>
+        <span className="font-medium tabular-nums">{academicYear}</span>
+      </div>
+      <h2 className="mt-4 text-center text-xl font-semibold tracking-wide">
+        學生缺席／遲到通知書
+      </h2>
+      <p className="mt-1 text-center text-xs text-zinc-500">中文版本</p>
+      <p className="mt-4 text-right text-sm">日期：{formatDate(issuedAt)}</p>
+    </header>
+  );
 }
 
-function chineseTitle(focus: LetterFocus, isOver: boolean): string {
-  if (isOver) return "學生缺席超過上限通知書";
-  if (focus === "late_count") return "學生遲到次數預警通知書";
-  if (focus === "absence_count") return "學生缺席次數預警通知書";
-  return "學生缺席預警通知書";
-}
-
-function englishTitle(focus: LetterFocus, isOver: boolean): string {
-  if (isOver) return "Notice of Absence Exceeding the Limit";
-  if (focus === "late_count") return "Lateness Occurrence Alert Notice";
-  if (focus === "absence_count") return "Absence Occurrence Alert Notice";
-  return "Absence Alert Notice";
+function LetterHeaderEn({
+  academicYear,
+  issuedAt,
+}: {
+  academicYear: string;
+  issuedAt: string;
+}) {
+  return (
+    <header className="border-b border-zinc-300 pb-4">
+      <p className="text-center text-xs tracking-[0.25em] text-zinc-600">
+        {SCHOOL_NAME_EN}
+      </p>
+      <h1 className="mt-1 text-center font-serif text-3xl tracking-widest text-zinc-900">
+        {SCHOOL_NAME}
+      </h1>
+      <div className="mx-auto mt-3 flex max-w-md items-center justify-between text-sm text-zinc-700">
+        <span>Student Attendance Affairs</span>
+        <span className="font-medium tabular-nums">{academicYear}</span>
+      </div>
+      <h2 className="mt-4 text-center text-xl font-semibold tracking-wide">
+        Student Absence / Lateness Notice
+      </h2>
+      <p className="mt-1 text-center text-xs text-zinc-500">English version</p>
+      <p className="mt-4 text-right text-sm">Date: {formatDate(issuedAt)}</p>
+    </header>
+  );
 }
 
 export function WarningLetterBundle({
@@ -161,40 +223,27 @@ function ChineseLetter({
   academicYear: string;
   stats: LetterStats;
 }) {
-  const focus = letterFocus(letter.type);
+  const { month, day } = issuedMonthDay(letter.issuedAt);
+  const { focus, displayStats, summaryZh: summary, slipDays } = resolveLetterDisplay(
+    letter,
+    stats
+  );
   const isOver = letter.type === "over_limit";
   const isLate = focus === "late_count";
-  const { month, day } = issuedMonthDay(letter.issuedAt);
-  const summary = issueSummaryZh(stats, focus);
-  const slipTotal = slipTotalZh(stats, focus, letter.triggerDays);
 
   const notes = isLate
     ? [
-        `獲批准病假（醫生證明或家長信）截止 ${month} 月 ${day} 日共有 ${stats.approvedLeaveDays} 日，不影響出席率。`,
+        `獲批准病假（醫生證明或家長信）截止 ${month} 月 ${day} 日共有 ${displayStats.approvedLeaveDays} 日，不影響出席率。`,
         "經常遲到會影響守時紀錄及出席評核。",
       ]
     : [
-        `獲批准病假（醫生證明或家長信）截止 ${month} 月 ${day} 日共有 ${stats.approvedLeaveDays} 日，不計入缺席上限，亦不影響出席率。`,
+        `獲批准病假（醫生證明或家長信）截止 ${month} 月 ${day} 日共有 ${displayStats.approvedLeaveDays} 日，不計入缺席上限，亦不影響出席率。`,
         "未批准請假或無故缺席會計入缺席日數，並拉低出席率。",
       ];
 
   return (
     <article className="letter-sheet mx-auto bg-white text-zinc-900">
-      <header className="border-b-2 border-[var(--school-navy)] pb-4 text-center">
-        <p className="text-xs tracking-[0.3em] text-[var(--school-gold)]">
-          {SCHOOL_NAME_EN}
-        </p>
-        <h1 className="mt-1 font-serif text-3xl tracking-widest text-[var(--school-navy)]">
-          {SCHOOL_NAME}
-        </h1>
-        <p className="mt-2 text-sm text-zinc-600">學生發展部　學生出勤事務</p>
-        <h2 className="mt-4 text-xl font-semibold tracking-wide">
-          {chineseTitle(focus, isOver)}
-        </h2>
-        <p className="mt-1 text-xs text-zinc-500">中文版本</p>
-      </header>
-
-      <p className="mt-8 text-right text-sm">日期：{formatDate(letter.issuedAt)}</p>
+      <LetterHeaderZh academicYear={academicYear} issuedAt={letter.issuedAt} />
 
       <p className="mt-6">貴家長：</p>
 
@@ -259,18 +308,16 @@ function ChineseLetter({
       <section className="letter-ack-slip mt-10 border-t border-dashed border-zinc-400 pt-6">
         <p className="text-sm font-medium text-zinc-700">回條（請家長簽署後交回學校）</p>
         <p className="mt-4 leading-8">
-          本人已知悉截至 <strong>{month}</strong> 月 <strong>{day}</strong> 日，敝子弟
-          <strong> {student.name}</strong> 已缺席／遲到共 <strong>{slipTotal}</strong>
-          ，並明白有機會影響其升班。
+          本人已知悉截止 <strong>{month}</strong> 月 <strong>{day}</strong> 日，敝子弟
+          <strong>
+            {classLabel(student.className)}班{student.name}
+          </strong>
+          已缺席共 <strong>{slipDays}</strong> 天，亦明白有機會影響其升班。
         </p>
-        <div className="mt-8 grid gap-6 text-sm sm:grid-cols-2">
+        <div className="mt-8 flex justify-end text-sm">
           <p>
-            家長／監護人簽署：
-            <span className="ml-2 inline-block min-w-40 border-b border-zinc-400" />
-          </p>
-          <p>
-            日期：
-            <span className="ml-2 inline-block min-w-32 border-b border-zinc-400" />
+            閱後簽署：
+            <span className="ml-2 inline-block min-w-48 border-b border-zinc-400" />
           </p>
         </div>
       </section>
@@ -289,42 +336,27 @@ function EnglishLetter({
   academicYear: string;
   stats: LetterStats;
 }) {
-  const focus = letterFocus(letter.type);
+  const { month, day } = issuedMonthDay(letter.issuedAt);
+  const { focus, displayStats, summaryEn: summary, slipDays } = resolveLetterDisplay(
+    letter,
+    stats
+  );
   const isOver = letter.type === "over_limit";
   const isLate = focus === "late_count";
-  const { month, day } = issuedMonthDay(letter.issuedAt);
-  const summary = issueSummaryEn(stats, focus);
-  const slipTotal = slipTotalEn(stats, focus, letter.triggerDays);
 
   const notes = isLate
     ? [
-        `Approved sick leave (medical certificate or parent letter) up to ${month}/${day}: ${stats.approvedLeaveDays} day(s), which does not affect the attendance rate.`,
+        `Approved sick leave (medical certificate or parent letter) as at ${month}/${day}: ${displayStats.approvedLeaveDays} day(s), which does not affect the attendance rate.`,
         "Frequent lateness may affect punctuality records and attendance assessment.",
       ]
     : [
-        `Approved sick leave (medical certificate or parent letter) up to ${month}/${day}: ${stats.approvedLeaveDays} day(s), which is not counted towards the absence limit and does not affect the attendance rate.`,
-        "Unapproved leave or unexplained absence is counted and will lower the attendance rate.",
+        `Approved sick leave (medical certificate or parent letter) as at ${month}/${day}: ${displayStats.approvedLeaveDays} day(s), which is not counted towards the absence limit and does not affect the attendance rate.`,
+        "Unapproved leave or unexplained absence is counted towards absence days and will lower the attendance rate.",
       ];
 
   return (
     <article className="letter-sheet letter-sheet-en mx-auto bg-white text-zinc-900">
-      <header className="border-b-2 border-[var(--school-navy)] pb-4 text-center">
-        <p className="text-xs tracking-[0.3em] text-[var(--school-gold)]">
-          {SCHOOL_NAME_EN}
-        </p>
-        <h1 className="mt-1 font-serif text-3xl tracking-widest text-[var(--school-navy)]">
-          {SCHOOL_NAME}
-        </h1>
-        <p className="mt-2 text-sm text-zinc-600">
-          Student Development Department · Student Attendance
-        </p>
-        <h2 className="mt-4 text-xl font-semibold tracking-wide">
-          {englishTitle(focus, isOver)}
-        </h2>
-        <p className="mt-1 text-xs text-zinc-500">English version</p>
-      </header>
-
-      <p className="mt-8 text-right text-sm">Date: {formatDate(letter.issuedAt)}</p>
+      <LetterHeaderEn academicYear={academicYear} issuedAt={letter.issuedAt} />
 
       <p className="mt-6">Dear Parent / Guardian,</p>
 
@@ -332,18 +364,19 @@ function EnglishLetter({
         According to our school records, your child
         <strong>
           {" "}
-          {student.name} ({student.nameEn})
+          {student.nameEn} ({student.name})
         </strong>
         , class
         <strong> {classLabel(student.className)}</strong>
         , student number
         <strong> {student.studentNo}</strong>
         , has recorded <strong>{summary}</strong> in the <strong>{academicYear}</strong>{" "}
-        academic year. This notice is hereby issued. (As of <strong>{month}/{day}</strong>)
+        academic year. This notice is hereby issued. (As of <strong>{month}</strong>/
+        <strong>{day}</strong>)
       </p>
 
       <div className="mt-4 rounded border border-zinc-200 bg-zinc-50 p-4 text-sm leading-7">
-        <p className="font-medium">Notes</p>
+        <p className="font-medium">Important Notes</p>
         <ul className="mt-2 list-disc pl-5">
           {notes.map((item) => (
             <li key={item}>{item}</li>
@@ -354,13 +387,13 @@ function EnglishLetter({
       <p className="mt-4 leading-8">
         Your child has accumulated <strong>{summary}</strong> to date. Please submit
         supporting documents to the School Office as soon as possible, and contact the
-        class teacher, <strong>{student.homeroomTeacherName}</strong>, so that we may
-        follow up together.
+        class teacher, <strong>{student.homeroomTeacherName}</strong>, to follow up on
+        attendance together.
       </p>
 
       <p className="mt-4 leading-8">
         {isOver
-          ? "As further follow-up is required, the school will initiate related procedures. If there are special reasons, please notify the school in writing as soon as possible."
+          ? "As your child's absence requires further follow-up, the school will initiate related procedures. If there are special reasons, please notify the school in writing as soon as possible."
           : "This is an advance notice. If a medical certificate or parent letter is ready, please return it to the School Office for review."}
       </p>
 
@@ -394,19 +427,19 @@ function EnglishLetter({
           Acknowledgment slip (please sign and return to school)
         </p>
         <p className="mt-4 leading-8">
-          I acknowledge that as of <strong>{month}/{day}</strong>, my child
-          <strong> {student.name}</strong> has been absent / late for a total of{" "}
-          <strong>{slipTotal}</strong>, and I understand this may affect promotion to the
-          next form.
+          I acknowledge that as of <strong>{month}</strong>/<strong>{day}</strong>, my child
+          in class
+          <strong>
+            {" "}
+            {classLabel(student.className)} {student.nameEn}
+          </strong>{" "}
+          has been absent for a total of <strong>{slipDays}</strong> day(s), and I also
+          understand that this may affect promotion to the next form.
         </p>
-        <div className="mt-8 grid gap-6 text-sm sm:grid-cols-2">
+        <div className="mt-8 flex justify-end text-sm">
           <p>
-            Parent / Guardian signature:
-            <span className="ml-2 inline-block min-w-40 border-b border-zinc-400" />
-          </p>
-          <p>
-            Date:
-            <span className="ml-2 inline-block min-w-32 border-b border-zinc-400" />
+            Sign after reading:
+            <span className="ml-2 inline-block min-w-48 border-b border-zinc-400" />
           </p>
         </div>
       </section>
