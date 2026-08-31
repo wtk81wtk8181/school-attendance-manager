@@ -54,7 +54,7 @@ export function WarningDetail({ id }: { id: string }) {
             返回存檔
           </Button>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
-            警告信預覽（中英對照）
+            警告信預覽
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <WarningTypeBadge type={letter.type} />
@@ -66,12 +66,17 @@ export function WarningDetail({ id }: { id: string }) {
           onClick={() => window.print()}
         >
           <Printer className="size-4" />
-          下載／列印 PDF（中英）
+          下載／列印 PDF（中文及英文分頁）
         </Button>
       </div>
 
       <div className="overflow-auto rounded-xl border border-slate-200 bg-slate-100/60 p-4 transition-colors duration-200 print:border-0 print:bg-white print:p-0">
-        <WarningLetterBundle student={student} letter={letter} />
+        <WarningLetterBundle
+          student={student}
+          letter={letter}
+          academicYear={state.academicYear.label}
+          absences={state.absences.filter((item) => item.studentId === student.id)}
+        />
       </div>
 
       <Card className="no-print shadow-none ring-slate-200/80 transition-all duration-200 hover:ring-slate-300/80">

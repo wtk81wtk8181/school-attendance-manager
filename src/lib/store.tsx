@@ -46,6 +46,11 @@ import {
   buildAdminDemoAttendance,
   mergeDemoAttendanceForDay,
 } from "@/lib/admin-demo-attendance";
+import {
+  detectChangedSharedSections,
+  pickSharedSections,
+  SNAPSHOT_OPERATIONAL_ID,
+} from "@/lib/shared-state-sections";
 import { appearanceIssueId } from "@/lib/appearance-report";
 import {
   appearanceCategoryLabel,
@@ -201,16 +206,22 @@ let useDatabase = false;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 let refreshing = false;
 let remoteRevision = 0;
+let remoteRosterRevision = 0;
+let remoteOperationalRevision = 0;
 let flushInFlight: Promise<boolean> | null = null;
 let dirty = false;
 let saveGeneration = 0;
+const dirtySections = new Set<string>();
 const pendingReplaceSections = new Set<string>();
 
 interface StateApiPayload {
   state: AppState;
   database: boolean;
   revision?: number;
+  rosterRevision?: number;
+  operationalRevision?: number;
   updatedAt?: string;
+  partial?: boolean;
   error?: string;
 }
 
@@ -219,10 +230,11 @@ function isJsonResponse(response: Response) {
 }
 
 async function fetchStatePayload(
-  init: RequestInit = {}
+  init: RequestInit = {},
+  path = "/api/state"
 ): Promise<StateApiPayload> {
   const { headers: initHeaders, ...rest } = init;
-  const response = await fetch("/api/state", {
+  const response = await fetch(path, {
     cache: "no-store",
     credentials: "same-origin",
     ...rest,
@@ -239,6 +251,43 @@ async function fetchStatePayload(
     throw new Error(data.error || "http");
   }
   return data;
+}
+
+function applyPartialServerState(partial: Partial<AppState>, localOverlay?: AppState) {
+  const session = readSession();
+  let next = mergeSharedStates(memory, partial);
+  if (localOverlay) {
+    next = mergeSharedStates(next, localOverlay);
+  }
+  memory = {
+    ...next,
+    currentUserId: session.currentUserId ?? memory.currentUserId,
+    selectedClassName: session.selectedClassName ?? memory.selectedClassName,
+  };
+  emit();
+}
+
+function rememberRemoteRevisions(data: StateApiPayload) {
+  if (typeof data.rosterRevision === "number") {
+    remoteRosterRevision = data.rosterRevision;
+  }
+  if (typeof data.operationalRevision === "number") {
+    remoteOperationalRevision = data.operationalRevision;
+  }
+  if (typeof data.revision === "number" || typeof data.revision === "string") {
+    remoteRevision = Number(data.revision);
+  } else {
+    remoteRevision = Math.max(remoteRosterRevision, remoteOperationalRevision);
+  }
+}
+
+function sectionsPendingSave(): string[] {
+  return [...new Set([...dirtySections, ...pendingReplaceSections])];
+}
+
+function buildPersistPayload() {
+  const sections = sectionsPendingSave();
+  return pickSharedSections(memory, sections);
 }
 
 function applyServerState(serverState: AppState, localOverlay?: AppState) {
@@ -277,8 +326,14 @@ async function flushPersist(): Promise<boolean> {
   if (flushInFlight) return flushInFlight;
 
   const generation = saveGeneration;
-  const payload = sharedFromState(memory);
+  const payload = buildPersistPayload();
   const replaceSections = [...pendingReplaceSections];
+  const savedSections = sectionsPendingSave();
+  if (Object.keys(payload).length === 0) {
+    dirty = false;
+    dirtySections.clear();
+    return true;
+  }
   flushInFlight = (async () => {
     let retryAfterFlight = false;
     if (persistTimer) {
@@ -295,21 +350,22 @@ async function flushPersist(): Promise<boolean> {
           replaceSections,
         }),
       });
-      if (typeof data.revision === "number" || typeof data.revision === "string") {
-        remoteRevision = Number(data.revision);
-      }
+      rememberRemoteRevisions(data);
       if (data.state) {
         if (saveGeneration === generation) {
-          applyServerState(data.state);
-          dirty = false;
+          applyPartialServerState(data.state);
+          for (const section of savedSections) dirtySections.delete(section);
           for (const section of replaceSections) pendingReplaceSections.delete(section);
+          dirty = dirtySections.size > 0 || pendingReplaceSections.size > 0;
           emit();
         } else {
-          applyServerState(data.state, memory);
+          applyPartialServerState(data.state, memory);
           retryAfterFlight = true;
         }
       } else if (saveGeneration === generation) {
-        dirty = false;
+        for (const section of savedSections) dirtySections.delete(section);
+        for (const section of replaceSections) pendingReplaceSections.delete(section);
+        dirty = dirtySections.size > 0 || pendingReplaceSections.size > 0;
         emit();
       }
       clearStaleLocalCache();
@@ -321,10 +377,11 @@ async function flushPersist(): Promise<boolean> {
       if (conflict) {
         try {
           const latest = await fetchStatePayload({ method: "GET" });
-          remoteRevision = Number(latest.revision ?? remoteRevision);
+          rememberRemoteRevisions(latest);
           if (latest.state) {
             for (const section of replaceSections) pendingReplaceSections.delete(section);
-            dirty = false;
+            for (const section of savedSections) dirtySections.delete(section);
+            dirty = dirtySections.size > 0 || pendingReplaceSections.size > 0;
             applyServerState(latest.state);
           }
         } catch {
@@ -339,9 +396,6 @@ async function flushPersist(): Promise<boolean> {
       return false;
     } finally {
       flushInFlight = null;
-      // A second edit can arrive while the first request is still in flight.
-      // Its debounce timer may have joined that old promise, so explicitly
-      // schedule another flush whenever a newer generation remains dirty.
       if (retryAfterFlight && dirty && useDatabase && hydrated && !persistTimer) {
         persistTimer = setTimeout(() => {
           persistTimer = null;
@@ -447,13 +501,17 @@ function getDirtyServerSnapshot() {
 }
 
 function assign(next: AppState, mode: "shared" | "session" = "shared") {
+  const prev = memory;
   memory = next;
   if (mode === "session") {
     persistSession(memory);
     emit();
     return;
   }
-  dirty = true;
+  for (const section of detectChangedSharedSections(prev, next)) {
+    dirtySections.add(section);
+  }
+  dirty = dirtySections.size > 0 || pendingReplaceSections.size > 0;
   saveGeneration += 1;
   if (hydrated) persistShared(memory);
   emit();
@@ -473,17 +531,27 @@ async function refreshFromDatabase(force = false): Promise<boolean> {
 
   refreshing = true;
   try {
-    const data = await fetchStatePayload({ method: "GET" });
+    const path = force ? "/api/state" : `/api/state?scopes=${SNAPSHOT_OPERATIONAL_ID}`;
+    const data = await fetchStatePayload({ method: "GET" }, path);
     useDatabase = Boolean(data.database);
     if (!useDatabase) return false;
 
-    const serverRevision = Number(data.revision ?? 0);
-    if (!force && !dirty && serverRevision <= remoteRevision) return true;
-
-    remoteRevision = serverRevision;
-    if (dirty) {
-      applyServerState(data.state, memory);
+    if (data.partial) {
+      const serverOperationalRevision = Number(
+        data.operationalRevision ?? data.revision ?? 0
+      );
+      if (
+        !force &&
+        serverOperationalRevision <= remoteOperationalRevision
+      ) {
+        return true;
+      }
+      rememberRemoteRevisions(data);
+      applyPartialServerState(data.state);
     } else {
+      const serverRevision = Number(data.revision ?? 0);
+      if (!force && serverRevision <= remoteRevision) return true;
+      rememberRemoteRevisions(data);
       applyServerState(data.state);
     }
     clearStaleLocalCache();
@@ -510,7 +578,7 @@ async function hydrateFromStorage() {
     const data = await fetchStatePayload({ method: "GET" });
     useDatabase = Boolean(data.database);
     if (useDatabase) {
-      remoteRevision = Number(data.revision ?? 0);
+      rememberRemoteRevisions(data);
       if (hadDirty) {
         memory = {
           ...mergeSharedStates(mergeSharedState(data.state), local),
@@ -530,6 +598,8 @@ async function hydrateFromStorage() {
           studentsHomeroomTeachersChanged(data.state.students ?? [], merged.students) ||
           formAHiddenStudentsChanged(data.state.hiddenStudents, merged.hiddenStudents)
         ) {
+          dirtySections.add("students");
+          dirtySections.add("hiddenStudents");
           dirty = true;
           persistShared(memory);
         }
@@ -787,14 +857,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === "visible") {
-        void refreshFromDatabase();
-      }
-    }, 15000);
-
     const onBeforeUnload = () => {
       if (!useDatabase || !dirty) return;
+      const payload = buildPersistPayload();
+      if (Object.keys(payload).length === 0) return;
       if (persistTimer) {
         clearTimeout(persistTimer);
         persistTimer = null;
@@ -805,7 +871,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         credentials: "same-origin",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
-          state: sharedFromState(memory),
+          state: payload,
           baseRevision: remoteRevision,
           replaceSections: [...pendingReplaceSections],
         }),
@@ -816,7 +882,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     window.addEventListener("beforeunload", onBeforeUnload);
 
     return () => {
-      window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
