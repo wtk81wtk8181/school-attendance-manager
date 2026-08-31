@@ -476,9 +476,10 @@ export default function AdminPage() {
                   <tr className="bg-slate-100">
                     <th className="border px-2 py-1.5 text-center">
                       <Checkbox
-                        checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
+                        checked={allPageSelected}
                         onCheckedChange={(checked) => togglePageSelection(checked === true)}
                         aria-label="全選本頁"
+                        title={somePageSelected ? "本頁部分已選" : "全選本頁"}
                       />
                     </th>
                     <th className="border px-2 py-1.5 text-left">#</th>
