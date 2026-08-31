@@ -47,6 +47,10 @@ import {
   mergeDemoAttendanceForDay,
 } from "@/lib/admin-demo-attendance";
 import { appearanceIssueId } from "@/lib/appearance-report";
+import {
+  appearanceCategoryLabel,
+  type AppearanceIssueCategoryId,
+} from "@/lib/appearance-categories";
 import type {
   AbsenceRecord,
   AppState,
@@ -158,7 +162,12 @@ interface StoreValue {
   }) => { added: number; skipped: number };
   removeStudentLeave: (id: string) => void;
   restoreHiddenStudent: (studentId: string) => void;
-  toggleAppearanceIssue: (studentId: string, date: string, issue: boolean) => void;
+  toggleAppearanceCategory: (
+    studentId: string,
+    date: string,
+    categoryId: AppearanceIssueCategoryId
+  ) => void;
+  clearAppearanceIssue: (studentId: string, date: string) => void;
   toggleStaffAbsence: (
     date: string,
     kind: StaffAbsenceKind,
@@ -529,7 +538,7 @@ async function hydrateFromStorage() {
     } else {
       memory = loadLocalState();
     }
-  } catch {
+  } catch (error) {
     useDatabase = false;
     memory = hadDirty
       ? {
@@ -538,6 +547,13 @@ async function hydrateFromStorage() {
           selectedClassName: session.selectedClassName ?? local.selectedClassName,
         }
       : loadLocalState();
+    const message =
+      error instanceof Error && error.message !== "auth" && error.message !== "http"
+        ? error.message
+        : null;
+    if (message) {
+      toast.error(message);
+    }
   }
   hydrated = true;
   emit();
@@ -1708,8 +1724,68 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [currentUser]
   );
 
-  const toggleAppearanceIssue = useCallback(
-    (studentId: string, date: string, issue: boolean) => {
+  const toggleAppearanceCategory = useCallback(
+    (studentId: string, date: string, categoryId: AppearanceIssueCategoryId) => {
+      if (currentUser?.role !== "office") {
+        toast.error("只有校務處可以標記校服儀容。");
+        return;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+      patch((prev) => {
+        const student = prev.students.find((item) => item.id === studentId);
+        if (!student) return prev;
+        const id = appearanceIssueId(date, studentId);
+        const existing = (prev.appearanceIssues ?? []).find((item) => item.id === id);
+        const currentCategories = existing?.categories ?? [];
+        const hasCategory = currentCategories.includes(categoryId);
+        const nextCategories = hasCategory
+          ? currentCategories.filter((item) => item !== categoryId)
+          : [...currentCategories, categoryId];
+        const updatedAt = nowIso();
+        if (nextCategories.length === 0) {
+          return withAudit(
+            {
+              ...prev,
+              appearanceIssues: (prev.appearanceIssues ?? []).filter((item) => item.id !== id),
+              appearanceIssueRemovals: [
+                { id, removedAt: updatedAt },
+                ...(prev.appearanceIssueRemovals ?? []).filter((item) => item.id !== id),
+              ],
+            },
+            "取消儀容問題",
+            `${student.className}　${student.name}　${date}　${appearanceCategoryLabel(categoryId)}`
+          );
+        }
+        const nextIssue: AppearanceIssue = {
+          id,
+          studentId,
+          studentName: student.name,
+          className: student.className,
+          date,
+          categories: nextCategories,
+          updatedAt,
+        };
+        return withAudit(
+          {
+            ...prev,
+            appearanceIssues: [
+              nextIssue,
+              ...(prev.appearanceIssues ?? []).filter((item) => item.id !== id),
+            ],
+            appearanceIssueRemovals: (prev.appearanceIssueRemovals ?? []).filter(
+              (item) => item.id !== id
+            ),
+          },
+          hasCategory ? "取消儀容問題" : "標記儀容問題",
+          `${student.className}　${student.name}　${date}　${appearanceCategoryLabel(categoryId)}`
+        );
+      });
+    },
+    [currentUser]
+  );
+
+  const clearAppearanceIssue = useCallback(
+    (studentId: string, date: string) => {
       if (currentUser?.role !== "office") {
         toast.error("只有校務處可以標記校服儀容。");
         return;
@@ -1720,30 +1796,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (!student) return prev;
         const id = appearanceIssueId(date, studentId);
         const updatedAt = nowIso();
-        if (issue) {
-          const nextIssue: AppearanceIssue = {
-            id,
-            studentId,
-            studentName: student.name,
-            className: student.className,
-            date,
-            updatedAt,
-          };
-          return withAudit(
-            {
-              ...prev,
-              appearanceIssues: [
-                nextIssue,
-                ...(prev.appearanceIssues ?? []).filter((item) => item.id !== id),
-              ],
-              appearanceIssueRemovals: (prev.appearanceIssueRemovals ?? []).filter(
-                (item) => item.id !== id
-              ),
-            },
-            "標記儀容有問題",
-            `${student.className}　${student.name}　${date}`
-          );
-        }
         return withAudit(
           {
             ...prev,
@@ -1753,7 +1805,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               ...(prev.appearanceIssueRemovals ?? []).filter((item) => item.id !== id),
             ],
           },
-          "取消儀容有問題",
+          "清除儀容問題",
           `${student.className}　${student.name}　${date}`
         );
       });
@@ -2058,7 +2110,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStudentLeaves,
       removeStudentLeave,
       restoreHiddenStudent,
-      toggleAppearanceIssue,
+      toggleAppearanceCategory,
+      clearAppearanceIssue,
       toggleStaffAbsence,
       toggleStaffAbsences,
       recordDigestSend,
@@ -2099,7 +2152,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStudentLeaves,
       removeStudentLeave,
       restoreHiddenStudent,
-      toggleAppearanceIssue,
+      toggleAppearanceCategory,
+      clearAppearanceIssue,
       toggleStaffAbsence,
       toggleStaffAbsences,
       recordDigestSend,

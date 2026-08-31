@@ -1,5 +1,6 @@
 import { allClassNames } from "@/lib/roster";
 import { buildMonthlyReport, monthRange } from "@/lib/monthly-report";
+import type { AppearanceIssueCategoryId } from "@/lib/appearance-categories";
 import type {
   AbsenceRecord,
   AppearanceIssue,
@@ -48,18 +49,46 @@ function isActiveAppearanceIssue(
   return record.updatedAt > removal.removedAt;
 }
 
+function recordHasActiveIssue(
+  record: AppearanceIssue,
+  removals: AppearanceIssueRemoval[] | undefined
+): boolean {
+  if (!isActiveAppearanceIssue(record, removals)) return false;
+  if (record.categories) return record.categories.length > 0;
+  return true;
+}
+
+export function getAppearanceRecordOnDate(
+  issues: AppearanceIssue[] | undefined,
+  studentId: string,
+  date: string
+): AppearanceIssue | undefined {
+  const id = appearanceIssueId(date, studentId);
+  return (issues ?? []).find(
+    (item) => item.id === id || (item.studentId === studentId && item.date === date)
+  );
+}
+
+export function getAppearanceCategoriesOnDate(
+  issues: AppearanceIssue[] | undefined,
+  removals: AppearanceIssueRemoval[] | undefined,
+  studentId: string,
+  date: string
+): AppearanceIssueCategoryId[] {
+  const record = getAppearanceRecordOnDate(issues, studentId, date);
+  if (!record || !recordHasActiveIssue(record, removals)) return [];
+  return record.categories ?? [];
+}
+
 export function hasAppearanceIssueOnDate(
   issues: AppearanceIssue[] | undefined,
   removals: AppearanceIssueRemoval[] | undefined,
   studentId: string,
   date: string
 ): boolean {
-  const id = appearanceIssueId(date, studentId);
-  const record = (issues ?? []).find(
-    (item) => item.id === id || (item.studentId === studentId && item.date === date)
-  );
+  const record = getAppearanceRecordOnDate(issues, studentId, date);
   if (!record) return false;
-  return isActiveAppearanceIssue(record, removals);
+  return recordHasActiveIssue(record, removals);
 }
 
 /** 該月內任一日被標記為有問題，或仍保留舊版每月標記 */
@@ -76,7 +105,7 @@ export function hasAppearanceIssueInMonth(
       !!item.date &&
       item.date >= start &&
       item.date <= end &&
-      isActiveAppearanceIssue(item, removals)
+      recordHasActiveIssue(item, removals)
   );
   if (dailyIssue) return true;
 
@@ -115,7 +144,7 @@ export function countAppearanceIssueDaysInMonth(
           !!item.date &&
           item.date >= start &&
           item.date <= end &&
-          isActiveAppearanceIssue(item, removals)
+          recordHasActiveIssue(item, removals)
       )
       .map((item) => item.date)
   );

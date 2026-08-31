@@ -545,6 +545,14 @@ function mergeAppearanceIssueRemovals(
   return [...map.values()];
 }
 
+function normalizeAppearanceIssueRecord(item: AppearanceIssue): AppearanceIssue {
+  if (!item.categories) return item;
+  return {
+    ...item,
+    categories: [...new Set(item.categories)],
+  };
+}
+
 function mergeAppearanceIssues(
   current: AppearanceIssue[] | undefined,
   incoming: AppearanceIssue[] | undefined,
@@ -553,9 +561,10 @@ function mergeAppearanceIssues(
   const map = new Map<string, AppearanceIssue>();
   for (const item of [...(current ?? []), ...(incoming ?? [])]) {
     if (!item.studentId || (!item.date && !item.yearMonth)) continue;
-    const existing = map.get(item.id);
-    if (!existing || item.updatedAt >= existing.updatedAt) {
-      map.set(item.id, item);
+    const normalized = normalizeAppearanceIssueRecord(item);
+    const existing = map.get(normalized.id);
+    if (!existing || normalized.updatedAt >= existing.updatedAt) {
+      map.set(normalized.id, normalized);
     }
   }
   return [...map.values()]

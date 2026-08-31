@@ -51,6 +51,21 @@ export function hasDatabase() {
   return Boolean(databaseUrl());
 }
 
+export function formatDatabaseError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (
+    message.includes("data transfer quota") ||
+    message.includes("HTTP status 402") ||
+    message.includes("exceeded the data transfer")
+  ) {
+    return "雲端資料庫本月流量配額已用盡，請到 Neon 控制台升級方案或等待下月重置。";
+  }
+  if (message.includes("Missing DATABASE_URL") || message.includes("POSTGRES_URL")) {
+    return "尚未設定 DATABASE_URL／POSTGRES_URL。";
+  }
+  return "資料庫連線失敗，請稍後再試。";
+}
+
 function sql() {
   const url = databaseUrl();
   if (!url) throw new Error("Missing DATABASE_URL or POSTGRES_URL");

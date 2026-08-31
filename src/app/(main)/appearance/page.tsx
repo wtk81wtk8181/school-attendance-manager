@@ -18,9 +18,11 @@ import {
 import {
   buildAppearanceReport,
   countAppearanceIssueDaysInMonth,
+  getAppearanceCategoriesOnDate,
   hasAppearanceIssueInMonth,
   hasAppearanceIssueOnDate,
 } from "@/lib/appearance-report";
+import { APPEARANCE_ISSUE_CATEGORIES } from "@/lib/appearance-categories";
 import { hongKongToday } from "@/lib/digest";
 import { downloadBase64Xlsx, requestAppearanceReport } from "@/lib/digest-client";
 import { formatPercentExact, formatShortDate } from "@/lib/format";
@@ -36,7 +38,8 @@ export default function AppearancePage() {
     currentUser,
     state,
     visibleStudents,
-    toggleAppearanceIssue,
+    toggleAppearanceCategory,
+    clearAppearanceIssue,
     ready,
   } = useStore();
   const isOffice = currentUser?.role === "office";
@@ -144,7 +147,7 @@ export default function AppearancePage() {
     <PageShell wide>
       <PageHeader
         title="校服儀容"
-        description="請先選班上課日，再逐人標記當日儀容。未標記視為正常；該月內曾出現問題的學生會計入每月儀容百分率報告。"
+        description="請先選班上課日，再逐人勾選當日儀容問題類別。未勾選任何項目視為正常；該月內曾出現問題的學生會計入每月儀容百分率報告。"
         actions={
           isOffice ? (
             <Button disabled={busy} onClick={() => void exportReport()}>
@@ -329,12 +332,18 @@ export default function AppearancePage() {
                     <TableRow>
                       <TableHead>學生</TableHead>
                       <TableHead>班別</TableHead>
-                      <TableHead>當日儀容</TableHead>
+                      <TableHead>當日儀容問題</TableHead>
                       <TableHead>本月累計</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {items.map((student) => {
+                      const categoriesToday = getAppearanceCategoriesOnDate(
+                        state.appearanceIssues,
+                        state.appearanceIssueRemovals,
+                        student.id,
+                        day
+                      );
                       const issueToday = hasAppearanceIssueOnDate(
                         state.appearanceIssues,
                         state.appearanceIssueRemovals,
@@ -359,37 +368,47 @@ export default function AppearancePage() {
                             </p>
                           </TableCell>
                           <TableCell>{classLabel(student.className)}</TableCell>
-                          <TableCell>
-                            <div className="inline-flex rounded-lg border bg-white p-0.5">
-                              <button
-                                type="button"
-                                disabled={!isOffice}
-                                onClick={() => toggleAppearanceIssue(student.id, day, false)}
-                                className={cn(
-                                  "h-8 min-w-16 rounded-md px-2 text-xs font-semibold transition-colors duration-200",
-                                  !issueToday
-                                    ? "bg-emerald-600 text-white hover:bg-emerald-600"
-                                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-900",
-                                  !isOffice && "cursor-default opacity-80"
-                                )}
-                              >
-                                正常
-                              </button>
-                              <button
-                                type="button"
-                                disabled={!isOffice}
-                                onClick={() => toggleAppearanceIssue(student.id, day, true)}
-                                className={cn(
-                                  "h-8 min-w-16 rounded-md px-2 text-xs font-semibold transition-colors duration-200",
-                                  issueToday
-                                    ? "bg-amber-600 text-white hover:bg-amber-600"
-                                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-900",
-                                  !isOffice && "cursor-default opacity-80"
-                                )}
-                              >
-                                有問題
-                              </button>
+                          <TableCell className="min-w-[28rem] align-top">
+                            <div className="flex flex-wrap gap-1">
+                              {APPEARANCE_ISSUE_CATEGORIES.map((category, index) => {
+                                const selected = categoriesToday.includes(category.id);
+                                return (
+                                  <button
+                                    key={category.id}
+                                    type="button"
+                                    disabled={!isOffice}
+                                    title={category.label}
+                                    onClick={() =>
+                                      toggleAppearanceCategory(student.id, day, category.id)
+                                    }
+                                    className={cn(
+                                      "rounded-md border px-1.5 py-0.5 text-[11px] leading-tight transition-colors duration-200",
+                                      selected
+                                        ? "border-amber-600 bg-amber-600 text-white"
+                                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50",
+                                      !isOffice && "cursor-default"
+                                    )}
+                                  >
+                                    <span className="mr-0.5 tabular-nums opacity-70">
+                                      {index + 1}.
+                                    </span>
+                                    {category.label}
+                                  </button>
+                                );
+                              })}
                             </div>
+                            {isOffice && issueToday ? (
+                              <button
+                                type="button"
+                                onClick={() => clearAppearanceIssue(student.id, day)}
+                                className="mt-1 text-[11px] text-slate-400 underline-offset-2 hover:text-slate-600 hover:underline"
+                              >
+                                清除全部
+                              </button>
+                            ) : null}
+                            {!isOffice && categoriesToday.length === 0 && issueToday ? (
+                              <p className="mt-1 text-[11px] text-amber-700">（舊版標記，未列明問題）</p>
+                            ) : null}
                           </TableCell>
                           <TableCell>
                             {issueDaysInMonth > 0 ? (

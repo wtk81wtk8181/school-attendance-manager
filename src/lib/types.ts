@@ -1,3 +1,5 @@
+import type { AppearanceIssueCategoryId } from "@/lib/appearance-categories";
+
 export type Role = "office" | "homeroom";
 
 export type FormLevel = 1 | 2 | 3 | 4 | 5 | 6;
@@ -215,7 +217,7 @@ export interface AuditLog {
   detail: string;
 }
 
-/** 該日上課日儀容有問題的學生；未標記者視為儀容正常 */
+/** 該日上課日儀容問題；未標記或 categories 為空視為儀容正常 */
 export interface AppearanceIssue {
   id: string;
   studentId: string;
@@ -223,6 +225,8 @@ export interface AppearanceIssue {
   className: string;
   /** YYYY-MM-DD 上課日 */
   date?: string;
+  /** 儀容問題類別；空陣列表示當日無問題 */
+  categories?: AppearanceIssueCategoryId[];
   updatedAt: string;
   /** @deprecated 舊版每月標記，僅作向後相容 */
   yearMonth?: string;

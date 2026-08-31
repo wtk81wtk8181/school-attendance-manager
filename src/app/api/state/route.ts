@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  formatDatabaseError,
   hasDatabase,
   loadSharedSnapshot,
   RevisionConflictError,
@@ -34,8 +35,8 @@ export async function GET(request: Request) {
       revision: snapshot.revision,
       updatedAt: snapshot.updatedAt,
     });
-  } catch {
-    return json({ error: "讀取資料庫失敗。" }, 500);
+  } catch (error) {
+    return json({ error: formatDatabaseError(error) }, 500);
   }
 }
 
@@ -72,6 +73,6 @@ export async function PUT(request: Request) {
     if (error instanceof RevisionConflictError) {
       return json({ error: error.message }, 409);
     }
-    return json({ error: "寫入資料庫失敗。" }, 500);
+    return json({ error: formatDatabaseError(error) }, 500);
   }
 }
