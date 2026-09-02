@@ -993,6 +993,16 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "Ramandeep、丘健"
   },
   {
+    "id": "s-1d-01",
+    "studentNo": "2504001",
+    "name": "ALVARADO LOUIS NIGEL",
+    "nameEn": "ALVARADO LOUIS NIGEL",
+    "form": 1,
+    "className": "1D",
+    "homeroomTeacherId": "u-1d",
+    "homeroomTeacherName": "Dari、鄧鵠耀"
+  },
+  {
     "id": "s-1d-02",
     "studentNo": "2504002",
     "name": "白頌曦",
@@ -1217,6 +1227,16 @@ export const ROSTER_STUDENTS: Student[] = [
     "studentNo": "2504024",
     "name": "譚子樂",
     "nameEn": "TAM TSZ LOK",
+    "form": 1,
+    "className": "1D",
+    "homeroomTeacherId": "u-1d",
+    "homeroomTeacherName": "Dari、鄧鵠耀"
+  },
+  {
+    "id": "s-1d-25",
+    "studentNo": "2504025",
+    "name": "WALSH ZULEIKA CELESTE",
+    "nameEn": "WALSH ZULEIKA CELESTE",
     "form": 1,
     "className": "1D",
     "homeroomTeacherId": "u-1d",
@@ -2623,6 +2643,16 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "Wayne、黃麗娜"
   },
   {
+    "id": "s-2d-06",
+    "studentNo": "2404006",
+    "name": "GURUNG DARPAN",
+    "nameEn": "GURUNG DARPAN",
+    "form": 2,
+    "className": "2D",
+    "homeroomTeacherId": "u-2d",
+    "homeroomTeacherName": "Wayne、黃麗娜"
+  },
+  {
     "id": "s-2d-07",
     "studentNo": "2404007",
     "name": "韓馥而",
@@ -2777,6 +2807,16 @@ export const ROSTER_STUDENTS: Student[] = [
     "studentNo": "2404022",
     "name": "沈祺昌",
     "nameEn": "SHUM KI CHEONG",
+    "form": 2,
+    "className": "2D",
+    "homeroomTeacherId": "u-2d",
+    "homeroomTeacherName": "Wayne、黃麗娜"
+  },
+  {
+    "id": "s-2d-23",
+    "studentNo": "2404023",
+    "name": "SREEJITH SAMIKSHA",
+    "nameEn": "SREEJITH SAMIKSHA",
     "form": 2,
     "className": "2D",
     "homeroomTeacherId": "u-2d",
@@ -5223,6 +5263,16 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "馮耀强"
   },
   {
+    "id": "s-4b-01",
+    "studentNo": "2202001",
+    "name": "AMJAD FARHAN ALI",
+    "nameEn": "AMJAD FARHAN ALI",
+    "form": 4,
+    "className": "4B",
+    "homeroomTeacherId": "u-4b",
+    "homeroomTeacherName": "周柏言"
+  },
+  {
     "id": "s-4b-02",
     "studentNo": "2202002",
     "name": "畢恩華",
@@ -6211,6 +6261,306 @@ export const ROSTER_STUDENTS: Student[] = [
     "className": "4D",
     "homeroomTeacherId": "u-4d",
     "homeroomTeacherName": "韓卓穎"
+  },
+  {
+    "id": "s-4e-01",
+    "studentNo": "2205001",
+    "name": "梁筠芝",
+    "nameEn": "LEUNG KWAN CHI AALIYAH",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-02",
+    "studentNo": "2205002",
+    "name": "吳芷瑩",
+    "nameEn": "NG TSZ YING",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-03",
+    "studentNo": "2205003",
+    "name": "陳雋皓",
+    "nameEn": "CHAN CHUN HO",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-04",
+    "studentNo": "2205004",
+    "name": "蔡仲軒",
+    "nameEn": "CHOI CHUNG HIN AIDEN",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-05",
+    "studentNo": "2205005",
+    "name": "鍾曉雪",
+    "nameEn": "CHUNG HIU SUET",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-06",
+    "studentNo": "2205006",
+    "name": "符焯然",
+    "nameEn": "FU CHEUK YIN",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-07",
+    "studentNo": "2205007",
+    "name": "韓心怡",
+    "nameEn": "HON SUM YI",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-08",
+    "studentNo": "2205008",
+    "name": "胡煥伊",
+    "nameEn": "HU WUN YI",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-09",
+    "studentNo": "2205009",
+    "name": "許焯澧",
+    "nameEn": "HUI CHEUK LAI",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-10",
+    "studentNo": "2205010",
+    "name": "沙羅",
+    "nameEn": "KARMACHARYA SWAROOP",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-11",
+    "studentNo": "2205011",
+    "name": "林洛為",
+    "nameEn": "LAM LOK WAI",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-12",
+    "studentNo": "2205012",
+    "name": "劉嘉沂",
+    "nameEn": "LAU KA YEE",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-13",
+    "studentNo": "2205013",
+    "name": "羅展豪",
+    "nameEn": "LAW CHIN HO",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-14",
+    "studentNo": "2205014",
+    "name": "李梓羽",
+    "nameEn": "LEE TSZ YU",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-15",
+    "studentNo": "2205015",
+    "name": "梁剴昊",
+    "nameEn": "LEONG HOI HO",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-16",
+    "studentNo": "2205016",
+    "name": "梁亦彤",
+    "nameEn": "LEUNG YIK TUNG",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-17",
+    "studentNo": "2205017",
+    "name": "李昊昇",
+    "nameEn": "LI HO SING",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-18",
+    "studentNo": "2205018",
+    "name": "林姸彤",
+    "nameEn": "LIN AMIEE",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-19",
+    "studentNo": "2205019",
+    "name": "馬力素霞",
+    "nameEn": "MALIK SOHA",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-20",
+    "studentNo": "2205020",
+    "name": "莫曉芸",
+    "nameEn": "MOK HIU WAN",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-21",
+    "studentNo": "2205021",
+    "name": "吳諾藍",
+    "nameEn": "NG NOK LAM KINGSLEY",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-22",
+    "studentNo": "2205022",
+    "name": "布柏翹",
+    "nameEn": "PO PAK KIU",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-23",
+    "studentNo": "2205023",
+    "name": "戴亦羲",
+    "nameEn": "TAI JIK HEI HAZE",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-24",
+    "studentNo": "2205024",
+    "name": "鄧嘉寶",
+    "nameEn": "TANG KA PO",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-25",
+    "studentNo": "2205025",
+    "name": "曾子健",
+    "nameEn": "TSANG CHI KIN",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-26",
+    "studentNo": "2205026",
+    "name": "謝佩孜",
+    "nameEn": "TSE PUI TSZ",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-27",
+    "studentNo": "2205027",
+    "name": "黃弘畤",
+    "nameEn": "WONG WAN CHI",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-28",
+    "studentNo": "2205028",
+    "name": "姚淼",
+    "nameEn": "YIU MIU",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-29",
+    "studentNo": "2205029",
+    "name": "余珈澄",
+    "nameEn": "YU KA CHING",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
+  },
+  {
+    "id": "s-4e-30",
+    "studentNo": "2205030",
+    "name": "章峻溪",
+    "nameEn": "ZHANG JUNXI",
+    "form": 4,
+    "className": "4E",
+    "homeroomTeacherId": "u-4e",
+    "homeroomTeacherName": "吳諾文、Heumil Wang"
   },
   {
     "id": "s-5a-01",
@@ -7581,6 +7931,276 @@ export const ROSTER_STUDENTS: Student[] = [
     "className": "5D",
     "homeroomTeacherId": "u-5d",
     "homeroomTeacherName": "歐陽佩霞"
+  },
+  {
+    "id": "s-5e-01",
+    "studentNo": "2105001",
+    "name": "AKRAM REHMAN ULHAQ",
+    "nameEn": "AKRAM REHMAN ULHAQ",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-02",
+    "studentNo": "2105002",
+    "name": "陳俊熹",
+    "nameEn": "CHAN CHUN HEI",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-03",
+    "studentNo": "2105003",
+    "name": "霍奕宇",
+    "nameEn": "FOK YIK YU JASPER",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-04",
+    "studentNo": "2105004",
+    "name": "江美華",
+    "nameEn": "KHAN URWAH",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-05",
+    "studentNo": "2105005",
+    "name": "李泓杰",
+    "nameEn": "LEE WANG KIT",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-06",
+    "studentNo": "2105006",
+    "name": "阿妮",
+    "nameEn": "MAROOF ARISHA",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-07",
+    "studentNo": "2105007",
+    "name": "梅津貽",
+    "nameEn": "MUI SONJIA",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-08",
+    "studentNo": "2105008",
+    "name": "吳曉璇",
+    "nameEn": "NG HIU SHUEN",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-09",
+    "studentNo": "2105009",
+    "name": "李凱迪",
+    "nameEn": "SHAHZAD MUHAMMAD HADI",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-10",
+    "studentNo": "2105010",
+    "name": "黃凱澄",
+    "nameEn": "WONG HOI CHING",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-11",
+    "studentNo": "2105011",
+    "name": "黃優莉",
+    "nameEn": "WONG YURI",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-12",
+    "studentNo": "2105012",
+    "name": "陳恩琳",
+    "nameEn": "CHAN YAN LAM PRISCILLA",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-13",
+    "studentNo": "2105013",
+    "name": "周卓信",
+    "nameEn": "CHOW CHEUK SHUN CHADSON",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-14",
+    "studentNo": "2105014",
+    "name": "胡熙莹",
+    "nameEn": "HU XIYING",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-15",
+    "studentNo": "2105015",
+    "name": "洪梓揚",
+    "nameEn": "HUNG TSZ YEUNG",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-16",
+    "studentNo": "2105016",
+    "name": "林凱瑩",
+    "nameEn": "LAM HOI YING",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-17",
+    "studentNo": "2105017",
+    "name": "林言熹",
+    "nameEn": "LAM YIN HEI",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-18",
+    "studentNo": "2105018",
+    "name": "劉棨謙",
+    "nameEn": "LAU KAI HIM",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-19",
+    "studentNo": "2105019",
+    "name": "李紫翹",
+    "nameEn": "LEE TSZ KIU",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-20",
+    "studentNo": "2105020",
+    "name": "梁皓朗",
+    "nameEn": "LEUNG HO LONG",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-21",
+    "studentNo": "2105021",
+    "name": "梁哲銘",
+    "nameEn": "LIANG CHIT MING",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-22",
+    "studentNo": "2105022",
+    "name": "譚芷怡",
+    "nameEn": "TAM TSZ YEE",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-23",
+    "studentNo": "2105023",
+    "name": "鄧晞浵",
+    "nameEn": "TANG HEI TUNG TRIXIE",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-24",
+    "studentNo": "2105024",
+    "name": "鄧悅翹",
+    "nameEn": "TANG YUET KIU",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-25",
+    "studentNo": "2105025",
+    "name": "曾曉一",
+    "nameEn": "TSANG HIU YAT",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-26",
+    "studentNo": "2105026",
+    "name": "楊信祈",
+    "nameEn": "YEUNG SHUN KI HELAMAN",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
+  },
+  {
+    "id": "s-5e-27",
+    "studentNo": "2105027",
+    "name": "朱芷萱",
+    "nameEn": "ZHU ZHIXUAN",
+    "form": 5,
+    "className": "5E",
+    "homeroomTeacherId": "u-5e",
+    "homeroomTeacherName": "劉麗芳、黃守宏"
   },
   {
     "id": "s-6a-01",
@@ -9011,5 +9631,215 @@ export const ROSTER_STUDENTS: Student[] = [
     "className": "6D",
     "homeroomTeacherId": "u-6d",
     "homeroomTeacherName": "李日東"
+  },
+  {
+    "id": "s-6e-01",
+    "studentNo": "2005001",
+    "name": "白雅嫦",
+    "nameEn": "BUTT ASHEL",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-02",
+    "studentNo": "2005002",
+    "name": "鄭倩芯",
+    "nameEn": "CHENG SIN SUM",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-03",
+    "studentNo": "2005003",
+    "name": "賴曉澄",
+    "nameEn": "LAI HIU CHING RILEY",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-04",
+    "studentNo": "2005004",
+    "name": "TAHIR AISHA",
+    "nameEn": "TAHIR AISHA",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-05",
+    "studentNo": "2005005",
+    "name": "鄧煒信",
+    "nameEn": "TANG WINSON",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-06",
+    "studentNo": "2005006",
+    "name": "VILLANUEVA JOHN YSMAEL",
+    "nameEn": "VILLANUEVA JOHN YSMAEL",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-07",
+    "studentNo": "2005007",
+    "name": "汪煦曜",
+    "nameEn": "WANG XUYAO",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-08",
+    "studentNo": "2005008",
+    "name": "陳晞桓",
+    "nameEn": "CHAN HEI WUN",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-09",
+    "studentNo": "2005009",
+    "name": "陳鎧淇",
+    "nameEn": "CHAN HOI KI",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-10",
+    "studentNo": "2005010",
+    "name": "陳家熙",
+    "nameEn": "CHAN KA HEI",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-11",
+    "studentNo": "2005011",
+    "name": "陳建霖",
+    "nameEn": "CHAN KIN LAM",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-12",
+    "studentNo": "2005012",
+    "name": "陳煒翹",
+    "nameEn": "CHAN WAI KIU",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-13",
+    "studentNo": "2005013",
+    "name": "陳奕初",
+    "nameEn": "CHAN YIK CHO",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-14",
+    "studentNo": "2005014",
+    "name": "張芷林",
+    "nameEn": "CHEUNG TSZ LAM",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-15",
+    "studentNo": "2005015",
+    "name": "周進謙",
+    "nameEn": "CHOW CHUN HIM",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-16",
+    "studentNo": "2005016",
+    "name": "鍾曉澄",
+    "nameEn": "CHUNG HIU CHING",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-17",
+    "studentNo": "2005017",
+    "name": "鍾雨晴",
+    "nameEn": "CHUNG YU CHING",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-18",
+    "studentNo": "2005018",
+    "name": "袁止柔",
+    "nameEn": "KAUFMANN SABRINA",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-19",
+    "studentNo": "2005019",
+    "name": "林詩桐",
+    "nameEn": "LIN ABBIE",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-20",
+    "studentNo": "2005020",
+    "name": "莫子熙",
+    "nameEn": "MOK TSZ HEI",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
+  },
+  {
+    "id": "s-6e-21",
+    "studentNo": "2005021",
+    "name": "張义林",
+    "nameEn": "ZHANG YILIN",
+    "form": 6,
+    "className": "6E",
+    "homeroomTeacherId": "u-6e",
+    "homeroomTeacherName": "鄭敬宏、Mirza"
   }
 ];

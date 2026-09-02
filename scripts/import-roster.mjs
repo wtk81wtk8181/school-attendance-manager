@@ -35,6 +35,16 @@ function streamIndex(className) {
   return "ABCDE".indexOf(stream) + 1;
 }
 
+/** 4EG1／4EG2 視為 4E，5EG1／6EG2 同理。 */
+function normalizeClassName(raw) {
+  const code = cellText(raw).toUpperCase().replace(/\s+/g, "");
+  const exact = code.match(/^([1-6][A-E])$/);
+  if (exact) return exact[1];
+  const englishGroup = code.match(/^([1-6])EG\d+$/);
+  if (englishGroup) return `${englishGroup[1]}E`;
+  return "";
+}
+
 function headerMap(worksheet) {
   const row = worksheet.getRow(1);
   const map = {};
@@ -62,15 +72,13 @@ function parseRegistrySheet(worksheet, fallbackForm) {
   const students = [];
   for (let rowIndex = 2; rowIndex <= worksheet.rowCount; rowIndex += 1) {
     const row = worksheet.getRow(rowIndex);
-    const classCode = cellText(row.getCell(classColumn).value).toUpperCase();
+    const className = normalizeClassName(row.getCell(classColumn).value);
     const nameEn = cellText(row.getCell(nameEnCol).value);
-    const name = cellText(row.getCell(nameCol).value);
+    const name = cellText(row.getCell(nameCol).value) || nameEn;
     const classNo = Number(cellText(row.getCell(noCol).value) || 0);
-    const form = Number(classCode[0]) || fallbackForm;
+    const form = Number(className[0]) || fallbackForm;
 
-    if (!/^\d[A-E]$/.test(classCode) || !nameEn || !name || !classNo) continue;
-
-    const className = classCode;
+    if (!/^[1-6][A-E]$/.test(className) || !name || !classNo) continue;
     const year = String(26 - form).padStart(2, "0");
     const serial = String(classNo).padStart(2, "0");
     let id = `s-${className.toLowerCase()}-${serial}`;
