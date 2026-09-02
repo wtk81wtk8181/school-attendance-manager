@@ -90,29 +90,47 @@ const PRINT_CSS = `
   .table .left { text-align: left; }
   .table .muted { color: #a1a1aa; }
   .staff-box, .stats-box, .metrics-box {
-    margin-top: 10px;
+    margin-top: 6px;
     border: 1px solid #d4d4d8;
-    border-radius: 4px;
-    overflow: hidden;
+    overflow: visible;
   }
-  .staff-box { padding: 8px; }
+  .staff-box { padding: 6px 8px; }
   .staff-box h3, .metrics-title {
     margin: 0;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
   }
   .staff-line {
-    margin: 6px 0 0;
-    font-size: 11px;
+    margin: 4px 0 0;
+    font-size: 10px;
   }
   .metrics-title {
-    padding: 4px 8px;
+    padding: 3px 6px;
     text-align: center;
     background: #f8fafc;
     border-bottom: 1px solid #d4d4d8;
   }
-  .metrics-table { font-size: 8px; }
-  .space-y { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .metrics-table {
+    table-layout: fixed;
+    font-size: 7.5px;
+  }
+  .metrics-table th, .metrics-table td {
+    padding: 3px 2px;
+    vertical-align: middle;
+    text-align: center;
+    white-space: nowrap;
+    word-break: keep-all;
+    overflow: hidden;
+  }
+  .metrics-table col.label { width: 22mm; }
+  .metrics-table .label {
+    width: 22mm;
+    text-align: left;
+    white-space: nowrap;
+    word-break: keep-all;
+    overflow: visible;
+  }
+  .space-y { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
   .absence-cols {
     display: grid;
     gap: 4px;
@@ -295,31 +313,34 @@ function renderClassMetrics(
     <section class="metrics-box">
       <h3 class="metrics-title">${escapeHtml(title)}</h3>
       <table class="table metrics-table">
+        <colgroup>
+          <col class="label" />
+        </colgroup>
         <thead>
           <tr>
-            <th class="left">班別</th>
+            <th class="label">班別</th>
             ${headerCells}
             <th>${escapeHtml(totalLabel)}</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td class="left">缺席人數</td>
+            <td class="label">缺席人數</td>
             ${absentCells}
             <td>${totals.absent}</td>
           </tr>
           <tr>
-            <td class="left">出席百分比</td>
+            <td class="label">出席百分比</td>
             ${attendanceCells}
             <td>${escapeHtml(formatPercentExact(totals.attendanceRate))}</td>
           </tr>
           <tr>
-            <td class="left">學生遲到人數</td>
+            <td class="label">遲到人數</td>
             ${lateCells}
             <td>${totals.late}</td>
           </tr>
           <tr>
-            <td class="left">守時百分比</td>
+            <td class="label">守時百分比</td>
             ${punctualityCells}
             <td>${escapeHtml(formatPercentExact(totals.punctualityRate))}</td>
           </tr>

@@ -68,7 +68,7 @@ export function DailySeniorReportPage({
         <ClassTable blocks={senior} />
       </div>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-3 space-y-2 print:mt-2 print:space-y-1">
         <FormStatsTable payload={payload} />
         <ClassMetricsTable
           title="中四至中六"
@@ -128,7 +128,7 @@ function StaffSection({ payload }: { payload: DailySchoolReportPayload }) {
 
 function FormStatsTable({ payload }: { payload: DailySchoolReportPayload }) {
   return (
-    <section className="overflow-x-auto rounded border border-zinc-300">
+    <section className="overflow-x-auto rounded border border-zinc-300 print:overflow-visible">
       <table className="w-full border-collapse text-center text-[11px]">
         <thead>
           <tr className="bg-slate-100">
@@ -202,56 +202,66 @@ function ClassMetricsTable({
       <h3 className="border-b border-zinc-300 bg-slate-50 px-2 py-1 text-center text-xs font-semibold">
         {title}
       </h3>
-      <table className="w-full border-collapse text-center text-[10px]">
+      <table className="w-full table-fixed border-collapse text-center text-[10px]">
         <thead>
           <tr className="bg-slate-100">
-            <th className="border border-zinc-300 px-1 py-1 text-left">班別</th>
+            <th className="w-24 whitespace-nowrap border border-zinc-300 px-1 py-1 text-left">
+              班別
+            </th>
             {classes.map((item) => (
-              <th key={item.className} className="border border-zinc-300 px-0.5 py-1">
+              <th key={item.className} className="whitespace-nowrap border border-zinc-300 px-0.5 py-1">
                 {item.className}
               </th>
             ))}
-            <th className="border border-zinc-300 px-1 py-1">{totalLabel}</th>
+            <th className="whitespace-nowrap border border-zinc-300 px-1 py-1">{totalLabel}</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td className="border border-zinc-300 px-1 py-1 text-left">缺席人數</td>
+            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1 text-left">
+              缺席人數
+            </td>
             {classes.map((item) => (
-              <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+              <td key={item.className} className="whitespace-nowrap border border-zinc-300 px-0.5 py-1">
                 {item.absentCount || ""}
               </td>
             ))}
-            <td className="border border-zinc-300 px-1 py-1">{totals.absent}</td>
+            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">{totals.absent}</td>
           </tr>
           <tr>
-            <td className="border border-zinc-300 px-1 py-1 text-left">出席百分比</td>
+            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1 text-left">
+              出席百分比
+            </td>
             {classes.map((item) => (
-              <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+              <td key={item.className} className="whitespace-nowrap border border-zinc-300 px-0.5 py-1">
                 {formatPercentExact(item.attendanceRate)}
               </td>
             ))}
-            <td className="border border-zinc-300 px-1 py-1">
+            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">
               {formatPercentExact(totals.attendanceRate)}
             </td>
           </tr>
           <tr>
-            <td className="border border-zinc-300 px-1 py-1 text-left">學生遲到人數</td>
+            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1 text-left">
+              遲到人數
+            </td>
             {classes.map((item) => (
-              <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+              <td key={item.className} className="whitespace-nowrap border border-zinc-300 px-0.5 py-1">
                 {item.lateCount}
               </td>
             ))}
-            <td className="border border-zinc-300 px-1 py-1">{totals.late}</td>
+            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">{totals.late}</td>
           </tr>
           <tr>
-            <td className="border border-zinc-300 px-1 py-1 text-left">守時百分比</td>
+            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1 text-left">
+              守時百分比
+            </td>
             {classes.map((item) => (
-              <td key={item.className} className="border border-zinc-300 px-0.5 py-1">
+              <td key={item.className} className="whitespace-nowrap border border-zinc-300 px-0.5 py-1">
                 {formatPercentExact(item.punctualityRate)}
               </td>
             ))}
-            <td className="border border-zinc-300 px-1 py-1">
+            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">
               {formatPercentExact(totals.punctualityRate)}
             </td>
           </tr>

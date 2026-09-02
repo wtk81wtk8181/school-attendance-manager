@@ -106,12 +106,12 @@ async function fitReportPages(page: import("puppeteer-core").Page) {
         if (!inner) return;
 
         inner.style.width = `${pageWidth}px`;
+        inner.style.transform = "";
+        inner.style.zoom = "";
         const contentHeight = inner.scrollHeight;
         if (contentHeight > maxHeight) {
-          const scale = maxHeight / contentHeight;
-          inner.style.transform = `scale(${scale})`;
-          inner.style.transformOrigin = "top left";
-          inner.style.width = `${pageWidth / scale}px`;
+          const scale = Math.min(1, maxHeight / contentHeight);
+          inner.style.zoom = String(scale);
         }
       });
     },
