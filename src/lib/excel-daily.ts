@@ -44,10 +44,11 @@ const FORM_COLS = [
   { start: 19, end: 21 },
 ];
 const FORM_TOTAL = { start: 22, end: 24 };
-const CLASS_LABEL_END = 2;
-const CLASS_CODE_START = 3;
-const CLASS_TOTAL_START = 18;
+const CLASS_LABEL_END = 4;
+const CLASS_CODE_START = 5;
+const CLASS_TOTAL_START = 20;
 const CLASS_TOTAL_END = 24;
+const METRIC_ROW_HEIGHT = 18;
 const JUNIOR_SPLIT = 8;
 
 export async function buildDailySchoolWorkbook(
@@ -326,6 +327,7 @@ function writeStatsFooter(
     mergeValue(sheet, startRow, cols.start, startRow, cols.end, stat.label, headerStyle());
   });
   mergeValue(sheet, startRow, FORM_TOTAL.start, startRow, FORM_TOTAL.end, "總數", headerStyle());
+  sheet.getRow(startRow).height = METRIC_ROW_HEIGHT;
 
   writeFormMetric(
     sheet,
@@ -389,6 +391,7 @@ function writeClassMetricTable(
     totals.totalLabel,
     headerStyle()
   );
+  sheet.getRow(startRow).height = METRIC_ROW_HEIGHT;
 
   writeClassMetricRow(
     sheet,
@@ -446,6 +449,7 @@ function writeClassMetricRow(
     font: { bold: true, size: 8 },
     numFmt: percent ? "0.00%" : undefined,
   });
+  sheet.getRow(row).height = METRIC_ROW_HEIGHT;
 }
 
 function writeFormMetric(
@@ -470,6 +474,7 @@ function writeFormMetric(
     font: { bold: true, size: 9 },
     numFmt: percent ? "0.00%" : undefined,
   });
+  sheet.getRow(row).height = METRIC_ROW_HEIGHT;
 }
 
 function headerStyle(size = 9): CellStyle {
@@ -483,14 +488,14 @@ function headerStyle(size = 9): CellStyle {
 function labelStyle(): CellStyle {
   return {
     font: { size: 8 },
-    alignment: { horizontal: "right", vertical: "middle", wrapText: true },
+    alignment: { horizontal: "left", vertical: "middle", wrapText: false },
   };
 }
 
 function centerStyle(): CellStyle {
   return {
     font: { size: 8 },
-    alignment: { horizontal: "center", vertical: "middle" },
+    alignment: { horizontal: "center", vertical: "middle", shrinkToFit: true },
   };
 }
 
