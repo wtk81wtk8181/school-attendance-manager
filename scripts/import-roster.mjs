@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
+const rosterDir = path.join(root, "新增資料夾");
 
 const CLASS_TEACHERS = {
   "1A": "黃轉鳳、郭家銘", "1B": "何慧欣、范嘉揚", "1C": "Ramandeep、丘健", "1D": "Dari、鄧鵠耀", "1E": "Scott、張思華",
@@ -20,7 +21,13 @@ function cellText(value) {
   if (typeof value === "object" && value.richText) {
     return value.richText.map((item) => item.text).join("");
   }
+  if (typeof value === "object" && value.text) return String(value.text).trim();
+  if (typeof value === "object" && value.result != null) return String(value.result).trim();
   return String(value).trim();
+}
+
+function normalizeHeader(value) {
+  return cellText(value).replace(/\s+/g, "");
 }
 
 function streamIndex(className) {
@@ -28,27 +35,54 @@ function streamIndex(className) {
   return "ABCDE".indexOf(stream) + 1;
 }
 
-function parseSheet(worksheet, form) {
+function headerMap(worksheet) {
+  const row = worksheet.getRow(1);
+  const map = {};
+  row.eachCell((cell, col) => {
+    const key = normalizeHeader(cell.value);
+    if (key) map[key] = col;
+  });
+  return map;
+}
+
+function classCol(headers) {
+  return headers["班別代碼"] ?? headers["班別"] ?? null;
+}
+
+function parseRegistrySheet(worksheet, fallbackForm) {
+  const headers = headerMap(worksheet);
+  const classColumn = classCol(headers);
+  const nameEnCol = headers["英文姓名"];
+  const nameCol = headers["中文姓名"];
+  const noCol = headers["班號"];
+  if (!classColumn || !nameEnCol || !nameCol || !noCol) {
+    throw new Error(`工作表「${worksheet.name}」缺少班別／姓名／班號欄`);
+  }
+
   const students = [];
-  for (let rowIndex = 1; rowIndex <= worksheet.rowCount; rowIndex += 1) {
+  for (let rowIndex = 2; rowIndex <= worksheet.rowCount; rowIndex += 1) {
     const row = worksheet.getRow(rowIndex);
-    const classCode = cellText(row.getCell(1).value);
-    const nameEn = cellText(row.getCell(2).value);
-    const name = cellText(row.getCell(3).value);
-    const classNo = Number(cellText(row.getCell(5).value) || cellText(row.getCell(4).value) || 0);
+    const classCode = cellText(row.getCell(classColumn).value).toUpperCase();
+    const nameEn = cellText(row.getCell(nameEnCol).value);
+    const name = cellText(row.getCell(nameCol).value);
+    const classNo = Number(cellText(row.getCell(noCol).value) || 0);
+    const form = Number(classCode[0]) || fallbackForm;
 
-    if (classCode.startsWith("CLASS")) continue;
-    if (classCode === "CLASS CODE" || nameEn === "NAME") continue;
-    if (!/^\d[A-E]$/i.test(classCode) || !nameEn || !name) continue;
+    if (!/^\d[A-E]$/.test(classCode) || !nameEn || !name || !classNo) continue;
 
-    const className = classCode.toUpperCase();
+    const className = classCode;
     const year = String(26 - form).padStart(2, "0");
-    const serial =
-      classNo || students.filter((item) => item.className === className).length + 1;
-    const studentNo = `${year}${String(streamIndex(className)).padStart(2, "0")}${String(serial).padStart(3, "0")}`;
+    const serial = String(classNo).padStart(2, "0");
+    let id = `s-${className.toLowerCase()}-${serial}`;
+    let studentNo = `${year}${String(streamIndex(className)).padStart(2, "0")}${String(classNo).padStart(3, "0")}`;
+    if (students.some((item) => item.id === id)) {
+      const suffix = cellText(row.getCell(headers["學生註冊編號"] ?? 1).value) || String(rowIndex);
+      id = `${id}-${suffix}`;
+      studentNo = `${studentNo}-${suffix.slice(-4)}`;
+    }
     const teacher = CLASS_TEACHERS[className] ?? "班主任";
     students.push({
-      id: `s-${className.toLowerCase()}-${String(serial).padStart(2, "0")}`,
+      id,
       studentNo,
       name,
       nameEn,
@@ -61,26 +95,42 @@ function parseSheet(worksheet, form) {
   return students;
 }
 
+function pickWorksheet(workbook) {
+  const byName = workbook.getWorksheet("學生編號");
+  if (byName) return byName;
+  for (const worksheet of workbook.worksheets) {
+    const headers = headerMap(worksheet);
+    if (headers["中文姓名"] && classCol(headers) && headers["班號"]) {
+      return worksheet;
+    }
+  }
+  return null;
+}
+
 const sources = [
-  { file: "S.1_中一級 (04.08.2026).xlsx", form: 1, sheets: ["S1 "] },
-  { file: "S.2_中二級 (04.08.2026).xlsx", form: 2, sheets: ["S2"] },
-  { file: "S.3_中三級 (04.08.2026).xlsx", form: 3, sheets: ["S3"] },
-  { file: "S.4_中四級 (04.08.2026).xlsx", form: 4, sheets: ["工作表1"] },
-  { file: "S.5_中五級 (04.08.2026).xlsx", form: 5, sheets: ["5A-5D ", "5E"] },
-  { file: "S.6_中六級 (04.08.2026).xlsx", form: 6, sheets: ["S.6 A-D", "S.6 E"] },
+  { file: "2627- S.1學生名單.xlsx", form: 1 },
+  { file: "2627- S.2學生名單(此為準).xlsx", form: 2 },
+  { file: "2627-S.3學生名單(此為準).xlsx", form: 3 },
+  { file: "2627- S.4學生名單.xlsx", form: 4 },
+  { file: "2627- S.5學生名單.xlsx", form: 5 },
+  { file: "2627- S.6學生名單.xlsx", form: 6 },
 ];
 
 const allStudents = [];
 for (const source of sources) {
-  const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.readFile(path.join(root, source.file));
-  for (const sheetName of source.sheets) {
-    const worksheet = workbook.getWorksheet(sheetName);
-    if (!worksheet) {
-      throw new Error(`找不到工作表 ${sheetName}（${source.file}）`);
-    }
-    allStudents.push(...parseSheet(worksheet, source.form));
+  const filePath = path.join(rosterDir, source.file);
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`找不到檔案：${source.file}`);
   }
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(filePath);
+  const worksheet = pickWorksheet(workbook);
+  if (!worksheet) {
+    throw new Error(`找不到可用工作表（${source.file}）`);
+  }
+  const parsed = parseRegistrySheet(worksheet, source.form);
+  console.log(`${source.file}／${worksheet.name}：${parsed.length} 人`);
+  allStudents.push(...parsed);
 }
 
 allStudents.sort(
@@ -90,18 +140,34 @@ allStudents.sort(
 );
 
 for (const key of ["id", "studentNo"]) {
-  const seen = new Set();
-  const duplicates = new Set();
+  const seen = new Map();
+  const duplicates = [];
   for (const student of allStudents) {
-    if (seen.has(student[key])) duplicates.add(student[key]);
-    seen.add(student[key]);
+    if (seen.has(student[key])) {
+      duplicates.push([seen.get(student[key]), student]);
+    } else {
+      seen.set(student[key], student);
+    }
   }
-  if (duplicates.size > 0) {
+  if (duplicates.length > 0) {
+    console.error(JSON.stringify(duplicates.slice(0, 5), null, 2));
     throw new Error(
-      `匯入中止：學生 ${key} 重複：${[...duplicates].slice(0, 10).join("、")}`
+      `匯入中止：學生 ${key} 重複：${duplicates.map((pair) => pair[1][key]).slice(0, 10).join("、")}`
     );
   }
 }
+
+const byClass = new Map();
+for (const student of allStudents) {
+  byClass.set(student.className, (byClass.get(student.className) ?? 0) + 1);
+}
+console.log(
+  "各班人數：",
+  [...byClass.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([cls, count]) => `${cls}:${count}`)
+    .join(" ")
+);
 
 const output = `// 自動產生：npm run import:roster
 import type { Student } from "@/lib/types";
