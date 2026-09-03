@@ -41,6 +41,8 @@ export interface Student {
   className: string;
   homeroomTeacherId: string;
   homeroomTeacherName: string;
+  /** 插班生效日 YYYY-MM-DD，當日報告會列入新生插班名單 */
+  enrolledOn?: string;
 }
 
 export type EarlyPickup =

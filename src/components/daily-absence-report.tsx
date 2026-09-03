@@ -324,6 +324,7 @@ function ClassTable({ blocks }: { blocks: DailyClassBlock[] }) {
             <th className="border border-zinc-300 px-1 py-1">出席</th>
             <th className="border border-zinc-300 px-1 py-1">早退</th>
             <th className="border border-zinc-300 px-1 py-1 text-left">缺席名單及原因</th>
+            <th className="border border-zinc-300 px-1 py-1 text-left">新生插班名單</th>
           </tr>
         </thead>
         <tbody>
@@ -341,6 +342,13 @@ function ClassTable({ blocks }: { blocks: DailyClassBlock[] }) {
               </td>
               <td className="border border-zinc-300 px-1 py-1">
                 <AbsenceLinesCell lines={block.absenceLines} />
+              </td>
+              <td className="border border-zinc-300 px-1 py-1">
+                {block.enrollNames.length > 0 ? (
+                  block.enrollNames.join("、")
+                ) : (
+                  <span className="text-zinc-400">—</span>
+                )}
               </td>
             </tr>
           ))}

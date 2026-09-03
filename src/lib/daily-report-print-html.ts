@@ -193,6 +193,11 @@ function renderClassColumn(blocks: DailyClassBlock[]): string {
           <td class="center">${block.present}</td>
           <td class="center">${block.earlyLeave || ""}</td>
           <td class="left">${renderAbsenceCell(block.absenceLines)}</td>
+          <td class="left">${
+            block.enrollNames.length
+              ? escapeHtml(block.enrollNames.join("、"))
+              : '<span class="muted">—</span>'
+          }</td>
         </tr>
       `
     )
@@ -207,6 +212,7 @@ function renderClassColumn(blocks: DailyClassBlock[]): string {
           <th>出席</th>
           <th>早退</th>
           <th class="left">缺席名單及原因</th>
+          <th class="left">新生插班名單</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>

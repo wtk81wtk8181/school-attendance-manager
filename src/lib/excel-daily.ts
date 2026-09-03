@@ -252,7 +252,10 @@ function writeClassBlocks(
       );
     });
 
-    mergeValue(sheet, currentRow, cols.enroll, end, cols.enroll, "", center);
+    mergeValue(sheet, currentRow, cols.enroll, end, cols.enroll, block.enrollNames.join("\n"), {
+      font: { size: 8 },
+      alignment: { horizontal: "left", vertical: "top", wrapText: true },
+    });
     mergeValue(sheet, currentRow, cols.withdraw, end, cols.withdraw, "", center);
 
     for (let row = currentRow; row <= end; row += 1) {

@@ -5263,6 +5263,17 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "馮耀强"
   },
   {
+    "id": "s-4a-35",
+    "studentNo": "2201035",
+    "name": "梁穎沂",
+    "nameEn": "LEUNG WING YEE",
+    "form": 4,
+    "className": "4A",
+    "homeroomTeacherId": "u-4a",
+    "homeroomTeacherName": "馮耀强",
+    "enrolledOn": "2026-09-03"
+  },
+  {
     "id": "s-4b-01",
     "studentNo": "2202001",
     "name": "AMJAD FARHAN ALI",
@@ -7931,6 +7942,17 @@ export const ROSTER_STUDENTS: Student[] = [
     "className": "5D",
     "homeroomTeacherId": "u-5d",
     "homeroomTeacherName": "歐陽佩霞"
+  },
+  {
+    "id": "s-5d-33",
+    "studentNo": "2104033",
+    "name": "石文樂",
+    "nameEn": "SHEK MAN LOK",
+    "form": 5,
+    "className": "5D",
+    "homeroomTeacherId": "u-5d",
+    "homeroomTeacherName": "歐陽佩霞",
+    "enrolledOn": "2026-09-03"
   },
   {
     "id": "s-5e-01",

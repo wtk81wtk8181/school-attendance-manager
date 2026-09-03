@@ -73,6 +73,7 @@ export interface DailyClassBlock {
   attendanceRate: number;
   punctualityRate: number;
   absenceLines: string[];
+  enrollNames: string[];
 }
 
 export interface DailyFormStat {
@@ -270,6 +271,9 @@ export function buildDailySchoolReport(
       attendanceRate: rate(present, registered),
       punctualityRate: rate(Math.max(0, present - lateCount), present),
       absenceLines: [...notPresent, ...earlyRows].map(formatDailyAbsenceLine),
+      enrollNames: classStudents
+        .filter((item) => item.enrolledOn === schoolDay)
+        .map((item) => item.name),
     };
   });
 
