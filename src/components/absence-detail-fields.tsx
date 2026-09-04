@@ -104,7 +104,7 @@ export function AbsenceDetailFields({
             if (!value) return;
             onChange({
               reason,
-              calledBy: joinCaller(value, callerParts.name),
+              calledBy: joinCaller(value, value === "其他" ? "" : callerParts.name),
               calledAt: value === "尚未致電" ? "" : calledAt,
             });
           }}
@@ -120,13 +120,29 @@ export function AbsenceDetailFields({
             ))}
           </SelectContent>
         </Select>
-        {callerParts.relation !== "尚未致電" ? (
+        {callerParts.relation === "其他" ? (
+          <div className="space-y-1">
+            {labels ? (
+              <p className="text-[11px] text-muted-foreground">請註明致電人士</p>
+            ) : null}
+            <Input
+              disabled={disabled}
+              value={callerParts.name}
+              placeholder="例如：姐姐、鄰居、監護人"
+              onChange={(event) =>
+                onChange({
+                  reason,
+                  calledBy: joinCaller("其他", event.target.value),
+                  calledAt,
+                })
+              }
+            />
+          </div>
+        ) : callerParts.relation !== "尚未致電" ? (
           <Input
             disabled={disabled}
             value={callerParts.name}
-            placeholder={
-              callerParts.relation === "其他" ? "請填寫致電人士" : "姓氏（可選，如陳太）"
-            }
+            placeholder="姓氏（可選，如陳太）"
             onChange={(event) =>
               onChange({
                 reason,

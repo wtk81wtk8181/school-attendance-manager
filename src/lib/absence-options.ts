@@ -38,6 +38,7 @@ export function joinReason(option: string, other: string): string {
 export function splitCaller(calledBy: string): { relation: string; name: string } {
   const value = calledBy.trim();
   if (!value || value === "尚未致電") return { relation: "尚未致電", name: "" };
+  if (value === "其他") return { relation: "其他", name: "" };
   for (const relation of RELATION_PREFIXES) {
     if (value === relation || value.startsWith(relation)) {
       return { relation, name: value.slice(relation.length).trim() };
@@ -48,6 +49,6 @@ export function splitCaller(calledBy: string): { relation: string; name: string 
 
 export function joinCaller(relation: string, name: string): string {
   if (relation === "尚未致電") return "";
-  if (relation === "其他") return name.trim();
+  if (relation === "其他") return name.trim() || "其他";
   return `${relation}${name.trim()}`;
 }
