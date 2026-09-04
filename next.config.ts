@@ -10,7 +10,10 @@ const nextConfig: NextConfig = {
     "@sparticuz/chromium",
   ],
   outputFileTracingIncludes: {
-    "/api/report/daily": ["./node_modules/@sparticuz/chromium/**"],
+    "/api/report/daily": [
+      "./node_modules/@sparticuz/chromium/**",
+      "./src/fonts/**",
+    ],
   },
 };
 

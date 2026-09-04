@@ -15,7 +15,7 @@ const PRINT_CSS = `
     margin: 0;
     padding: 0;
     width: 194mm;
-    font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    font-family: "Noto Sans TC", "Noto Sans CJK TC", "Microsoft JhengHei", sans-serif;
     color: #18181b;
     background: #fff;
   }
@@ -396,12 +396,16 @@ function renderSeniorPage(payload: DailySchoolReportPayload): string {
   `;
 }
 
-export function buildDailyReportHtml(payload: DailySchoolReportPayload): string {
+export function buildDailyReportHtml(
+  payload: DailySchoolReportPayload,
+  extraCss = ""
+): string {
   return `<!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <style>${PRINT_CSS}</style>
+    <style>${PRINT_CSS}
+${extraCss}</style>
   </head>
   <body>
     ${renderJuniorPage(payload)}

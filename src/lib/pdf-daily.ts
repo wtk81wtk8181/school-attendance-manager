@@ -1,9 +1,40 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { DailySchoolReportPayload } from "@/lib/daily-report";
 
 const PAGE_HEIGHT_MM = 281;
 const PAGE_WIDTH_MM = 194;
+
+const FONT_FILES = [
+  { file: "noto-sans-tc-latin-400.woff", weight: 400 },
+  { file: "noto-sans-tc-400.woff", weight: 400 },
+  { file: "noto-sans-tc-700.woff", weight: 700 },
+] as const;
+
+function fontsDir(): string {
+  return path.join(process.cwd(), "src", "fonts");
+}
+
+function fontPath(file: string): string {
+  return path.join(fontsDir(), file);
+}
+
+function embeddedCjkFontCss(): string {
+  return FONT_FILES.flatMap((item) => {
+    const filePath = fontPath(item.file);
+    if (!existsSync(filePath)) return [];
+    const b64 = readFileSync(filePath).toString("base64");
+    return [
+      `@font-face {
+        font-family: "Noto Sans TC";
+        font-style: normal;
+        font-weight: ${item.weight};
+        font-display: block;
+        src: url(data:font/woff;base64,${b64}) format("woff");
+      }`,
+    ];
+  }).join("\n");
+}
 
 function mmToPx(mm: number): number {
   return (mm * 96) / 25.4;
@@ -51,6 +82,13 @@ async function launchBrowser() {
     const chromiumModule = await import("@sparticuz/chromium");
     const chromium = chromiumModule.default;
     chromium.setGraphicsMode = false;
+
+    for (const item of FONT_FILES) {
+      const filePath = fontPath(item.file);
+      if (existsSync(filePath)) {
+        await chromium.font(filePath);
+      }
+    }
 
     const executablePath = await resolveChromiumExecutablePath(chromium);
     const execDir = path.dirname(executablePath);
@@ -127,7 +165,8 @@ async function htmlToPdf(html: string): Promise<Buffer> {
       width: Math.round(mmToPx(PAGE_WIDTH_MM)),
       height: Math.round(mmToPx(PAGE_HEIGHT_MM)),
     });
-    await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 45_000 });
+    await page.setContent(html, { waitUntil: "load", timeout: 45_000 });
+    await page.evaluate(() => document.fonts.ready);
     await fitReportPages(page);
     const pdf = await page.pdf({
       format: "A4",
@@ -147,5 +186,5 @@ export async function buildDailySchoolPdf(
   payload: DailySchoolReportPayload
 ): Promise<Buffer> {
   const { buildDailyReportHtml } = await import("@/lib/daily-report-print-html");
-  return htmlToPdf(buildDailyReportHtml(payload));
+  return htmlToPdf(buildDailyReportHtml(payload, embeddedCjkFontCss()));
 }
