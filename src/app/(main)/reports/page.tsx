@@ -753,7 +753,7 @@ export default function ReportsPage() {
                 <TableHead>班別</TableHead>
                 <TableHead>學生姓名</TableHead>
                 <TableHead>請假／缺席原因</TableHead>
-                <TableHead>致電到校人士</TableHead>
+                <TableHead>致電人士／聯絡方式</TableHead>
                 <TableHead>致電時間</TableHead>
               </TableRow>
             </TableHeader>

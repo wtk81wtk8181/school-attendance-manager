@@ -104,7 +104,7 @@ function ReviewForm({
         <div className="grid gap-1.5">
           <div className="grid grid-cols-3 gap-3 text-sm font-medium">
             <span>請假／缺席原因</span>
-            <span>聯絡方式／人士</span>
+            <span>致電人士／聯絡方式</span>
             <span>致電時間</span>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
