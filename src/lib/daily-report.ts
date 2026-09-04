@@ -164,7 +164,7 @@ export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
     );
   }
   if (row.statusKey === "early") {
-    return formatEarlyLeaveReportLine(name, row.reason, row.earlyAt, row.earlyPickup);
+    return `${formatEarlyLeaveReportLine(name, row.reason, row.earlyAt, row.earlyPickup)}（半日）`;
   }
   const reason = row.reason.trim() || row.status;
   const half = row.days === 0.5 ? "（半日）" : "";

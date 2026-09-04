@@ -501,7 +501,8 @@ export default function StudentsPage() {
                     const showCountedDays =
                       dayStatus === "absent" ||
                       dayStatus === "leave" ||
-                      dayStatus === "half_absent";
+                      dayStatus === "half_absent" ||
+                      dayStatus === "early";
                     return (
                     <TableRow key={item.student.id}>
                       <TableCell>

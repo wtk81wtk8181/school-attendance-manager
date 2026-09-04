@@ -188,7 +188,7 @@ export function AttendanceMark({
       {value === "early" && record ? (
         <p className="text-xs text-slate-400">
           {record.reason?.trim() && record.reason !== "早退" ? `因${record.reason}` : ""}
-          於{record.earlyAt || "—"}早退（{earlyPickupLabel(record.earlyPickup)}）
+          於{record.earlyAt || "—"}早退（{earlyPickupLabel(record.earlyPickup)}），計入 0.5 日缺席
           {!disabled ? (
             <button
               type="button"
@@ -206,7 +206,7 @@ export function AttendanceMark({
           <DialogHeader>
             <DialogTitle>登記早退</DialogTitle>
             <DialogDescription>
-              請填寫早退原因、離開方式及時間。時間預設為現在，可再修改。
+              請填寫早退原因、離開方式及時間。早退會計入 0.5 日缺席。時間預設為現在，可再修改。
             </DialogDescription>
           </DialogHeader>
           <form className="space-y-3" onSubmit={submitEarly}>

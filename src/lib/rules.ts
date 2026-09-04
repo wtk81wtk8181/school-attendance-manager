@@ -85,11 +85,7 @@ export function countedAbsenceDaysOnOrBefore(
 }
 
 export function isCountedTowardAbsence(record: AbsenceRecord): boolean {
-  return (
-    record.reviewStatus !== "approved" &&
-    record.eclassStatus !== "late" &&
-    record.eclassStatus !== "early"
-  );
+  return record.reviewStatus !== "approved" && record.eclassStatus !== "late";
 }
 
 export function approvedLeaveDays(records: AbsenceRecord[]): number {
@@ -105,17 +101,15 @@ export function pendingDays(records: AbsenceRecord[]): number {
   return records
     .filter(
       (record) =>
-        record.reviewStatus === "pending" &&
-      record.eclassStatus !== "late" &&
-      record.eclassStatus !== "early"
+        record.reviewStatus === "pending" && record.eclassStatus !== "late"
     )
     .reduce((sum, record) => sum + record.days, 0);
 }
 
 /**
  * 出席率 = (總上課日數 − 計入缺席日數) ÷ 總上課日數 × 100%
- * 計入缺席日數 = 無故缺席 + 未批准請假
- * 獲批請假（醫生證明／家長信）不計入，亦不影響出席率
+ * 計入缺席日數 = 無故缺席 + 未批准請假 + 半日缺席（0.5）+ 早退（0.5）
+ * 獲批請假（醫生證明／家長信）與遲到不計入，亦不影響出席率
  */
 export function attendanceRate(schoolDays: number, countedDays: number): number {
   if (schoolDays <= 0) return 100;

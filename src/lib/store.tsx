@@ -14,7 +14,7 @@ import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lat
 import { studentsHomeroomTeachersChanged } from "@/lib/roster";
 import { formAHiddenStudentsChanged } from "@/lib/hidden-students";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
-import { isGenericAttendanceReason } from "@/lib/attendance-extras";
+import { isGenericAttendanceReason, normalizeAbsenceDays } from "@/lib/attendance-extras";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
 import {
   mergeSharedState,
@@ -1021,7 +1021,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ? {
                 ...existing,
                 eclassStatus: status,
-                days: status === "half_absent" ? 0.5 : 1,
+                days: normalizeAbsenceDays(status),
                 reason: nextReason,
                 source: "office",
                 notes: "校務處於學生出勤頁更新當日狀態",
@@ -1044,7 +1044,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 id: `ab-office-${studentId}-${date}-${Date.now()}`,
                 studentId,
                 date,
-                days: status === "half_absent" ? 0.5 : 1,
+                days: normalizeAbsenceDays(status),
                 eclassStatus: status,
                 reason: nextReason,
                 documentType: "none",
@@ -1144,7 +1144,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             id: `ab-office-${student.id}-${create.date}-${Date.now()}`,
             studentId: student.id,
             date: create.date,
-            days: create.status === "half_absent" ? 0.5 : 1,
+            days: normalizeAbsenceDays(create.status),
             eclassStatus: create.status,
             reason: input.reason.trim() || "病假",
             calledBy: input.calledBy.trim() || undefined,

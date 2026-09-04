@@ -39,7 +39,7 @@ export const EARLY_PICKUP_OPTIONS: Array<{ value: EarlyPickup; label: string }> 
 ];
 
 export function normalizeAbsenceDays(status: string): 0.5 | 1 {
-  if (status === "half_absent") return 0.5;
+  if (status === "half_absent" || status === "early") return 0.5;
   return 1;
 }
 

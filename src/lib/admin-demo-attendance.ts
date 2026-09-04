@@ -1,4 +1,4 @@
-import { EARLY_PICKUP_OPTIONS } from "@/lib/attendance-extras";
+import { EARLY_PICKUP_OPTIONS, normalizeAbsenceDays } from "@/lib/attendance-extras";
 import { allClassNames } from "@/lib/roster";
 import { emptyStaffDaily, withToggledStaff } from "@/lib/staff";
 import type {
@@ -77,7 +77,7 @@ function buildStudentRecord(
     id: `demo-${schoolDay}-${student.id}`,
     studentId: student.id,
     date: schoolDay,
-    days: status === "half_absent" ? 0.5 : 1,
+    days: normalizeAbsenceDays(status),
     eclassStatus: status as Exclude<DayAttendance, "present">,
     reason:
       status === "absent"

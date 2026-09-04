@@ -2,6 +2,7 @@ import {
   attendanceStatusLabel,
   classLabel,
   isCountedTowardAbsence,
+  pendingDays,
 } from "@/lib/rules";
 import { formatAbsenceRecordLine } from "@/lib/attendance-extras";
 import type { AbsenceRecord, Student } from "@/lib/types";
@@ -148,14 +149,7 @@ export function buildMonthlyReport(
             item.reviewStatus === "approved" && item.eclassStatus === "leave"
         )
         .reduce((sum, item) => sum + item.days, 0),
-      pendingDays: classRecords
-        .filter(
-          (item) =>
-            item.reviewStatus === "pending" &&
-            item.eclassStatus !== "late" &&
-            item.eclassStatus !== "early"
-        )
-        .reduce((sum, item) => sum + item.days, 0),
+      pendingDays: pendingDays(classRecords),
       studentsWithAbsence: absentees.size,
       attendanceRate:
         classStudents.length === 0 ? 100 : totalRate / classStudents.length,
