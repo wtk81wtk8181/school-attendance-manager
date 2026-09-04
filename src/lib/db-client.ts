@@ -56,16 +56,21 @@ function isLegacyMockRoster(students: Student[]) {
 }
 
 function shouldReplaceRoster(shared: Partial<AppState>, seed: AppState) {
-  const students = shared.students ?? [];
+  if (!Array.isArray(shared.students)) return false;
+  const students = shared.students;
   if (students.length === 0) return true;
-  if ((shared.dataVersion ?? 1) < OPERATIONAL_DATA_VERSION) return true;
+  if (typeof shared.dataVersion === "number" && shared.dataVersion < OPERATIONAL_DATA_VERSION) {
+    return true;
+  }
   if (isLegacyMockRoster(students)) return true;
   if (students.length < seed.students.length) return true;
   return false;
 }
 
 function shouldResetOperationalData(shared: Partial<AppState>) {
-  return (shared.dataVersion ?? 1) < OPERATIONAL_DATA_VERSION;
+  // 部分更新（例如只送 absences）不會帶 dataVersion，不可當成舊版而清空出勤。
+  if (typeof shared.dataVersion !== "number") return false;
+  return shared.dataVersion < OPERATIONAL_DATA_VERSION;
 }
 
 function emptyOperationalData(seed: AppState) {
@@ -88,17 +93,24 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
   const seed = createSeed();
   const replaceRoster = shouldReplaceRoster(shared, seed);
   const resetOperational = shouldResetOperationalData(shared);
-  const operational = resetOperational
-    ? emptyOperationalData(seed)
-    : {
-        absences: (shared.absences ?? seed.absences).map(normalizeAbsenceRecord),
-        warnings: shared.warnings ?? seed.warnings,
-        notifications: shared.notifications ?? seed.notifications,
-        digestLogs: shared.digestLogs ?? seed.digestLogs,
-        digestSettings: shared.digestSettings ?? seed.digestSettings,
-        clearedAttendance: shared.clearedAttendance ?? seed.clearedAttendance,
-        removedRecipients: shared.removedRecipients ?? seed.removedRecipients,
-      };
+  const emptied = emptyOperationalData(seed);
+  const operational = {
+    absences: (shared.absences ?? (resetOperational ? emptied.absences : seed.absences)).map(
+      normalizeAbsenceRecord
+    ),
+    warnings: shared.warnings ?? (resetOperational ? emptied.warnings : seed.warnings),
+    notifications:
+      shared.notifications ?? (resetOperational ? emptied.notifications : seed.notifications),
+    digestLogs: shared.digestLogs ?? (resetOperational ? emptied.digestLogs : seed.digestLogs),
+    digestSettings:
+      shared.digestSettings ?? (resetOperational ? emptied.digestSettings : seed.digestSettings),
+    clearedAttendance:
+      shared.clearedAttendance ??
+      (resetOperational ? emptied.clearedAttendance : seed.clearedAttendance),
+    removedRecipients:
+      shared.removedRecipients ??
+      (resetOperational ? emptied.removedRecipients : seed.removedRecipients),
+  };
 
   const staffApplied = applyOfficialStaffRoster(
     shared.staffMembers ?? seed.staffMembers,
@@ -189,6 +201,7 @@ function pickStudents(current: Student[], incoming: Student[], seed: Student[]):
   if (currentBad && !incomingBad) return incoming;
   if (!currentBad && incomingBad) return current;
   if (currentBad && incomingBad) return seed;
+  if (incoming.length === 0) return current;
   return incoming.length >= current.length ? incoming : current;
 }
 

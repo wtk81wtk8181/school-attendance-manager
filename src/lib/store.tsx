@@ -49,6 +49,8 @@ import {
 import {
   detectChangedSharedSections,
   pickSharedSections,
+  pickSharedSectionsByScope,
+  snapshotScopesForSections,
   SNAPSHOT_OPERATIONAL_ID,
 } from "@/lib/shared-state-sections";
 import { appearanceIssueId } from "@/lib/appearance-report";
@@ -287,7 +289,15 @@ function sectionsPendingSave(): string[] {
 
 function buildPersistPayload() {
   const sections = sectionsPendingSave();
-  return pickSharedSections(memory, sections);
+  const scopes = snapshotScopesForSections(sections);
+  const picked: Partial<AppState> = {};
+  for (const scope of scopes) {
+    Object.assign(picked, pickSharedSectionsByScope(memory, scope));
+  }
+  if (Object.keys(picked).length === 0) {
+    return pickSharedSections(memory, sections);
+  }
+  return picked;
 }
 
 function applyServerState(serverState: AppState, localOverlay?: AppState) {
