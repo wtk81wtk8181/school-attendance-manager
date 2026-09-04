@@ -50,10 +50,14 @@ export async function sendMail(input: {
         : undefined,
   });
 
+  const fromName =
+    process.env.SMTP_FROM_NAME?.trim() ||
+    input.fromName?.trim() ||
+    MAIL_FROM_NAME;
   const from = process.env.SMTP_FROM || process.env.SMTP_USER || "attendance@localhost";
   await transporter.sendMail({
     from: {
-      name: input.fromName?.trim() || MAIL_FROM_NAME,
+      name: fromName,
       address: from,
     },
     to: input.recipients.map((item) => item.email).join(", "),

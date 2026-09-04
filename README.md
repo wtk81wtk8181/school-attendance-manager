@@ -70,6 +70,7 @@ firebase deploy --only apphosting
 - `SMTP_USER`
 - `SMTP_PASS`
 - `SMTP_FROM`
+- `SMTP_FROM_NAME`（選填，寄件顯示名稱，例如：萬鈞伯裘書院校務處）
 
 ### 上線後注意
 
@@ -118,6 +119,7 @@ SMTP_PORT=587
 SMTP_USER=
 SMTP_PASS=
 SMTP_FROM=
+SMTP_FROM_NAME=萬鈞伯裘書院校務處
 ```
 
 ## 部署到 Vercel（GitHub + Postgres）
