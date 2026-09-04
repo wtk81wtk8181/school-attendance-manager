@@ -1,4 +1,5 @@
-import type { AbsenceRecord, EarlyPickup } from "@/lib/types";
+import type { AbsenceRecord, ContactMethod, EarlyPickup, ReviewStatus } from "@/lib/types";
+import { formatContactSuffix, inferContactMethod } from "@/lib/absence-options";
 
 export const ABSENCE_ECLASS_STATUSES = [
   "absent",
@@ -17,6 +18,7 @@ export const ABSENCE_ADMIN_COLUMNS = [
   "reason",
   "calledBy",
   "calledAt",
+  "contactMethod",
   "documentType",
   "documentSubmitted",
   "reviewStatus",
@@ -62,6 +64,15 @@ export function normalizeAbsenceRecord(record: AbsenceRecord): AbsenceRecord {
   const pickup = EARLY_PICKUP_OPTIONS.some((item) => item.value === record.earlyPickup)
     ? record.earlyPickup
     : undefined;
+  const contactMethod = inferContactMethod(optionalString(record.calledBy), record.contactMethod);
+  let reviewStatus: ReviewStatus = ["pending", "approved", "rejected"].includes(
+    record.reviewStatus
+  )
+    ? record.reviewStatus
+    : "pending";
+  if (status === "late" && reviewStatus !== "rejected") {
+    reviewStatus = "approved";
+  }
 
   return {
     ...record,
@@ -70,18 +81,29 @@ export function normalizeAbsenceRecord(record: AbsenceRecord): AbsenceRecord {
     reason: typeof record.reason === "string" ? record.reason : defaultReason,
     calledBy: optionalString(record.calledBy),
     calledAt: optionalString(record.calledAt),
+    contactMethod,
     documentType: ["doctor", "parent", "none"].includes(record.documentType)
       ? record.documentType
       : "none",
     documentSubmitted: record.documentSubmitted === true,
-    reviewStatus: ["pending", "approved", "rejected"].includes(record.reviewStatus)
-      ? record.reviewStatus
-      : "pending",
+    reviewStatus,
     source: ["eclass", "office"].includes(record.source) ? record.source : "office",
     returnedAt: optionalString(record.returnedAt),
     earlyAt: optionalString(record.earlyAt),
     earlyPickup: pickup,
   };
+}
+
+export function reviewStatusForAttendance(
+  status: string,
+  previousStatus?: string,
+  previousReview?: ReviewStatus
+): ReviewStatus {
+  if (status === "late") {
+    return previousReview === "rejected" ? "rejected" : "approved";
+  }
+  if (previousStatus === status && previousReview) return previousReview;
+  return "pending";
 }
 
 export function earlyPickupLabel(value: EarlyPickup | undefined): string {
@@ -102,7 +124,8 @@ export function formatHalfAbsentReportLine(
   reason: string,
   returnedAt: string,
   calledBy?: string,
-  calledAt?: string
+  calledAt?: string,
+  contactMethod?: ContactMethod
 ): string {
   const body = cleanedReason(reason);
   const cause =
@@ -111,10 +134,7 @@ export function formatHalfAbsentReportLine(
       : body.endsWith("缺席")
         ? `因${body}`
         : `因${body}缺席`;
-  const caller =
-    calledBy?.trim() && calledBy !== "尚未致電" ? calledBy : "";
-  const callTime = calledAt?.trim() && calledAt !== "—" ? calledAt : "";
-  const callSuffix = caller ? `(${caller})${callTime}` : callTime;
+  const callSuffix = formatContactSuffix(calledBy, calledAt, contactMethod);
   const time = returnedAt.trim() || "—";
   return `${name}${cause}${callSuffix}/(已於${time}回校)`;
 }
@@ -135,7 +155,14 @@ export function formatAbsenceRecordLine(
   name: string,
   record: Pick<
     AbsenceRecord,
-    "eclassStatus" | "reason" | "returnedAt" | "earlyAt" | "earlyPickup" | "calledBy" | "calledAt"
+    | "eclassStatus"
+    | "reason"
+    | "returnedAt"
+    | "earlyAt"
+    | "earlyPickup"
+    | "calledBy"
+    | "calledAt"
+    | "contactMethod"
   >
 ): string {
   if (record.eclassStatus === "half_absent") {
@@ -144,7 +171,8 @@ export function formatAbsenceRecordLine(
       record.reason,
       record.returnedAt ?? "",
       record.calledBy,
-      record.calledAt
+      record.calledAt,
+      record.contactMethod
     );
   }
   if (record.eclassStatus === "early") {

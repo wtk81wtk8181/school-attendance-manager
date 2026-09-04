@@ -400,7 +400,7 @@ function writeClassMetricTable(
     sheet,
     startRow + 1,
     "缺席人數",
-    blocks.map((item) => item.absentCount || ""),
+    blocks.map((item) => item.absentCount),
     totals.absent,
     false
   );

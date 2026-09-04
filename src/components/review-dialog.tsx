@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { AbsenceRecord, DocumentType, ReviewStatus, Student } from "@/lib/types";
+import type { AbsenceRecord, ContactMethod, DocumentType, ReviewStatus, Student } from "@/lib/types";
 import { classLabel } from "@/lib/rules";
 import { formatDate } from "@/lib/format";
 import { useStore } from "@/lib/store";
@@ -68,6 +68,7 @@ function ReviewForm({
   const [reason, setReason] = useState(record.reason);
   const [calledBy, setCalledBy] = useState(record.calledBy ?? "");
   const [calledAt, setCalledAt] = useState(record.calledAt ?? "");
+  const [contactMethod, setContactMethod] = useState(record.contactMethod);
   const [notes, setNotes] = useState(record.notes ?? "");
 
   const canApprove =
@@ -84,6 +85,7 @@ function ReviewForm({
       notes,
       calledBy,
       calledAt,
+      contactMethod,
     });
     onOpenChange(false);
   }
@@ -102,7 +104,7 @@ function ReviewForm({
         <div className="grid gap-1.5">
           <div className="grid grid-cols-3 gap-3 text-sm font-medium">
             <span>請假／缺席原因</span>
-            <span>致電到校人士</span>
+            <span>聯絡方式／人士</span>
             <span>致電時間</span>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -110,10 +112,12 @@ function ReviewForm({
               reason={reason}
               calledBy={calledBy}
               calledAt={calledAt}
+              contactMethod={contactMethod}
               onChange={(next) => {
                 setReason(next.reason);
                 setCalledBy(next.calledBy);
                 setCalledAt(next.calledAt);
+                setContactMethod(next.contactMethod);
               }}
             />
           </div>

@@ -116,6 +116,146 @@ export function formatStaffLeaveLine(record: StaffLeaveRecord): string {
   return `${record.staffName}（${category}${activity}）${note}`;
 }
 
+const MULTI_DAY_LEAVE_THRESHOLD = 2;
+
+function addCalendarDays(date: string, days: number): string {
+  const cursor = new Date(`${date}T00:00:00`);
+  cursor.setDate(cursor.getDate() + days);
+  const year = cursor.getFullYear();
+  const month = String(cursor.getMonth() + 1).padStart(2, "0");
+  const day = String(cursor.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function slashDayMonth(iso: string): string {
+  const [, month, day] = iso.split("-");
+  return `${Number(day)}/${Number(month)}`;
+}
+
+function leaveCoversDate(record: StaffLeaveRecord, date: string): boolean {
+  return record.startDate <= date && (record.endDate || record.startDate) >= date;
+}
+
+function leaveDayCount(record: StaffLeaveRecord): number {
+  return expandStaffLeaveDates(record.startDate, record.endDate || record.startDate).length;
+}
+
+function matchingStaffLeave(
+  records: StaffLeaveRecord[] | undefined,
+  staffId: string,
+  kind: StaffAbsenceKind,
+  date: string
+): StaffLeaveRecord | undefined {
+  return (records ?? [])
+    .filter(
+      (item) =>
+        item.staffId === staffId &&
+        staffLeaveKind(item.category) === kind &&
+        leaveCoversDate(item, date)
+    )
+    .sort((a, b) => leaveDayCount(b) - leaveDayCount(a))[0];
+}
+
+function staffKindDateSet(
+  staffId: string,
+  kind: StaffAbsenceKind,
+  leaveRecords: StaffLeaveRecord[] | undefined,
+  allDaily: StaffDailyAbsence[] | undefined
+): Set<string> {
+  const dates = new Set<string>();
+  for (const leave of leaveRecords ?? []) {
+    if (leave.staffId !== staffId || staffLeaveKind(leave.category) !== kind) continue;
+    for (const date of expandStaffLeaveDates(leave.startDate, leave.endDate || leave.startDate)) {
+      dates.add(date);
+    }
+  }
+  for (const daily of allDaily ?? []) {
+    if (staffIdsForKind(daily, kind).includes(staffId)) {
+      dates.add(daily.date);
+    }
+  }
+  return dates;
+}
+
+function contiguousLeaveRange(
+  dates: Set<string>,
+  schoolDay: string
+): { start: string; end: string; days: number } | undefined {
+  if (!dates.has(schoolDay)) return undefined;
+  let start = schoolDay;
+  let end = schoolDay;
+  while (dates.has(addCalendarDays(start, -1))) {
+    start = addCalendarDays(start, -1);
+  }
+  while (dates.has(addCalendarDays(end, 1))) {
+    end = addCalendarDays(end, 1);
+  }
+  return {
+    start,
+    end,
+    days: expandStaffLeaveDates(start, end).length,
+  };
+}
+
+function formatStaffDailyReportLabel(
+  name: string,
+  kind: StaffAbsenceKind,
+  staffId: string,
+  schoolDay: string,
+  leaveRecords: StaffLeaveRecord[] | undefined,
+  allDaily: StaffDailyAbsence[] | undefined
+): string {
+  const leave = matchingStaffLeave(leaveRecords, staffId, kind, schoolDay);
+  const range = leave
+    ? {
+        start: leave.startDate,
+        end: leave.endDate || leave.startDate,
+        days: leaveDayCount(leave),
+      }
+    : contiguousLeaveRange(
+        staffKindDateSet(staffId, kind, leaveRecords, allDaily),
+        schoolDay
+      );
+  const extras: string[] = [];
+  const activity = leave?.activity.trim();
+  const note = leave?.note.trim();
+  if (activity) extras.push(activity);
+  else if (note) extras.push(note);
+  const showDates = range && range.days > MULTI_DAY_LEAVE_THRESHOLD;
+  if (showDates) {
+    extras.push(
+      range.end !== range.start
+        ? `${slashDayMonth(range.start)}-${slashDayMonth(range.end)}`
+        : slashDayMonth(range.start)
+    );
+  }
+  return extras.length > 0 ? `${name}（${extras.join("，")}）` : name;
+}
+
+/** 每日報告用：病假／公假／事假如超過兩天，附上請假日子。 */
+export function staffDailyReportLabels(
+  members: StaffMember[],
+  record: StaffDailyAbsence | undefined,
+  kind: StaffAbsenceKind,
+  schoolDay: string,
+  leaveRecords: StaffLeaveRecord[] | undefined,
+  allDaily: StaffDailyAbsence[] | undefined
+): string[] {
+  const ids = new Set(staffIdsForKind(record, kind));
+  return members
+    .filter((item) => ids.has(item.id))
+    .map((item) =>
+      formatStaffDailyReportLabel(
+        item.name,
+        kind,
+        item.id,
+        schoolDay,
+        leaveRecords,
+        allDaily
+      )
+    );
+}
+
 /** 將提早登記的請假合併進當日四行勾選。 */
 export function applyStaffLeavesToDaily(
   daily: StaffDailyAbsence,

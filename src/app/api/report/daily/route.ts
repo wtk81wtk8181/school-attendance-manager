@@ -3,7 +3,7 @@ import { reportSendPayload, sendMail } from "@/lib/mailer";
 import { buildDailySchoolWorkbook } from "@/lib/excel-daily";
 import { buildDailySchoolPdf } from "@/lib/pdf-daily";
 import type { DailySchoolReportPayload } from "@/lib/daily-report";
-import { SCHOOL_NAME } from "@/lib/seed";
+import { MAIL_FROM_NAME, SCHOOL_NAME } from "@/lib/seed";
 import { isSiteRequestAuthorized } from "@/lib/site-auth";
 
 export const runtime = "nodejs";
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       }
 
       await sendMail({
-        fromName: `${SCHOOL_NAME}校務處`,
+        fromName: MAIL_FROM_NAME,
         subject: `【${SCHOOL_NAME}】${body.payload.schoolDay} 每日缺席報告`,
         html,
         recipients: enabledRecipients,

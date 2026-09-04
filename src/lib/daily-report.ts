@@ -6,11 +6,12 @@ import {
   formLabel,
 } from "@/lib/rules";
 import { formatSchoolReportDate } from "@/lib/format";
+import { formatContactSuffix } from "@/lib/absence-options";
 import { allClassNames } from "@/lib/roster";
 import {
   applyStaffLeavesToDaily,
   formatStaffLeaveLine,
-  staffNamesForKind,
+  staffDailyReportLabels,
   staffDailyFor,
   staffLeavesForDate,
 } from "@/lib/staff";
@@ -25,6 +26,7 @@ import {
 } from "@/lib/attendance-extras";
 import type {
   AbsenceRecord,
+  ContactMethod,
   DayAttendance,
   EarlyPickup,
   FormLevel,
@@ -56,6 +58,7 @@ export interface DailyAbsenceRow {
   reason: string;
   calledBy: string;
   calledAt: string;
+  contactMethod?: ContactMethod;
   returnedAt: string;
   earlyAt: string;
   earlyPickup?: EarlyPickup;
@@ -141,6 +144,7 @@ export function buildDailyAbsenceRows(
         reason: item.reason,
         calledBy: item.calledBy?.trim() || "尚未致電",
         calledAt: item.calledAt?.trim() || "—",
+        contactMethod: item.contactMethod,
         returnedAt: item.returnedAt?.trim() || "",
         earlyAt: item.earlyAt?.trim() || "",
         earlyPickup: item.earlyPickup,
@@ -160,7 +164,8 @@ export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
       row.reason,
       row.returnedAt,
       row.calledBy,
-      row.calledAt
+      row.calledAt,
+      row.contactMethod
     );
   }
   if (row.statusKey === "early") {
@@ -168,11 +173,7 @@ export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
   }
   const reason = row.reason.trim() || row.status;
   const half = row.days === 0.5 ? "（半日）" : "";
-  const caller =
-    row.calledBy && row.calledBy !== "尚未致電" ? row.calledBy : "";
-  const time = row.calledAt && row.calledAt !== "—" ? row.calledAt : "";
-  const suffix = caller ? `(${caller})` : "";
-  return `${name}：${reason}${half}${suffix}${time}`;
+  return `${name}：${reason}${half}${formatContactSuffix(row.calledBy, row.calledAt, row.contactMethod)}`;
 }
 
 function rate(numerator: number, denominator: number): number {
@@ -318,10 +319,38 @@ export function buildDailySchoolReport(
       totalPresent
     ),
     staff: {
-      sick: staffNamesForKind(staffMembers, staffRecord, "sick"),
-      personal: staffNamesForKind(staffMembers, staffRecord, "personal"),
-      official: staffNamesForKind(staffMembers, staffRecord, "official"),
-      early: staffNamesForKind(staffMembers, staffRecord, "early"),
+      sick: staffDailyReportLabels(
+        staffMembers,
+        staffRecord,
+        "sick",
+        schoolDay,
+        staffLeaveRecords,
+        staffDailyAbsences
+      ),
+      personal: staffDailyReportLabels(
+        staffMembers,
+        staffRecord,
+        "personal",
+        schoolDay,
+        staffLeaveRecords,
+        staffDailyAbsences
+      ),
+      official: staffDailyReportLabels(
+        staffMembers,
+        staffRecord,
+        "official",
+        schoolDay,
+        staffLeaveRecords,
+        staffDailyAbsences
+      ),
+      early: staffDailyReportLabels(
+        staffMembers,
+        staffRecord,
+        "early",
+        schoolDay,
+        staffLeaveRecords,
+        staffDailyAbsences
+      ),
     },
     staffLeaveLines: dayLeaves.map(formatStaffLeaveLine),
     studentLeaveLines: dayStudentLeaves.map((leave) => {

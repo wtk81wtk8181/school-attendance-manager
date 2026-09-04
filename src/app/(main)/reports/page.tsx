@@ -780,6 +780,7 @@ export default function ReportsPage() {
                       reason={row.reason}
                       calledBy={row.calledBy === "尚未致電" ? "" : row.calledBy}
                       calledAt={row.calledAt === "—" ? "" : row.calledAt}
+                      contactMethod={row.contactMethod}
                       onChange={(next) =>
                         updateAbsenceDetails(row.id, {
                           ...next,

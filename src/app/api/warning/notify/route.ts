@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { FREQUENT_LIMIT } from "@/lib/rules";
-import { SCHOOL_NAME } from "@/lib/seed";
+import { MAIL_FROM_NAME, SCHOOL_NAME } from "@/lib/seed";
 import { sendMail } from "@/lib/mailer";
 import type { WarningType } from "@/lib/types";
 import { isSiteRequestAuthorized } from "@/lib/site-auth";
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
   try {
     await sendMail({
-      fromName: `${SCHOOL_NAME}校務處`,
+      fromName: MAIL_FROM_NAME,
       subject: `【${SCHOOL_NAME}】出席警告通知：${body.student.name}（${body.student.className}）`,
       html: warningEmailHtml(body),
       recipients,
@@ -100,6 +100,6 @@ function warningEmailHtml(body: SendBody): string {
       </tbody>
     </table>
     <p>請於平台「警告信」頁面檢視及列印警告信，並登記跟進。</p>
-    <p>${SCHOOL_NAME}校務處（此為系統自動通知）</p>
+    <p>${MAIL_FROM_NAME}（此為系統自動通知）</p>
   `;
 }

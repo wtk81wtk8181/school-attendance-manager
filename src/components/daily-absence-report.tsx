@@ -223,7 +223,7 @@ function ClassMetricsTable({
             </td>
             {classes.map((item) => (
               <td key={item.className} className="whitespace-nowrap border border-zinc-300 px-0.5 py-1">
-                {item.absentCount || ""}
+                {item.absentCount}
               </td>
             ))}
             <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">{totals.absent}</td>

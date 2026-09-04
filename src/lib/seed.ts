@@ -8,6 +8,7 @@ import { OFFICIAL_STAFF_MEMBERS } from "@/data/staff-members";
 
 export const SCHOOL_NAME = "萬鈞伯裘書院";
 export const SCHOOL_NAME_EN = "Man Kwan Pak Kau College";
+export const MAIL_FROM_NAME = `${SCHOOL_NAME}校務處`;
 export const STORAGE_KEY = "hongtao-attendance-v9";
 /** 升級此版本會清空舊缺席紀錄，並換上 Excel 匯入的正式學生名單 */
 export const OPERATIONAL_DATA_VERSION = 3;

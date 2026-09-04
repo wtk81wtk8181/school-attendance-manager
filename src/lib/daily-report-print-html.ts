@@ -305,7 +305,7 @@ function renderClassMetrics(
     .join("");
 
   const absentCells = classes
-    .map((item) => `<td>${item.absentCount || ""}</td>`)
+    .map((item) => `<td>${item.absentCount}</td>`)
     .join("");
   const attendanceCells = classes
     .map((item) => `<td>${escapeHtml(formatPercentExact(item.attendanceRate))}</td>`)

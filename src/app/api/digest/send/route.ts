@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildAbsenceWorkbook } from "@/lib/excel-digest";
 import { reportSendPayload, sendMail } from "@/lib/mailer";
-import { SCHOOL_NAME } from "@/lib/seed";
+import { MAIL_FROM_NAME, SCHOOL_NAME } from "@/lib/seed";
 import type { DigestPayload } from "@/lib/digest";
 import { isSiteRequestAuthorized } from "@/lib/site-auth";
 
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   if (body.sendEmail) {
     try {
       await sendMail({
-        fromName: `${SCHOOL_NAME}校務處`,
+        fromName: MAIL_FROM_NAME,
         subject: `【${SCHOOL_NAME}】${body.payload.schoolDay} 全校缺席名單`,
         html: emailHtml(body.payload, enabledRecipients),
         recipients: enabledRecipients,
@@ -115,6 +115,6 @@ function emailHtml(
     ${studentDetailTable(payload)}
     <p>請班主任核對本班名單；校務處請跟進醫生證明／家長信審核。獲批請假不計入出席率及缺席上限。</p>
     <p>此郵件已發送至：${recipients.map((item) => item.email).join("、")}。</p>
-    <p>${SCHOOL_NAME}校務處</p>
+    <p>${MAIL_FROM_NAME}</p>
   `;
 }

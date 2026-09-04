@@ -13,16 +13,27 @@ import {
 import {
   ABSENCE_REASONS,
   CALLER_RELATIONS,
+  CONTACT_METHODS,
+  inferContactMethod,
   joinCaller,
   joinReason,
   splitCaller,
   splitReason,
 } from "@/lib/absence-options";
+import type { ContactMethod } from "@/lib/types";
+
+export type AbsenceDetailPatch = {
+  reason: string;
+  calledBy: string;
+  calledAt: string;
+  contactMethod: ContactMethod;
+};
 
 export function AbsenceDetailFields({
   reason,
   calledBy,
   calledAt,
+  contactMethod,
   disabled,
   compact,
   asCells,
@@ -32,18 +43,33 @@ export function AbsenceDetailFields({
   reason: string;
   calledBy: string;
   calledAt: string;
+  contactMethod?: ContactMethod;
   disabled?: boolean;
   compact?: boolean;
   asCells?: boolean;
   labels?: boolean;
-  onChange: (next: { reason: string; calledBy: string; calledAt: string }) => void;
+  onChange: (next: AbsenceDetailPatch) => void;
 }) {
   const reasonParts = splitReason(reason);
   const callerParts = splitCaller(calledBy);
+  const method = inferContactMethod(calledBy, contactMethod);
   const stack = compact ? "space-y-1.5 min-w-40" : "grid gap-1.5";
+  const showPerson = method !== "none";
+  const showTime = method === "call";
+  const personLabel = method === "app" ? "申請人士" : "致電人士";
 
   const wrap = (node: ReactNode) =>
     asCells ? <TableCell>{node}</TableCell> : node;
+
+  function emit(next: Partial<AbsenceDetailPatch>) {
+    onChange({
+      reason,
+      calledBy,
+      calledAt,
+      contactMethod: method,
+      ...next,
+    });
+  }
 
   return (
     <>
@@ -57,11 +83,7 @@ export function AbsenceDetailFields({
           disabled={disabled}
           onValueChange={(value) => {
             if (!value) return;
-            onChange({
-              reason: joinReason(value, reasonParts.other),
-              calledBy,
-              calledAt,
-            });
+            emit({ reason: joinReason(value, value === reasonParts.option ? reasonParts.extra : "") });
           }}
         >
           <SelectTrigger className="w-full">
@@ -75,17 +97,23 @@ export function AbsenceDetailFields({
             ))}
           </SelectContent>
         </Select>
+        {reasonParts.option === "病假" ? (
+          <Input
+            disabled={disabled}
+            value={reasonParts.extra}
+            placeholder="病症（例如：感冒、發燒）"
+            onChange={(event) =>
+              emit({ reason: joinReason("病假", event.target.value) })
+            }
+          />
+        ) : null}
         {reasonParts.option === "其他" ? (
           <Input
             disabled={disabled}
-            value={reasonParts.other}
+            value={reasonParts.extra}
             placeholder="請填寫其他原因"
             onChange={(event) =>
-              onChange({
-                reason: joinReason("其他", event.target.value),
-                calledBy,
-                calledAt,
-              })
+              emit({ reason: joinReason("其他", event.target.value) })
             }
           />
         ) : null}
@@ -95,62 +123,89 @@ export function AbsenceDetailFields({
       {wrap(
       <div className={stack}>
         {labels ? (
-          <p className="text-[11px] text-muted-foreground">致電人士</p>
+          <p className="text-[11px] text-muted-foreground">聯絡方式</p>
         ) : null}
         <Select
-          value={callerParts.relation}
+          value={method}
           disabled={disabled}
           onValueChange={(value) => {
             if (!value) return;
-            onChange({
-              reason,
-              calledBy: joinCaller(value, value === "其他" ? "" : callerParts.name),
-              calledAt: value === "尚未致電" ? "" : calledAt,
+            const nextMethod = value as ContactMethod;
+            emit({
+              contactMethod: nextMethod,
+              calledBy:
+                nextMethod === "none"
+                  ? ""
+                  : joinCaller(
+                      callerParts.relation === "尚未致電" ? "母親" : callerParts.relation,
+                      callerParts.name
+                    ),
+              calledAt: nextMethod === "call" ? calledAt : "",
             });
           }}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="致電人士" />
+            <SelectValue placeholder="聯絡方式" />
           </SelectTrigger>
           <SelectContent>
-            {CALLER_RELATIONS.map((item) => (
-              <SelectItem key={item} value={item}>
-                {item}
+            {CONTACT_METHODS.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {callerParts.relation === "其他" ? (
-          <div className="space-y-1">
+        {showPerson ? (
+          <>
             {labels ? (
-              <p className="text-[11px] text-muted-foreground">請註明致電人士</p>
+              <p className="text-[11px] text-muted-foreground">{personLabel}</p>
             ) : null}
-            <Input
+            <Select
+              value={callerParts.relation === "尚未致電" ? "母親" : callerParts.relation}
               disabled={disabled}
-              value={callerParts.name}
-              placeholder="例如：姐姐、鄰居、監護人"
-              onChange={(event) =>
-                onChange({
-                  reason,
-                  calledBy: joinCaller("其他", event.target.value),
-                  calledAt,
-                })
-              }
-            />
-          </div>
-        ) : callerParts.relation !== "尚未致電" ? (
-          <Input
-            disabled={disabled}
-            value={callerParts.name}
-            placeholder="姓氏（可選，如陳太）"
-            onChange={(event) =>
-              onChange({
-                reason,
-                calledBy: joinCaller(callerParts.relation, event.target.value),
-                calledAt,
-              })
-            }
-          />
+              onValueChange={(value) => {
+                if (!value) return;
+                emit({
+                  calledBy: joinCaller(value, value === "其他" ? "" : callerParts.name),
+                });
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={personLabel} />
+              </SelectTrigger>
+              <SelectContent>
+                {CALLER_RELATIONS.filter((item) => item !== "尚未致電").map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {callerParts.relation === "其他" ? (
+              <Input
+                disabled={disabled}
+                value={callerParts.name}
+                placeholder="例如：姐姐、鄰居、監護人"
+                onChange={(event) =>
+                  emit({ calledBy: joinCaller("其他", event.target.value) })
+                }
+              />
+            ) : (
+              <Input
+                disabled={disabled}
+                value={callerParts.name}
+                placeholder="姓氏（可選，如陳太）"
+                onChange={(event) =>
+                  emit({
+                    calledBy: joinCaller(
+                      callerParts.relation === "尚未致電" ? "母親" : callerParts.relation,
+                      event.target.value
+                    ),
+                  })
+                }
+              />
+            )}
+          </>
         ) : null}
       </div>
       )}
@@ -158,20 +213,16 @@ export function AbsenceDetailFields({
       {wrap(
       <div className={stack}>
         {labels ? (
-          <p className="text-[11px] text-muted-foreground">致電時間</p>
+          <p className="text-[11px] text-muted-foreground">
+            {showTime ? "致電時間" : "聯絡時間"}
+          </p>
         ) : null}
         <Input
           type="time"
-          disabled={disabled}
-          value={calledAt}
+          disabled={disabled || !showTime}
+          value={showTime ? calledAt : ""}
           className={compact ? "w-32" : undefined}
-          onChange={(event) =>
-            onChange({
-              reason,
-              calledBy,
-              calledAt: event.target.value,
-            })
-          }
+          onChange={(event) => emit({ calledAt: event.target.value })}
         />
       </div>
       )}

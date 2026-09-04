@@ -1,4 +1,5 @@
 import { parseEmailAddresses, toMailRecipients } from "@/lib/email-utils";
+import { MAIL_FROM_NAME } from "@/lib/seed";
 
 export { parseEmailAddresses, toMailRecipients };
 
@@ -13,7 +14,7 @@ export function smtpRequiredMessage() {
 export async function sendMail(input: {
   subject: string;
   html: string;
-  fromName: string;
+  fromName?: string;
   recipients: Array<{ name: string; email: string }>;
   attachments?: Array<{
     filename: string;
@@ -51,7 +52,10 @@ export async function sendMail(input: {
 
   const from = process.env.SMTP_FROM || process.env.SMTP_USER || "attendance@localhost";
   await transporter.sendMail({
-    from: `${input.fromName} <${from}>`,
+    from: {
+      name: input.fromName?.trim() || MAIL_FROM_NAME,
+      address: from,
+    },
     to: input.recipients.map((item) => item.email).join(", "),
     subject: input.subject,
     html: input.html,

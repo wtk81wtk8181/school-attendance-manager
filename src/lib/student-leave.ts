@@ -53,19 +53,22 @@ export function effectiveAbsencesForDay(
     if (covered.has(leave.studentId)) continue;
     const student = students.find((item) => item.id === leave.studentId);
     if (!student) continue;
+    const category = studentLeaveCategoryLabel(leave.category);
+    const activity = leave.activity.trim();
+    const extra = leave.reason.trim();
+    const reason = extra || (activity ? `${category}（${activity}）` : category);
     synthetic.push({
       id: `pleave-${leave.id}-${schoolDay}`,
       studentId: leave.studentId,
       date: schoolDay,
       days: 1,
       eclassStatus: leave.status,
-      reason: leave.reason.trim() || studentLeaveCategoryLabel(leave.category),
+      reason,
+      contactMethod: "none",
       documentType: "none",
       documentSubmitted: false,
       reviewStatus: "pending",
-      notes: leave.activity.trim()
-        ? `預先登記：${leave.activity.trim()}`
-        : "預先登記請假",
+      notes: activity ? `預先登記：${activity}` : "預先登記請假",
       source: "office",
     });
   }

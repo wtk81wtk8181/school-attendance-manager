@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildMonthlyWorkbook } from "@/lib/excel-monthly";
-import { SCHOOL_NAME } from "@/lib/seed";
+import { MAIL_FROM_NAME, SCHOOL_NAME } from "@/lib/seed";
 import { reportSendPayload, sendMail } from "@/lib/mailer";
 import type { MonthlyReportPayload } from "@/lib/monthly-report";
 import { isSiteRequestAuthorized } from "@/lib/site-auth";
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   if (body.sendEmail) {
     try {
       await sendMail({
-        fromName: `${SCHOOL_NAME}校務處`,
+        fromName: MAIL_FROM_NAME,
         subject: `【${SCHOOL_NAME}】${body.payload.monthLabel} 每月各班缺席率報告`,
         html: monthlyEmailHtml(body.payload, enabledRecipients),
         recipients: enabledRecipients,
@@ -86,6 +86,6 @@ function monthlyEmailHtml(
     </table>
     <p>獲批請假不計入出席率；遲到另行統計。學生缺席＋遲到超過 3 次者，系統會自動發出警告信並電郵通知。</p>
     <p>此郵件已發送至：${recipients.map((item) => `${item.name} &lt;${item.email}&gt;`).join("、")}。</p>
-    <p>${SCHOOL_NAME}校務處</p>
+    <p>${MAIL_FROM_NAME}</p>
   `;
 }

@@ -218,6 +218,7 @@ export function validateAdminSectionRows(
       for (const field of [
         "calledBy",
         "calledAt",
+        "contactMethod",
         "reviewedBy",
         "reviewedAt",
         "notes",
@@ -226,6 +227,11 @@ export function validateAdminSectionRows(
       ] as const) {
         if (row[field] !== undefined && row[field] !== null && typeof row[field] !== "string") {
           return `${rowLabel}的 ${field} 必須是文字。`;
+        }
+      }
+      if (row.contactMethod !== undefined && row.contactMethod !== null && row.contactMethod !== "") {
+        if (!["none", "call", "app"].includes(String(row.contactMethod))) {
+          return `${rowLabel}的 contactMethod 無效。`;
         }
       }
       if (!allowedDocumentTypes.has(String(row.documentType ?? ""))) {

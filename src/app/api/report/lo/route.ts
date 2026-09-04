@@ -3,7 +3,7 @@ import { formatShortDate } from "@/lib/format";
 import { reportSendPayload, sendMail } from "@/lib/mailer";
 import { buildLoWorkbook } from "@/lib/excel-lo";
 import type { LoReportPayload } from "@/lib/lo-report";
-import { SCHOOL_NAME } from "@/lib/seed";
+import { MAIL_FROM_NAME, SCHOOL_NAME } from "@/lib/seed";
 import { isSiteRequestAuthorized } from "@/lib/site-auth";
 import { formLabel } from "@/lib/rules";
 
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   if (body.sendEmail) {
     try {
       await sendMail({
-        fromName: `${SCHOOL_NAME}校務處`,
+        fromName: MAIL_FROM_NAME,
         subject: `【${SCHOOL_NAME}】${filename.replace(/\.xlsx$/, "")}`,
         html: loEmailHtml(body.payload, enabledRecipients),
         recipients: enabledRecipients,
@@ -98,6 +98,6 @@ function loEmailHtml(
       <tbody>${dayRows}</tbody>
     </table>
     <p>此郵件已發送至：${recipients.map((item) => `${item.name} &lt;${item.email}&gt;`).join("、")}。</p>
-    <p>${SCHOOL_NAME}校務處</p>
+    <p>${MAIL_FROM_NAME}</p>
   `;
 }

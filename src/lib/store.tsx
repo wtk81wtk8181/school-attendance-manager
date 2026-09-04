@@ -14,7 +14,7 @@ import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lat
 import { studentsHomeroomTeachersChanged } from "@/lib/roster";
 import { formAHiddenStudentsChanged } from "@/lib/hidden-students";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
-import { isGenericAttendanceReason, normalizeAbsenceDays } from "@/lib/attendance-extras";
+import { isGenericAttendanceReason, normalizeAbsenceDays, reviewStatusForAttendance } from "@/lib/attendance-extras";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
 import {
   mergeSharedState,
@@ -76,6 +76,7 @@ import type {
   User,
   WarningLetter,
   AppearanceIssue,
+  ContactMethod,
 } from "@/lib/types";
 
 const ADMIN_EDITABLE_SECTIONS = new Set<string>(ADMIN_JSON_SECTIONS);
@@ -89,6 +90,7 @@ interface ReviewInput {
   notes: string;
   calledBy: string;
   calledAt: string;
+  contactMethod?: ContactMethod;
 }
 
 interface FollowUpInput {
@@ -107,6 +109,7 @@ interface AbsenceDetailsInput {
   reason: string;
   calledBy: string;
   calledAt: string;
+  contactMethod?: ContactMethod;
   create?: {
     studentId: string;
     date: string;
@@ -1027,6 +1030,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             status === "early"
               ? (extras?.earlyReason?.trim() || keepReason)
               : keepReason;
+          const nextReview = reviewStatusForAttendance(
+            status,
+            existing?.eclassStatus,
+            existing?.reviewStatus
+          );
           const nextRecord: AbsenceRecord = existing
             ? {
                 ...existing,
@@ -1035,6 +1043,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 reason: nextReason,
                 source: "office",
                 notes: "校務處於學生出勤頁更新當日狀態",
+                reviewStatus: nextReview,
                 reviewedBy: currentUser.id,
                 reviewedAt: nowIso(),
                 returnedAt:
@@ -1059,7 +1068,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 reason: nextReason,
                 documentType: "none",
                 documentSubmitted: false,
-                reviewStatus: "pending",
+                reviewStatus: nextReview,
                 reviewedBy: currentUser.id,
                 reviewedAt: nowIso(),
                 notes: "校務處於學生出勤頁登記",
@@ -1159,9 +1168,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             reason: input.reason.trim() || "病假",
             calledBy: input.calledBy.trim() || undefined,
             calledAt: input.calledAt.trim() || undefined,
+            contactMethod: input.contactMethod,
             documentType: "none",
             documentSubmitted: false,
-            reviewStatus: "pending",
+            reviewStatus: reviewStatusForAttendance(create.status),
             reviewedBy: currentUser.id,
             reviewedAt,
             notes: "由預先請假紀錄建立",
@@ -1192,6 +1202,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                     reason: input.reason.trim() || item.reason,
                     calledBy: input.calledBy.trim() || undefined,
                     calledAt: input.calledAt.trim() || undefined,
+                    contactMethod: input.contactMethod ?? item.contactMethod,
                     reviewedBy: currentUser.id,
                     reviewedAt: nowIso(),
                   }
@@ -1226,6 +1237,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 reason: input.reason,
                 calledBy: input.calledBy.trim() || undefined,
                 calledAt: input.calledAt.trim() || undefined,
+                contactMethod: input.contactMethod ?? item.contactMethod,
                 notes: input.notes.trim() || undefined,
                 reviewedBy: currentUser.id,
                 reviewedAt: nowIso(),

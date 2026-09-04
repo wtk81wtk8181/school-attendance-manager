@@ -155,7 +155,7 @@ export function frequentOccurrences(records: AbsenceRecord[]): number {
 
 export function lateOccurrences(records: AbsenceRecord[]): number {
   return records.filter(
-    (record) => record.eclassStatus === "late" && record.reviewStatus !== "approved"
+    (record) => record.eclassStatus === "late" && record.reviewStatus !== "rejected"
   ).length;
 }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildAppearanceWorkbook } from "@/lib/excel-appearance";
-import { SCHOOL_NAME } from "@/lib/seed";
+import { MAIL_FROM_NAME, SCHOOL_NAME } from "@/lib/seed";
 import { reportSendPayload, sendMail } from "@/lib/mailer";
 import type { AppearanceReportPayload } from "@/lib/appearance-report";
 import { isSiteRequestAuthorized } from "@/lib/site-auth";
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   if (body.sendEmail) {
     try {
       await sendMail({
-        fromName: `${SCHOOL_NAME}校務處`,
+        fromName: MAIL_FROM_NAME,
         subject: `【${SCHOOL_NAME}】（${body.payload.monthLabel}）各班出席表現及儀容百份比報告`,
         html: appearanceEmailHtml(body.payload, enabledRecipients),
         recipients: enabledRecipients,
@@ -83,6 +83,6 @@ function appearanceEmailHtml(
       <tbody>${lines}</tbody>
     </table>
     <p>此郵件已發送至：${recipients.map((item) => `${item.name} &lt;${item.email}&gt;`).join("、")}。</p>
-    <p>${SCHOOL_NAME}校務處</p>
+    <p>${MAIL_FROM_NAME}</p>
   `;
 }

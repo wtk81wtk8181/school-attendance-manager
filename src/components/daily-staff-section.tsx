@@ -384,7 +384,7 @@ export function DailyStaffSection({ date }: { date: string }) {
           <DialogHeader>
             <DialogTitle>提早登記教職員請假</DialogTitle>
             <DialogDescription>
-              可預先輸入複診、手術、白事等請假；到請假當日會自動顯示於每日缺席名單及總覽。事假／公假可填寫外出活動或比賽名稱。
+              可預先輸入病假、公假、複診等；原因會顯示於每日缺席報告。超過兩天會一併列出請假日子。
             </DialogDescription>
           </DialogHeader>
           <form className="space-y-3" onSubmit={submitLeave}>
@@ -445,11 +445,11 @@ export function DailyStaffSection({ date }: { date: string }) {
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="leave-activity">外出活動／比賽（選填）</Label>
+              <Label htmlFor="leave-activity">原因／外出活動（選填）</Label>
               <Input
                 id="leave-activity"
                 value={leaveActivity}
-                placeholder="例如：學界田徑比賽、境外交流團"
+                placeholder="例如：感冒、學界田徑比賽、境外交流團"
                 onChange={(event) => setLeaveActivity(event.target.value)}
               />
             </div>
