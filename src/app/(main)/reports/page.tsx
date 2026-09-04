@@ -754,7 +754,7 @@ export default function ReportsPage() {
                 <TableHead>學生姓名</TableHead>
                 <TableHead>請假／缺席原因</TableHead>
                 <TableHead>致電人士／聯絡方式</TableHead>
-                <TableHead>致電時間</TableHead>
+                <TableHead>申請／致電時間</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -781,6 +781,8 @@ export default function ReportsPage() {
                       calledBy={row.calledBy === "尚未致電" ? "" : row.calledBy}
                       calledAt={row.calledAt === "—" ? "" : row.calledAt}
                       contactMethod={row.contactMethod}
+                      contactedOn={row.contactedOn ?? ""}
+                      recordDate={row.date}
                       onChange={(next) =>
                         updateAbsenceDetails(row.id, {
                           ...next,

@@ -83,10 +83,15 @@ async function launchBrowser() {
     const chromium = chromiumModule.default;
     chromium.setGraphicsMode = false;
 
-    for (const item of FONT_FILES) {
-      const filePath = fontPath(item.file);
-      if (existsSync(filePath)) {
-        await chromium.font(filePath);
+    const loadFont = (
+      chromium as { font?: (filePath: string) => Promise<unknown> }
+    ).font;
+    if (loadFont) {
+      for (const item of FONT_FILES) {
+        const filePath = fontPath(item.file);
+        if (existsSync(filePath)) {
+          await loadFont(filePath);
+        }
       }
     }
 

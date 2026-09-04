@@ -85,14 +85,20 @@ export function inferContactMethod(
 export function formatContactSuffix(
   calledBy?: string,
   calledAt?: string,
-  contactMethod?: ContactMethod
+  contactMethod?: ContactMethod,
+  contactedOn?: string
 ): string {
   const method = inferContactMethod(calledBy, contactMethod);
   const caller =
     calledBy?.trim() && calledBy !== "尚未致電" ? calledBy.trim() : "";
   const time = calledAt?.trim() && calledAt !== "—" ? calledAt.trim() : "";
+  const dateLabel = formatContactDate(contactedOn);
   if (method === "app") {
-    return caller ? `（APP申請：${caller}）` : "（APP申請）";
+    const when = [dateLabel, time].filter(Boolean).join(" ");
+    if (caller && when) return `（APP申請：${caller} ${when}）`;
+    if (caller) return `（APP申請：${caller}）`;
+    if (when) return `（APP申請 ${when}）`;
+    return "（APP申請）";
   }
   if (method === "call") {
     if (caller && time) return `(${caller})${time}`;
@@ -100,4 +106,11 @@ export function formatContactSuffix(
     return time;
   }
   return "";
+}
+
+function formatContactDate(iso?: string): string {
+  const value = iso?.trim();
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
+  const [, month, day] = value.split("-");
+  return `${Number(day)}/${Number(month)}`;
 }

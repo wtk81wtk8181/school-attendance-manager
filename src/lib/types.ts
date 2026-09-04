@@ -66,6 +66,8 @@ export interface AbsenceRecord {
   calledAt?: string;
   /** 致電或 APP 申請；未填則依 calledBy 推斷 */
   contactMethod?: ContactMethod;
+  /** APP 申請日期 YYYY-MM-DD */
+  contactedOn?: string;
   documentType: DocumentType;
   documentSubmitted: boolean;
   reviewStatus: ReviewStatus;

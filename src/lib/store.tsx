@@ -91,6 +91,7 @@ interface ReviewInput {
   calledBy: string;
   calledAt: string;
   contactMethod?: ContactMethod;
+  contactedOn?: string;
 }
 
 interface FollowUpInput {
@@ -110,6 +111,7 @@ interface AbsenceDetailsInput {
   calledBy: string;
   calledAt: string;
   contactMethod?: ContactMethod;
+  contactedOn?: string;
   create?: {
     studentId: string;
     date: string;
@@ -1169,6 +1171,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             calledBy: input.calledBy.trim() || undefined,
             calledAt: input.calledAt.trim() || undefined,
             contactMethod: input.contactMethod,
+            contactedOn: input.contactedOn?.trim() || undefined,
             documentType: "none",
             documentSubmitted: false,
             reviewStatus: reviewStatusForAttendance(create.status),
@@ -1203,6 +1206,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                     calledBy: input.calledBy.trim() || undefined,
                     calledAt: input.calledAt.trim() || undefined,
                     contactMethod: input.contactMethod ?? item.contactMethod,
+                    contactedOn: input.contactedOn?.trim() || undefined,
                     reviewedBy: currentUser.id,
                     reviewedAt: nowIso(),
                   }
@@ -1238,6 +1242,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 calledBy: input.calledBy.trim() || undefined,
                 calledAt: input.calledAt.trim() || undefined,
                 contactMethod: input.contactMethod ?? item.contactMethod,
+                contactedOn: input.contactedOn?.trim() || undefined,
                 notes: input.notes.trim() || undefined,
                 reviewedBy: currentUser.id,
                 reviewedAt: nowIso(),

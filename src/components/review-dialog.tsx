@@ -69,6 +69,7 @@ function ReviewForm({
   const [calledBy, setCalledBy] = useState(record.calledBy ?? "");
   const [calledAt, setCalledAt] = useState(record.calledAt ?? "");
   const [contactMethod, setContactMethod] = useState(record.contactMethod);
+  const [contactedOn, setContactedOn] = useState(record.contactedOn ?? "");
   const [notes, setNotes] = useState(record.notes ?? "");
 
   const canApprove =
@@ -86,6 +87,7 @@ function ReviewForm({
       calledBy,
       calledAt,
       contactMethod,
+      contactedOn,
     });
     onOpenChange(false);
   }
@@ -105,7 +107,7 @@ function ReviewForm({
           <div className="grid grid-cols-3 gap-3 text-sm font-medium">
             <span>請假／缺席原因</span>
             <span>致電人士／聯絡方式</span>
-            <span>致電時間</span>
+            <span>申請／致電時間</span>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <AbsenceDetailFields
@@ -113,11 +115,14 @@ function ReviewForm({
               calledBy={calledBy}
               calledAt={calledAt}
               contactMethod={contactMethod}
+              contactedOn={contactedOn}
+              recordDate={record.date}
               onChange={(next) => {
                 setReason(next.reason);
                 setCalledBy(next.calledBy);
                 setCalledAt(next.calledAt);
                 setContactMethod(next.contactMethod);
+                setContactedOn(next.contactedOn);
               }}
             />
           </div>

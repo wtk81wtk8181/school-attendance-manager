@@ -219,6 +219,7 @@ export function validateAdminSectionRows(
         "calledBy",
         "calledAt",
         "contactMethod",
+        "contactedOn",
         "reviewedBy",
         "reviewedAt",
         "notes",

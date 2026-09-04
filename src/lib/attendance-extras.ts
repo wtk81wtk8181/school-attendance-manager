@@ -19,6 +19,7 @@ export const ABSENCE_ADMIN_COLUMNS = [
   "calledBy",
   "calledAt",
   "contactMethod",
+  "contactedOn",
   "documentType",
   "documentSubmitted",
   "reviewStatus",
@@ -82,6 +83,7 @@ export function normalizeAbsenceRecord(record: AbsenceRecord): AbsenceRecord {
     calledBy: optionalString(record.calledBy),
     calledAt: optionalString(record.calledAt),
     contactMethod,
+    contactedOn: optionalString(record.contactedOn),
     documentType: ["doctor", "parent", "none"].includes(record.documentType)
       ? record.documentType
       : "none",
@@ -125,7 +127,8 @@ export function formatHalfAbsentReportLine(
   returnedAt: string,
   calledBy?: string,
   calledAt?: string,
-  contactMethod?: ContactMethod
+  contactMethod?: ContactMethod,
+  contactedOn?: string
 ): string {
   const body = cleanedReason(reason);
   const cause =
@@ -134,7 +137,7 @@ export function formatHalfAbsentReportLine(
       : body.endsWith("缺席")
         ? `因${body}`
         : `因${body}缺席`;
-  const callSuffix = formatContactSuffix(calledBy, calledAt, contactMethod);
+  const callSuffix = formatContactSuffix(calledBy, calledAt, contactMethod, contactedOn);
   const time = returnedAt.trim() || "—";
   return `${name}${cause}${callSuffix}/(已於${time}回校)`;
 }
@@ -163,6 +166,7 @@ export function formatAbsenceRecordLine(
     | "calledBy"
     | "calledAt"
     | "contactMethod"
+    | "contactedOn"
   >
 ): string {
   if (record.eclassStatus === "half_absent") {
@@ -172,7 +176,8 @@ export function formatAbsenceRecordLine(
       record.returnedAt ?? "",
       record.calledBy,
       record.calledAt,
-      record.contactMethod
+      record.contactMethod,
+      record.contactedOn
     );
   }
   if (record.eclassStatus === "early") {

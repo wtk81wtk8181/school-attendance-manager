@@ -59,6 +59,7 @@ export interface DailyAbsenceRow {
   calledBy: string;
   calledAt: string;
   contactMethod?: ContactMethod;
+  contactedOn?: string;
   returnedAt: string;
   earlyAt: string;
   earlyPickup?: EarlyPickup;
@@ -145,6 +146,7 @@ export function buildDailyAbsenceRows(
         calledBy: item.calledBy?.trim() || "尚未致電",
         calledAt: item.calledAt?.trim() || "—",
         contactMethod: item.contactMethod,
+        contactedOn: item.contactedOn,
         returnedAt: item.returnedAt?.trim() || "",
         earlyAt: item.earlyAt?.trim() || "",
         earlyPickup: item.earlyPickup,
@@ -165,7 +167,8 @@ export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
       row.returnedAt,
       row.calledBy,
       row.calledAt,
-      row.contactMethod
+      row.contactMethod,
+      row.contactedOn
     );
   }
   if (row.statusKey === "early") {
@@ -173,7 +176,7 @@ export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
   }
   const reason = row.reason.trim() || row.status;
   const half = row.days === 0.5 ? "（半日）" : "";
-  return `${name}：${reason}${half}${formatContactSuffix(row.calledBy, row.calledAt, row.contactMethod)}`;
+  return `${name}：${reason}${half}${formatContactSuffix(row.calledBy, row.calledAt, row.contactMethod, row.contactedOn)}`;
 }
 
 function rate(numerator: number, denominator: number): number {

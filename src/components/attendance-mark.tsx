@@ -82,6 +82,7 @@ export function AttendanceMark({
     calledBy: string;
     calledAt: string;
     contactMethod: ContactMethod;
+    contactedOn: string;
   }) => void;
 }) {
   const [earlyOpen, setEarlyOpen] = useState(false);
@@ -181,6 +182,8 @@ export function AttendanceMark({
             calledBy={record.calledBy ?? ""}
             calledAt={record.calledAt ?? ""}
             contactMethod={record.contactMethod}
+            contactedOn={record.contactedOn ?? ""}
+            recordDate={record.date}
             disabled={disabled}
             onChange={(next) => onDetailsChange?.(next)}
           />

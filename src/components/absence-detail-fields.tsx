@@ -27,6 +27,7 @@ export type AbsenceDetailPatch = {
   calledBy: string;
   calledAt: string;
   contactMethod: ContactMethod;
+  contactedOn: string;
 };
 
 export function AbsenceDetailFields({
@@ -34,6 +35,8 @@ export function AbsenceDetailFields({
   calledBy,
   calledAt,
   contactMethod,
+  contactedOn,
+  recordDate,
   disabled,
   compact,
   asCells,
@@ -44,6 +47,8 @@ export function AbsenceDetailFields({
   calledBy: string;
   calledAt: string;
   contactMethod?: ContactMethod;
+  contactedOn?: string;
+  recordDate?: string;
   disabled?: boolean;
   compact?: boolean;
   asCells?: boolean;
@@ -55,7 +60,9 @@ export function AbsenceDetailFields({
   const method = inferContactMethod(calledBy, contactMethod);
   const stack = compact ? "space-y-1.5 min-w-40" : "grid gap-1.5";
   const showPerson = method !== "none";
-  const showTime = method === "call";
+  const showTime = method === "call" || method === "app";
+  const showDate = method === "app";
+  const appDate = contactedOn?.trim() || recordDate || "";
 
   const wrap = (node: ReactNode) =>
     asCells ? <TableCell className="whitespace-normal align-top">{node}</TableCell> : node;
@@ -66,6 +73,7 @@ export function AbsenceDetailFields({
       calledBy,
       calledAt,
       contactMethod: method,
+      contactedOn: appDate,
       ...next,
     });
   }
@@ -135,7 +143,7 @@ export function AbsenceDetailFields({
             onValueChange={(value) => {
               if (!value) return;
               if (value === "尚未致電") {
-                emit({ calledBy: "", contactMethod: "none", calledAt: "" });
+                emit({ calledBy: "", contactMethod: "none", calledAt: "", contactedOn: "" });
                 return;
               }
               emit({
@@ -170,7 +178,9 @@ export function AbsenceDetailFields({
                         callerParts.relation === "尚未致電" ? "母親" : callerParts.relation,
                         callerParts.name
                       ),
-                calledAt: nextMethod === "call" ? calledAt : "",
+                calledAt: nextMethod === "none" ? "" : calledAt,
+                contactedOn:
+                  nextMethod === "app" ? contactedOn?.trim() || recordDate || "" : "",
               });
             }}
           >
@@ -214,8 +224,16 @@ export function AbsenceDetailFields({
       <div className={stack}>
         {labels ? (
           <p className="text-[11px] text-muted-foreground">
-            {showTime ? "致電時間" : "聯絡時間"}
+            {method === "app" ? "APP申請日期／時間" : "致電時間"}
           </p>
+        ) : null}
+        {showDate ? (
+          <Input
+            type="date"
+            disabled={disabled}
+            value={appDate}
+            onChange={(event) => emit({ contactedOn: event.target.value })}
+          />
         ) : null}
         <Input
           type="time"
