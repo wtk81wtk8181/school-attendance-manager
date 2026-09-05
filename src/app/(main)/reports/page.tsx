@@ -783,6 +783,9 @@ export default function ReportsPage() {
                       contactMethod={row.contactMethod}
                       contactedOn={row.contactedOn ?? ""}
                       recordDate={row.date}
+                      eclassStatus={row.statusKey}
+                      documentType={row.documentType}
+                      documentSubmitted={row.documentSubmitted}
                       onChange={(next) =>
                         updateAbsenceDetails(row.id, {
                           ...next,

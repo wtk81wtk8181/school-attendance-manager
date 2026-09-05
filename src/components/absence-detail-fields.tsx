@@ -10,17 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ABSENCE_REASONS,
   CALLER_RELATIONS,
   CONTACT_METHODS,
+  SICK_SYMPTOM_OTHER,
+  SICK_SYMPTOMS,
   inferContactMethod,
   joinCaller,
   joinReason,
+  joinSickSymptom,
   splitCaller,
   splitReason,
+  splitSickSymptom,
 } from "@/lib/absence-options";
-import type { ContactMethod } from "@/lib/types";
+import type { ContactMethod, DocumentType, EclassStatus } from "@/lib/types";
 
 export type AbsenceDetailPatch = {
   reason: string;
@@ -28,6 +33,8 @@ export type AbsenceDetailPatch = {
   calledAt: string;
   contactMethod: ContactMethod;
   contactedOn: string;
+  documentType?: DocumentType;
+  documentSubmitted?: boolean;
 };
 
 export function AbsenceDetailFields({
@@ -37,6 +44,9 @@ export function AbsenceDetailFields({
   contactMethod,
   contactedOn,
   recordDate,
+  eclassStatus,
+  documentType = "none",
+  documentSubmitted = false,
   disabled,
   compact,
   asCells,
@@ -49,6 +59,9 @@ export function AbsenceDetailFields({
   contactMethod?: ContactMethod;
   contactedOn?: string;
   recordDate?: string;
+  eclassStatus?: EclassStatus;
+  documentType?: DocumentType;
+  documentSubmitted?: boolean;
   disabled?: boolean;
   compact?: boolean;
   asCells?: boolean;
@@ -56,6 +69,7 @@ export function AbsenceDetailFields({
   onChange: (next: AbsenceDetailPatch) => void;
 }) {
   const reasonParts = splitReason(reason);
+  const sickParts = splitSickSymptom(reasonParts.extra);
   const callerParts = splitCaller(calledBy);
   const method = inferContactMethod(calledBy, contactMethod);
   const stack = compact ? "space-y-1.5 min-w-40" : "grid gap-1.5";
@@ -63,6 +77,7 @@ export function AbsenceDetailFields({
   const showTime = method === "call" || method === "app";
   const showDate = method === "app";
   const appDate = contactedOn?.trim() || recordDate || "";
+  const lateExempted = documentType === "doctor" && documentSubmitted;
 
   const wrap = (node: ReactNode) =>
     asCells ? <TableCell className="whitespace-normal align-top">{node}</TableCell> : node;
@@ -74,6 +89,8 @@ export function AbsenceDetailFields({
       calledAt,
       contactMethod: method,
       contactedOn: appDate,
+      documentType,
+      documentSubmitted,
       ...next,
     });
   }
@@ -105,14 +122,48 @@ export function AbsenceDetailFields({
           </SelectContent>
         </Select>
         {reasonParts.option === "病假" ? (
-          <Input
-            disabled={disabled}
-            value={reasonParts.extra}
-            placeholder="病症（例如：感冒、發燒）"
-            onChange={(event) =>
-              emit({ reason: joinReason("病假", event.target.value) })
-            }
-          />
+          <>
+            <Select
+              value={sickParts.symptom}
+              disabled={disabled}
+              onValueChange={(value) => {
+                if (!value) return;
+                emit({
+                  reason: joinReason(
+                    "病假",
+                    joinSickSymptom(value, value === sickParts.symptom ? sickParts.custom : "")
+                  ),
+                });
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="病症" />
+              </SelectTrigger>
+              <SelectContent>
+                {SICK_SYMPTOMS.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+                <SelectItem value={SICK_SYMPTOM_OTHER}>其他</SelectItem>
+              </SelectContent>
+            </Select>
+            {sickParts.symptom === SICK_SYMPTOM_OTHER ? (
+              <Input
+                disabled={disabled}
+                value={sickParts.custom}
+                placeholder="請填寫其他病症"
+                onChange={(event) =>
+                  emit({
+                    reason: joinReason(
+                      "病假",
+                      joinSickSymptom(SICK_SYMPTOM_OTHER, event.target.value)
+                    ),
+                  })
+                }
+              />
+            ) : null}
+          </>
         ) : null}
         {reasonParts.option === "其他" ? (
           <Input
@@ -123,6 +174,24 @@ export function AbsenceDetailFields({
               emit({ reason: joinReason("其他", event.target.value) })
             }
           />
+        ) : null}
+        {eclassStatus === "late" ? (
+          <label className="flex items-start gap-2 text-[11px] leading-snug text-slate-600">
+            <Checkbox
+              className="mt-0.5"
+              disabled={disabled}
+              checked={lateExempted}
+              onCheckedChange={(checked) =>
+                emit({
+                  documentType: checked === true ? "doctor" : "none",
+                  documentSubmitted: checked === true,
+                })
+              }
+            />
+            <span>
+              已交醫生證明（記錄遲到，但不計入違規次數）
+            </span>
+          </label>
         ) : null}
       </div>
       )}

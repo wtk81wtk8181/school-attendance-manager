@@ -12,6 +12,19 @@ export const ABSENCE_REASONS = [
   "其他",
 ] as const;
 
+export const SICK_SYMPTOMS = [
+  "發燒",
+  "扭傷腳",
+  "扭傷手",
+  "感冒",
+  "肚痛",
+  "吐瀉",
+  "嘔吐",
+  "咳嗽",
+] as const;
+
+export const SICK_SYMPTOM_OTHER = "其他";
+
 export const CONTACT_METHODS = [
   { value: "none", label: "尚未聯絡" },
   { value: "call", label: "致電" },
@@ -45,9 +58,26 @@ export function splitReason(reason: string): { option: string; extra: string } {
   return { option: "其他", extra: trimmed };
 }
 
+export function splitSickSymptom(extra: string): { symptom: string; custom: string } {
+  const detail = extra.trim();
+  if ((SICK_SYMPTOMS as readonly string[]).includes(detail)) {
+    return { symptom: detail, custom: "" };
+  }
+  if (!detail) return { symptom: SICK_SYMPTOMS[0], custom: "" };
+  return { symptom: SICK_SYMPTOM_OTHER, custom: detail };
+}
+
+export function joinSickSymptom(symptom: string, custom: string): string {
+  if (symptom === SICK_SYMPTOM_OTHER) return custom.trim();
+  return symptom;
+}
+
 export function joinReason(option: string, extra: string): string {
   const detail = extra.trim();
-  if (option === "病假") return detail ? `病假（${detail}）` : "病假";
+  if (option === "病假") {
+    const symptom = detail || SICK_SYMPTOMS[0];
+    return `病假（${symptom}）`;
+  }
   if (option === "其他") return detail || "其他";
   return option;
 }

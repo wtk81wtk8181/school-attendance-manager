@@ -23,7 +23,7 @@ import {
 import { EARLY_PICKUP_OPTIONS, earlyPickupLabel } from "@/lib/attendance-extras";
 import { hongKongHHMM } from "@/lib/digest";
 import { cn } from "@/lib/utils";
-import type { AbsenceRecord, ContactMethod, DayAttendance, EarlyPickup } from "@/lib/types";
+import type { AbsenceRecord, ContactMethod, DayAttendance, DocumentType, EarlyPickup } from "@/lib/types";
 
 const OPTIONS: { value: DayAttendance; label: string; active: string }[] = [
   {
@@ -83,6 +83,8 @@ export function AttendanceMark({
     calledAt: string;
     contactMethod: ContactMethod;
     contactedOn: string;
+    documentType?: DocumentType;
+    documentSubmitted?: boolean;
   }) => void;
 }) {
   const [earlyOpen, setEarlyOpen] = useState(false);
@@ -184,6 +186,9 @@ export function AttendanceMark({
             contactMethod={record.contactMethod}
             contactedOn={record.contactedOn ?? ""}
             recordDate={record.date}
+            eclassStatus={record.eclassStatus}
+            documentType={record.documentType}
+            documentSubmitted={record.documentSubmitted}
             disabled={disabled}
             onChange={(next) => onDetailsChange?.(next)}
           />

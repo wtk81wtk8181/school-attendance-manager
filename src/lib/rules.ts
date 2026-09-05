@@ -153,10 +153,25 @@ export function frequentOccurrences(records: AbsenceRecord[]): number {
   return absenceOccurrences(records) + lateOccurrences(records);
 }
 
+/** 有醫生證明的遲到仍會記錄，但不計入違規／警告次數 */
+export function isDoctorExemptedLate(record: AbsenceRecord): boolean {
+  return (
+    record.eclassStatus === "late" &&
+    record.documentType === "doctor" &&
+    record.documentSubmitted
+  );
+}
+
+export function isLateViolation(record: AbsenceRecord): boolean {
+  return (
+    record.eclassStatus === "late" &&
+    record.reviewStatus !== "rejected" &&
+    !isDoctorExemptedLate(record)
+  );
+}
+
 export function lateOccurrences(records: AbsenceRecord[]): number {
-  return records.filter(
-    (record) => record.eclassStatus === "late" && record.reviewStatus !== "rejected"
-  ).length;
+  return records.filter(isLateViolation).length;
 }
 
 export type WarningCategory = "absence" | "late";

@@ -2,6 +2,7 @@ import {
   attendanceStatusLabel,
   classLabel,
   isCountedTowardAbsence,
+  isLateViolation,
   pendingDays,
 } from "@/lib/rules";
 import { formatAbsenceRecordLine } from "@/lib/attendance-extras";
@@ -140,7 +141,7 @@ export function buildMonthlyReport(
       absentCount: classRecords.filter(
         (item) => item.eclassStatus === "absent" || item.eclassStatus === "half_absent"
       ).length,
-      lateCount: classRecords.filter((item) => item.eclassStatus === "late").length,
+      lateCount: classRecords.filter(isLateViolation).length,
       leaveCount: classRecords.filter((item) => item.eclassStatus === "leave").length,
       countedAbsenceDays,
       approvedLeaveDays: classRecords

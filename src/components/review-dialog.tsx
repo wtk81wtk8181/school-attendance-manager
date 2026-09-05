@@ -117,12 +117,19 @@ function ReviewForm({
               contactMethod={contactMethod}
               contactedOn={contactedOn}
               recordDate={record.date}
+              eclassStatus={record.eclassStatus}
+              documentType={documentType}
+              documentSubmitted={documentSubmitted}
               onChange={(next) => {
                 setReason(next.reason);
                 setCalledBy(next.calledBy);
                 setCalledAt(next.calledAt);
                 setContactMethod(next.contactMethod);
                 setContactedOn(next.contactedOn);
+                if (next.documentType) setDocumentType(next.documentType);
+                if (typeof next.documentSubmitted === "boolean") {
+                  setDocumentSubmitted(next.documentSubmitted);
+                }
               }}
             />
           </div>
@@ -166,6 +173,11 @@ function ReviewForm({
           />
           已提交實體／掃描文件
         </label>
+        {record.eclassStatus === "late" ? (
+          <p className="text-xs text-slate-500">
+            遲到如選擇醫生證明並已提交，平台仍會記錄遲到，但不計入遲到違規及警告次數。
+          </p>
+        ) : null}
 
         <div className="grid gap-1.5">
           <Label>審核結果</Label>

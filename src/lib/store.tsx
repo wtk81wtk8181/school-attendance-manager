@@ -14,6 +14,7 @@ import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lat
 import { studentsHomeroomTeachersChanged } from "@/lib/roster";
 import { formAHiddenStudentsChanged } from "@/lib/hidden-students";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
+import { joinReason } from "@/lib/absence-options";
 import { isGenericAttendanceReason, normalizeAbsenceDays, reviewStatusForAttendance } from "@/lib/attendance-extras";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
 import {
@@ -112,6 +113,8 @@ interface AbsenceDetailsInput {
   calledAt: string;
   contactMethod?: ContactMethod;
   contactedOn?: string;
+  documentType?: DocumentType;
+  documentSubmitted?: boolean;
   create?: {
     studentId: string;
     date: string;
@@ -1016,13 +1019,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const nowTime = hongKongHHMM();
           const defaultReason =
             status === "absent"
-              ? "病假"
+              ? joinReason("病假", "")
               : status === "late"
                 ? "遲到"
                 : status === "leave"
                   ? "事假"
                   : status === "half_absent"
-                    ? "病假"
+                    ? joinReason("病假", "")
                     : "早退";
           const keepReason =
             existing && !isGenericAttendanceReason(existing.reason)
@@ -1172,8 +1175,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             calledAt: input.calledAt.trim() || undefined,
             contactMethod: input.contactMethod,
             contactedOn: input.contactedOn?.trim() || undefined,
-            documentType: "none",
-            documentSubmitted: false,
+            documentType: input.documentType ?? "none",
+            documentSubmitted: input.documentSubmitted === true,
             reviewStatus: reviewStatusForAttendance(create.status),
             reviewedBy: currentUser.id,
             reviewedAt,
@@ -1195,26 +1198,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
         if (!current) return prev;
         const student = prev.students.find((item) => item.id === current.studentId);
+        const nextAbsences = prev.absences.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                reason: input.reason.trim() || item.reason,
+                calledBy: input.calledBy.trim() || undefined,
+                calledAt: input.calledAt.trim() || undefined,
+                contactMethod: input.contactMethod ?? item.contactMethod,
+                contactedOn: input.contactedOn?.trim() || undefined,
+                documentType: input.documentType ?? item.documentType,
+                documentSubmitted:
+                  typeof input.documentSubmitted === "boolean"
+                    ? input.documentSubmitted
+                    : item.documentSubmitted,
+                reviewedBy: currentUser.id,
+                reviewedAt: nowIso(),
+              }
+            : item
+        );
+        if (!student) return { ...prev, absences: nextAbsences };
         return withAudit(
-          {
-            ...prev,
-            absences: prev.absences.map((item) =>
-              item.id === id
-                ? {
-                    ...item,
-                    reason: input.reason.trim() || item.reason,
-                    calledBy: input.calledBy.trim() || undefined,
-                    calledAt: input.calledAt.trim() || undefined,
-                    contactMethod: input.contactMethod ?? item.contactMethod,
-                    contactedOn: input.contactedOn?.trim() || undefined,
-                    reviewedBy: currentUser.id,
-                    reviewedAt: nowIso(),
-                  }
-                : item
-            ),
-          },
+          applyWarnings(
+            { ...prev, absences: nextAbsences },
+            student,
+            "校務處"
+          ),
           "更新缺席資料",
-          `${student?.name ?? current.studentId}　${current.date}`
+          `${student.name}　${current.date}`
         );
       });
     },

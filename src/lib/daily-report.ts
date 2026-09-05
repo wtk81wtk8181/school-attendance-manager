@@ -28,6 +28,7 @@ import type {
   AbsenceRecord,
   ContactMethod,
   DayAttendance,
+  DocumentType,
   EarlyPickup,
   FormLevel,
   StaffAbsenceKind,
@@ -60,6 +61,8 @@ export interface DailyAbsenceRow {
   calledAt: string;
   contactMethod?: ContactMethod;
   contactedOn?: string;
+  documentType?: DocumentType;
+  documentSubmitted?: boolean;
   returnedAt: string;
   earlyAt: string;
   earlyPickup?: EarlyPickup;
@@ -147,6 +150,8 @@ export function buildDailyAbsenceRows(
         calledAt: item.calledAt?.trim() || "—",
         contactMethod: item.contactMethod,
         contactedOn: item.contactedOn,
+        documentType: item.documentType,
+        documentSubmitted: item.documentSubmitted,
         returnedAt: item.returnedAt?.trim() || "",
         earlyAt: item.earlyAt?.trim() || "",
         earlyPickup: item.earlyPickup,
