@@ -63,7 +63,6 @@ function shouldReplaceRoster(shared: Partial<AppState>, seed: AppState) {
     return true;
   }
   if (isLegacyMockRoster(students)) return true;
-  if (students.length < seed.students.length) return true;
   return false;
 }
 
@@ -198,11 +197,20 @@ function pickStudents(current: Student[], incoming: Student[], seed: Student[]):
     { students: incoming, dataVersion: OPERATIONAL_DATA_VERSION },
     seedState
   );
-  if (currentBad && !incomingBad) return incoming;
-  if (!currentBad && incomingBad) return current;
-  if (currentBad && incomingBad) return seed;
-  if (incoming.length === 0) return current;
-  return incoming.length >= current.length ? incoming : current;
+  if (currentBad && incomingBad) return seed.map((student) => ({ ...student }));
+
+  const overlay = new Map<string, Student>();
+  if (!currentBad) {
+    for (const student of current) overlay.set(student.id, student);
+  }
+  if (!incomingBad) {
+    for (const student of incoming) overlay.set(student.id, student);
+  }
+  const seedIds = new Set(seed.map((student) => student.id));
+  const extras = [...overlay.values()].filter(
+    (student) => !seedIds.has(student.id) && Boolean(student.enrolledOn)
+  );
+  return [...seed.map((student) => overlay.get(student.id) ?? student), ...extras];
 }
 
 function mergeClears(
@@ -650,7 +658,11 @@ export function mergeSharedStates(
     next.appearanceIssueRemovals
   );
 
-  const students = syncHomeroomTeachers(pickStudents(base.students, next.students, seed.students));
+  const students = syncHomeroomTeachers(
+    Array.isArray(incoming.students)
+      ? pickStudents(base.students, incoming.students, seed.students)
+      : base.students
+  );
   const absences = mergeAbsences(base.absences, next.absences, clearedAttendance);
   const hiddenMerged = mergeHiddenStudents(
     base.hiddenStudents,
