@@ -187,13 +187,15 @@ interface StoreValue {
     date: string,
     kind: StaffAbsenceKind,
     staffId: string,
-    selected: boolean
+    selected: boolean,
+    reason?: string
   ) => void;
   toggleStaffAbsences: (
     date: string,
     kind: StaffAbsenceKind,
     staffIds: string[],
-    selected: boolean
+    selected: boolean,
+    reason?: string
   ) => void;
   recordDigestSend: (log: Omit<DigestLog, "id" | "createdAt">) => void;
   adminPatchState: (input: { section: string; rows: unknown[] }) => boolean;
@@ -1063,6 +1065,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                   status === "early"
                     ? extras?.earlyPickup ?? existing.earlyPickup ?? "self"
                     : undefined,
+                contactedOn:
+                  status === "leave"
+                    ? existing.contactedOn || date
+                    : existing.contactedOn,
               }
             : {
                 id: `ab-office-${studentId}-${date}-${Date.now()}`,
@@ -1081,6 +1087,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 returnedAt: status === "half_absent" ? extras?.returnedAt ?? nowTime : undefined,
                 earlyAt: status === "early" ? extras?.earlyAt ?? nowTime : undefined,
                 earlyPickup: status === "early" ? extras?.earlyPickup ?? "self" : undefined,
+                contactedOn: status === "leave" ? date : undefined,
               };
 
           nextAbsences = existing
@@ -1917,7 +1924,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   const toggleStaffAbsences = useCallback(
-    (date: string, kind: StaffAbsenceKind, staffIds: string[], selected: boolean) => {
+    (
+      date: string,
+      kind: StaffAbsenceKind,
+      staffIds: string[],
+      selected: boolean,
+      reason?: string
+    ) => {
       if (currentUser?.role !== "office") {
         toast.error("只有校務處職員可以修改教職員缺席。");
         return;
@@ -1929,7 +1942,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const updatedAt = nowIso();
         const next = ids.reduce(
           (record, staffId) =>
-            withToggledStaff(record, kind, staffId, selected, updatedAt),
+            withToggledStaff(record, kind, staffId, selected, updatedAt, reason),
           current.updatedAt ? current : emptyStaffDaily(date)
         );
         const names = (prev.staffMembers ?? [])
@@ -1952,8 +1965,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   const toggleStaffAbsence = useCallback(
-    (date: string, kind: StaffAbsenceKind, staffId: string, selected: boolean) =>
-      toggleStaffAbsences(date, kind, [staffId], selected),
+    (
+      date: string,
+      kind: StaffAbsenceKind,
+      staffId: string,
+      selected: boolean,
+      reason?: string
+    ) => toggleStaffAbsences(date, kind, [staffId], selected, reason),
     [toggleStaffAbsences]
   );
 

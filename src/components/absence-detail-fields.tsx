@@ -72,11 +72,12 @@ export function AbsenceDetailFields({
   const sickParts = splitSickSymptom(reasonParts.extra);
   const callerParts = splitCaller(calledBy);
   const method = inferContactMethod(calledBy, contactMethod);
+  const isPersonalLeave = eclassStatus === "leave" || reasonParts.option === "事假";
   const stack = compact ? "space-y-1.5 min-w-40" : "grid gap-1.5";
   const showPerson = method !== "none";
   const showTime = method === "call" || method === "app";
-  const showDate = method === "app";
-  const appDate = contactedOn?.trim() || recordDate || "";
+  const showDate = method === "app" || isPersonalLeave;
+  const appDate = contactedOn?.trim() || (showDate ? recordDate || "" : "");
   const lateExempted = documentType === "doctor" && documentSubmitted;
 
   const wrap = (node: ReactNode) =>
@@ -107,7 +108,15 @@ export function AbsenceDetailFields({
           disabled={disabled}
           onValueChange={(value) => {
             if (!value) return;
-            emit({ reason: joinReason(value, value === reasonParts.option ? reasonParts.extra : "") });
+            emit({
+              reason: joinReason(value, value === reasonParts.option ? reasonParts.extra : ""),
+              contactedOn:
+                value === "事假" || eclassStatus === "leave"
+                  ? contactedOn?.trim() || recordDate || ""
+                  : method === "app"
+                    ? appDate
+                    : contactedOn,
+            });
           }}
         >
           <SelectTrigger className="w-full">
@@ -152,7 +161,7 @@ export function AbsenceDetailFields({
               <Input
                 disabled={disabled}
                 value={sickParts.custom}
-                placeholder="請填寫其他病症"
+                placeholder="請填寫其他原因"
                 onChange={(event) =>
                   emit({
                     reason: joinReason(
@@ -249,7 +258,9 @@ export function AbsenceDetailFields({
                       ),
                 calledAt: nextMethod === "none" ? "" : calledAt,
                 contactedOn:
-                  nextMethod === "app" ? contactedOn?.trim() || recordDate || "" : "",
+                  nextMethod === "app" || isPersonalLeave
+                    ? contactedOn?.trim() || recordDate || ""
+                    : "",
               });
             }}
           >
@@ -293,7 +304,13 @@ export function AbsenceDetailFields({
       <div className={stack}>
         {labels ? (
           <p className="text-[11px] text-muted-foreground">
-            {method === "app" ? "APP申請日期／時間" : "致電時間"}
+            {method === "app"
+              ? "APP申請日期／時間"
+              : isPersonalLeave && method === "call"
+                ? "請假申請日期／致電時間"
+                : isPersonalLeave
+                  ? "請假申請日期"
+                  : "致電時間"}
           </p>
         ) : null}
         {showDate ? (

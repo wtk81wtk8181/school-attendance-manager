@@ -66,7 +66,7 @@ export interface AbsenceRecord {
   calledAt?: string;
   /** 致電或 APP 申請；未填則依 calledBy 推斷 */
   contactMethod?: ContactMethod;
-  /** APP 申請日期 YYYY-MM-DD */
+  /** APP 申請或事假申請日期 YYYY-MM-DD */
   contactedOn?: string;
   documentType: DocumentType;
   documentSubmitted: boolean;
@@ -151,7 +151,7 @@ export interface StaffDailyAbsence {
   earlyIds: string[];
   selectionChanges?: Record<
     string,
-    { kind: StaffAbsenceKind | null; updatedAt: string }
+    { kind: StaffAbsenceKind | null; updatedAt: string; reason?: string }
   >;
   updatedAt: string;
 }

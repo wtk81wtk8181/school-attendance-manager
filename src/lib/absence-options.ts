@@ -63,12 +63,17 @@ export function splitSickSymptom(extra: string): { symptom: string; custom: stri
   if ((SICK_SYMPTOMS as readonly string[]).includes(detail)) {
     return { symptom: detail, custom: "" };
   }
+  const other = detail.match(/^其他(?:[：:](.*))?$/);
+  if (other) return { symptom: SICK_SYMPTOM_OTHER, custom: (other[1] ?? "").trim() };
   if (!detail) return { symptom: SICK_SYMPTOMS[0], custom: "" };
   return { symptom: SICK_SYMPTOM_OTHER, custom: detail };
 }
 
 export function joinSickSymptom(symptom: string, custom: string): string {
-  if (symptom === SICK_SYMPTOM_OTHER) return custom.trim();
+  if (symptom === SICK_SYMPTOM_OTHER) {
+    const detail = custom.trim();
+    return detail ? `其他：${detail}` : SICK_SYMPTOM_OTHER;
+  }
   return symptom;
 }
 
@@ -130,12 +135,17 @@ export function formatContactSuffix(
     if (when) return `（APP申請 ${when}）`;
     return "（APP申請）";
   }
+  let suffix = "";
   if (method === "call") {
-    if (caller && time) return `(${caller})${time}`;
-    if (caller) return `(${caller})`;
-    return time;
+    if (caller && time) suffix = `(${caller})${time}`;
+    else if (caller) suffix = `(${caller})`;
+    else suffix = time;
   }
-  return "";
+  if (dateLabel) {
+    const applied = `（申請日期：${dateLabel}）`;
+    suffix = suffix ? `${suffix}${applied}` : applied;
+  }
+  return suffix;
 }
 
 function formatContactDate(iso?: string): string {

@@ -396,7 +396,10 @@ function mergeStaffDailyAbsences(
     string,
     {
       updatedAt: string;
-      changes: Record<string, { kind: StaffAbsenceKind | null; updatedAt: string }>;
+      changes: Record<
+        string,
+        { kind: StaffAbsenceKind | null; updatedAt: string; reason?: string }
+      >;
     }
   >();
   for (const item of [...(current ?? []), ...(incoming ?? [])]) {

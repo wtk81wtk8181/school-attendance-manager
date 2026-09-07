@@ -219,8 +219,10 @@ function formatStaffDailyReportLabel(
   const extras: string[] = [];
   const activity = leave?.activity.trim();
   const note = leave?.note.trim();
+  const clickReason = staffDailyFor(allDaily, schoolDay).selectionChanges?.[staffId]?.reason?.trim();
+  if (note) extras.push(note);
+  else if (clickReason) extras.push(clickReason);
   if (activity) extras.push(activity);
-  else if (note) extras.push(note);
   const showDates = range && range.days > MULTI_DAY_LEAVE_THRESHOLD;
   if (showDates) {
     extras.push(
@@ -323,8 +325,10 @@ export function withToggledStaff(
   kind: StaffAbsenceKind,
   staffId: string,
   selected: boolean,
-  updatedAt: string
+  updatedAt: string,
+  reason?: string
 ): StaffDailyAbsence {
+  const previous = record.selectionChanges?.[staffId];
   const next: StaffDailyAbsence = {
     ...record,
     sickIds: record.sickIds.filter((id) => id !== staffId),
@@ -333,7 +337,13 @@ export function withToggledStaff(
     earlyIds: record.earlyIds.filter((id) => id !== staffId),
     selectionChanges: {
       ...(record.selectionChanges ?? {}),
-      [staffId]: { kind: selected ? kind : null, updatedAt },
+      [staffId]: {
+        kind: selected ? kind : null,
+        updatedAt,
+        reason: selected
+          ? (reason?.trim() || previous?.reason)
+          : undefined,
+      },
     },
     updatedAt,
   };
@@ -343,3 +353,4 @@ export function withToggledStaff(
   }
   return next;
 }
+

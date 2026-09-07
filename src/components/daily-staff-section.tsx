@@ -65,6 +65,12 @@ export function DailyStaffSection({ date }: { date: string }) {
   const [leaveEnd, setLeaveEnd] = useState(date);
   const [leaveNote, setLeaveNote] = useState("");
   const [leaveActivity, setLeaveActivity] = useState("");
+  const [reasonPrompt, setReasonPrompt] = useState<{
+    kind: StaffAbsenceKind;
+    staffId: string;
+    name: string;
+  } | null>(null);
+  const [reasonDraft, setReasonDraft] = useState("");
   const [dragPreview, setDragPreview] = useState<DragSelection | null>(null);
   const dragRef = useRef<DragSelection | null>(null);
   const ignoreNextClickRef = useRef(false);
@@ -274,12 +280,18 @@ export function DailyStaffSection({ date }: { date: string }) {
                               ignoreNextClickRef.current = false;
                               return;
                             }
-                            toggleStaffAbsence(
-                              date,
-                              row.kind,
-                              member.id,
-                              !selected.has(member.id)
+                            if (selected.has(member.id)) {
+                              toggleStaffAbsence(date, row.kind, member.id, false);
+                              return;
+                            }
+                            setReasonDraft(
+                              daily.selectionChanges?.[member.id]?.reason ?? ""
                             );
+                            setReasonPrompt({
+                              kind: row.kind,
+                              staffId: member.id,
+                              name: member.name,
+                            });
                           }}
                           onDragStart={(event) => event.preventDefault()}
                           className={cn(
@@ -301,6 +313,11 @@ export function DailyStaffSection({ date }: { date: string }) {
                             {checked ? <Check className="size-3" /> : null}
                           </span>
                           {member.name}
+                          {checked && daily.selectionChanges?.[member.id]?.reason ? (
+                            <span className="text-[11px] opacity-80">
+                              {daily.selectionChanges[member.id]?.reason}
+                            </span>
+                          ) : null}
                         </button>
                       );
                     })
@@ -445,21 +462,21 @@ export function DailyStaffSection({ date }: { date: string }) {
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="leave-activity">原因／外出活動（選填）</Label>
-              <Input
-                id="leave-activity"
-                value={leaveActivity}
-                placeholder="例如：感冒、學界田徑比賽、境外交流團"
-                onChange={(event) => setLeaveActivity(event.target.value)}
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="leave-note">備註（選填）</Label>
+              <Label htmlFor="leave-note">請假原因</Label>
               <Input
                 id="leave-note"
                 value={leaveNote}
-                placeholder="例如：上午覆診，下午回校"
+                placeholder="例如：發燒、覆診、家庭事務"
                 onChange={(event) => setLeaveNote(event.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="leave-activity">外出活動／比賽（選填）</Label>
+              <Input
+                id="leave-activity"
+                value={leaveActivity}
+                placeholder="例如：學界田徑比賽、境外交流團、下午講座"
+                onChange={(event) => setLeaveActivity(event.target.value)}
               />
             </div>
             <DialogFooter>
@@ -500,6 +517,66 @@ export function DailyStaffSection({ date }: { date: string }) {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(reasonPrompt)}
+        onOpenChange={(open) => {
+          if (!open) setReasonPrompt(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>請假原因</DialogTitle>
+            <DialogDescription>
+              {reasonPrompt
+                ? `請輸入 ${reasonPrompt.name} 的請假原因，會顯示於每日缺席報告。`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!reasonPrompt) return;
+              toggleStaffAbsence(
+                date,
+                reasonPrompt.kind,
+                reasonPrompt.staffId,
+                true,
+                reasonDraft
+              );
+              setReasonPrompt(null);
+              setReasonDraft("");
+            }}
+          >
+            <div className="grid gap-1.5">
+              <Label htmlFor="staff-day-reason">原因</Label>
+              <Input
+                id="staff-day-reason"
+                value={reasonDraft}
+                placeholder="例如：發燒、覆診、講座"
+                autoFocus
+                onChange={(event) => setReasonDraft(event.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (!reasonPrompt) return;
+                  toggleStaffAbsence(date, reasonPrompt.kind, reasonPrompt.staffId, true);
+                  setReasonPrompt(null);
+                  setReasonDraft("");
+                }}
+              >
+                略過
+              </Button>
+              <Button type="submit">確定</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
