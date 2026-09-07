@@ -41,6 +41,12 @@ interface DragSelection {
   ids: Set<string>;
 }
 
+interface ReasonPrompt {
+  kind: StaffAbsenceKind;
+  staffIds: string[];
+  names: string[];
+}
+
 export function DailyStaffSection({ date }: { date: string }) {
   const {
     currentUser,
@@ -50,7 +56,6 @@ export function DailyStaffSection({ date }: { date: string }) {
     removeStaffMember,
     addStaffLeave,
     removeStaffLeave,
-    toggleStaffAbsence,
     toggleStaffAbsences,
   } = useStore();
   const canEdit = currentUser?.role === "office";
@@ -65,11 +70,7 @@ export function DailyStaffSection({ date }: { date: string }) {
   const [leaveEnd, setLeaveEnd] = useState(date);
   const [leaveNote, setLeaveNote] = useState("");
   const [leaveActivity, setLeaveActivity] = useState("");
-  const [reasonPrompt, setReasonPrompt] = useState<{
-    kind: StaffAbsenceKind;
-    staffId: string;
-    name: string;
-  } | null>(null);
+  const [reasonPrompt, setReasonPrompt] = useState<ReasonPrompt | null>(null);
   const [reasonDraft, setReasonDraft] = useState("");
   const [dragPreview, setDragPreview] = useState<DragSelection | null>(null);
   const dragRef = useRef<DragSelection | null>(null);
@@ -103,7 +104,22 @@ export function DailyStaffSection({ date }: { date: string }) {
       window.setTimeout(() => {
         ignoreNextClickRef.current = false;
       }, 0);
-      toggleStaffAbsences(date, drag.kind, [...drag.ids], drag.selected);
+      const ids = [...drag.ids];
+      if (!drag.selected) {
+        toggleStaffAbsences(date, drag.kind, ids, false);
+        return;
+      }
+      const names = members
+        .filter((member) => ids.includes(member.id))
+        .map((member) => member.name);
+      setReasonDraft(
+        ids.length === 1 ? daily.selectionChanges?.[ids[0]]?.reason ?? "" : ""
+      );
+      setReasonPrompt({
+        kind: drag.kind,
+        staffIds: ids,
+        names,
+      });
     }
 
     const commitDrag = () => finishDrag(true);
@@ -116,7 +132,7 @@ export function DailyStaffSection({ date }: { date: string }) {
       window.removeEventListener("pointercancel", cancelDrag);
       window.removeEventListener("blur", cancelDrag);
     };
-  }, [date, toggleStaffAbsences]);
+  }, [daily.selectionChanges, date, members, toggleStaffAbsences]);
 
   function startDrag(
     kind: StaffAbsenceKind,
@@ -275,24 +291,6 @@ export function DailyStaffSection({ date }: { date: string }) {
                             startDrag(row.kind, member.id, selected.has(member.id));
                           }}
                           onPointerEnter={() => extendDrag(row.kind, member.id)}
-                          onClick={() => {
-                            if (ignoreNextClickRef.current) {
-                              ignoreNextClickRef.current = false;
-                              return;
-                            }
-                            if (selected.has(member.id)) {
-                              toggleStaffAbsence(date, row.kind, member.id, false);
-                              return;
-                            }
-                            setReasonDraft(
-                              daily.selectionChanges?.[member.id]?.reason ?? ""
-                            );
-                            setReasonPrompt({
-                              kind: row.kind,
-                              staffId: member.id,
-                              name: member.name,
-                            });
-                          }}
                           onDragStart={(event) => event.preventDefault()}
                           className={cn(
                             "flex select-none items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors",
@@ -531,7 +529,7 @@ export function DailyStaffSection({ date }: { date: string }) {
             <DialogTitle>請假原因</DialogTitle>
             <DialogDescription>
               {reasonPrompt
-                ? `請輸入 ${reasonPrompt.name} 的請假原因，會顯示於每日缺席報告。`
+                ? `請輸入 ${reasonPrompt.names.join("、")} 的請假原因，會顯示於每日缺席報告。`
                 : ""}
             </DialogDescription>
           </DialogHeader>
@@ -540,10 +538,10 @@ export function DailyStaffSection({ date }: { date: string }) {
             onSubmit={(event) => {
               event.preventDefault();
               if (!reasonPrompt) return;
-              toggleStaffAbsence(
+              toggleStaffAbsences(
                 date,
                 reasonPrompt.kind,
-                reasonPrompt.staffId,
+                reasonPrompt.staffIds,
                 true,
                 reasonDraft
               );
@@ -552,7 +550,7 @@ export function DailyStaffSection({ date }: { date: string }) {
             }}
           >
             <div className="grid gap-1.5">
-              <Label htmlFor="staff-day-reason">原因</Label>
+              <Label htmlFor="staff-day-reason">請假原因</Label>
               <Input
                 id="staff-day-reason"
                 value={reasonDraft}
@@ -567,7 +565,12 @@ export function DailyStaffSection({ date }: { date: string }) {
                 variant="outline"
                 onClick={() => {
                   if (!reasonPrompt) return;
-                  toggleStaffAbsence(date, reasonPrompt.kind, reasonPrompt.staffId, true);
+                  toggleStaffAbsences(
+                    date,
+                    reasonPrompt.kind,
+                    reasonPrompt.staffIds,
+                    true
+                  );
                   setReasonPrompt(null);
                   setReasonDraft("");
                 }}
