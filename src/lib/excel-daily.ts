@@ -5,6 +5,7 @@ import {
 } from "@/lib/daily-absence-display";
 import { SCHOOL_NAME } from "@/lib/seed";
 import {
+  classMetricTotals,
   formatDailyAbsenceLine,
   type DailyClassBlock,
   type DailySchoolReportPayload,
@@ -73,7 +74,17 @@ export async function buildDailySchoolWorkbook(
     classSectionEndRow(CLASS_START_ROW, juniorLeft, payload),
     classSectionEndRow(CLASS_START_ROW, juniorRight, payload)
   );
-  const juniorLastRow = writeStaffFooter(juniorSheet, payload, juniorFooterStart);
+  const juniorStaffEnd = writeStaffFooter(juniorSheet, payload, juniorFooterStart);
+  const juniorLastRow = writeClassMetricTable(
+    juniorSheet,
+    juniorStaffEnd + 1,
+    "中一至中三",
+    junior,
+    {
+      ...classMetricTotals(junior),
+      totalLabel: "TOTAL",
+    }
+  );
   juniorSheet.pageSetup.printArea = `A1:X${juniorLastRow}`;
 
   const seniorSheet = createDailySheet(workbook, "中四至中六");
@@ -357,12 +368,17 @@ function writeStatsFooter(
     true
   );
 
+  const junior = payload.classes.slice(0, 15);
   const senior = payload.classes.slice(15, 30);
-  return writeClassMetricTable(sheet, startRow + 5, "中四至中六", senior, {
+  const seniorEnd = writeClassMetricTable(sheet, startRow + 5, "中四至中六", senior, {
     absent: payload.totalAbsent,
     attendanceRate: payload.totalAttendanceRate,
     late: payload.totalLate,
     punctualityRate: payload.schoolPunctualityRate,
+    totalLabel: "TOTAL",
+  });
+  return writeClassMetricTable(sheet, seniorEnd + 2, "中一至中三", junior, {
+    ...classMetricTotals(junior),
     totalLabel: "TOTAL",
   });
 }

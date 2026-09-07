@@ -6,7 +6,11 @@ import {
   splitAbsenceLinesIntoColumns,
 } from "@/lib/daily-absence-display";
 import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
-import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
+import {
+  classMetricTotals,
+  type DailyClassBlock,
+  type DailySchoolReportPayload,
+} from "@/lib/daily-report";
 
 export function DailyAbsenceReport({
   payload,
@@ -45,6 +49,15 @@ export function DailyJuniorReportPage({
       </div>
 
       <StaffSection payload={payload} />
+
+      <div className="mt-3 print:mt-2">
+        <ClassMetricsTable
+          title="中一至中三"
+          classes={junior}
+          totalLabel="TOTAL"
+          totals={classMetricTotals(junior)}
+        />
+      </div>
     </article>
   );
 }
@@ -80,6 +93,12 @@ export function DailySeniorReportPage({
             late: payload.totalLate,
             punctualityRate: payload.schoolPunctualityRate,
           }}
+        />
+        <ClassMetricsTable
+          title="中一至中三"
+          classes={payload.classes.slice(0, 15)}
+          totalLabel="TOTAL"
+          totals={classMetricTotals(payload.classes.slice(0, 15))}
         />
       </div>
     </article>

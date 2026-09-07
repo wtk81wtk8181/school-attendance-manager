@@ -6,7 +6,11 @@ import {
 } from "@/lib/daily-absence-display";
 import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
-import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
+import {
+  classMetricTotals,
+  type DailyClassBlock,
+  type DailySchoolReportPayload,
+} from "@/lib/daily-report";
 
 const PRINT_CSS = `
   @page { size: A4 portrait; margin: 8mm; }
@@ -367,6 +371,7 @@ function renderJuniorPage(payload: DailySchoolReportPayload): string {
           ${renderClassColumn(junior)}
         </div>
         ${renderStaffSection(payload)}
+        ${renderClassMetrics("中一至中三", junior, "TOTAL", classMetricTotals(junior))}
       </article>
     </div>
   `;
@@ -390,6 +395,12 @@ function renderSeniorPage(payload: DailySchoolReportPayload): string {
             late: payload.totalLate,
             punctualityRate: payload.schoolPunctualityRate,
           })}
+          ${renderClassMetrics(
+            "中一至中三",
+            payload.classes.slice(0, 15),
+            "TOTAL",
+            classMetricTotals(payload.classes.slice(0, 15))
+          )}
         </div>
       </article>
     </div>

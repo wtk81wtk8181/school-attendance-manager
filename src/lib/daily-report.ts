@@ -189,6 +189,19 @@ function rate(numerator: number, denominator: number): number {
   return numerator / denominator;
 }
 
+export function classMetricTotals(blocks: DailyClassBlock[]) {
+  const absent = blocks.reduce((sum, item) => sum + item.absentCount, 0);
+  const late = blocks.reduce((sum, item) => sum + item.lateCount, 0);
+  const registered = blocks.reduce((sum, item) => sum + item.registered, 0);
+  const present = blocks.reduce((sum, item) => sum + item.present, 0);
+  return {
+    absent,
+    late,
+    attendanceRate: rate(present, registered),
+    punctualityRate: rate(Math.max(0, present - late), present),
+  };
+}
+
 const SAMPLE_REASONS = [
   { reason: "病假", calledBy: "母親", calledAt: "08:12" },
   { reason: "頭痛", calledBy: "父親", calledAt: "08:27" },
