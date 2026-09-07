@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { CalendarPlus, Check, Plus, Search, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,7 +75,15 @@ export function DailyStaffSection({ date }: { date: string }) {
   const [reasonDraft, setReasonDraft] = useState("");
   const [dragPreview, setDragPreview] = useState<DragSelection | null>(null);
   const dragRef = useRef<DragSelection | null>(null);
+  const pointerStartRef = useRef<{
+    x: number;
+    y: number;
+    kind: StaffAbsenceKind;
+    staffId: string;
+    currentlySelected: boolean;
+  } | null>(null);
   const ignoreNextClickRef = useRef(false);
+  const promptGuardRef = useRef(0);
 
   const members = state.staffMembers ?? [];
   const normalizedSearch = search.trim().toLocaleLowerCase("zh-HK");
@@ -93,13 +102,50 @@ export function DailyStaffSection({ date }: { date: string }) {
     .filter((item) => item.endDate >= date)
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
 
+  const askLeaveReason = useCallback(
+    (kind: StaffAbsenceKind, ids: string[]) => {
+      const uniqueIds = [...new Set(ids)];
+      const names = members
+        .filter((member) => uniqueIds.includes(member.id))
+        .map((member) => member.name);
+      const draft =
+        uniqueIds.length === 1
+          ? daily.selectionChanges?.[uniqueIds[0]]?.reason ?? ""
+          : "";
+      promptGuardRef.current = Date.now();
+      window.setTimeout(() => {
+        setReasonDraft(draft);
+        setReasonPrompt({ kind, staffIds: uniqueIds, names });
+      }, 50);
+    },
+    [daily.selectionChanges, members]
+  );
+
   useEffect(() => {
-    function finishDrag(commit: boolean) {
+    function onPointerMove(event: PointerEvent) {
+      const start = pointerStartRef.current;
+      if (!start || !canEdit) return;
+      const distance = Math.hypot(event.clientX - start.x, event.clientY - start.y);
+      if (!dragRef.current) {
+        if (distance < 8) return;
+        const drag = {
+          kind: start.kind,
+          selected: !start.currentlySelected,
+          ids: new Set([start.staffId]),
+        };
+        dragRef.current = drag;
+        setDragPreview(drag);
+        return;
+      }
+      event.preventDefault();
+    }
+
+    function onPointerUp() {
       const drag = dragRef.current;
-      if (!drag) return;
+      pointerStartRef.current = null;
       dragRef.current = null;
       setDragPreview(null);
-      if (!commit) return;
+      if (!drag) return;
       ignoreNextClickRef.current = true;
       window.setTimeout(() => {
         ignoreNextClickRef.current = false;
@@ -109,45 +155,18 @@ export function DailyStaffSection({ date }: { date: string }) {
         toggleStaffAbsences(date, drag.kind, ids, false);
         return;
       }
-      const names = members
-        .filter((member) => ids.includes(member.id))
-        .map((member) => member.name);
-      setReasonDraft(
-        ids.length === 1 ? daily.selectionChanges?.[ids[0]]?.reason ?? "" : ""
-      );
-      setReasonPrompt({
-        kind: drag.kind,
-        staffIds: ids,
-        names,
-      });
+      askLeaveReason(drag.kind, ids);
     }
 
-    const commitDrag = () => finishDrag(true);
-    const cancelDrag = () => finishDrag(false);
-    window.addEventListener("pointerup", commitDrag);
-    window.addEventListener("pointercancel", cancelDrag);
-    window.addEventListener("blur", cancelDrag);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
     return () => {
-      window.removeEventListener("pointerup", commitDrag);
-      window.removeEventListener("pointercancel", cancelDrag);
-      window.removeEventListener("blur", cancelDrag);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
     };
-  }, [daily.selectionChanges, date, members, toggleStaffAbsences]);
-
-  function startDrag(
-    kind: StaffAbsenceKind,
-    staffId: string,
-    currentlySelected: boolean
-  ) {
-    if (!canEdit) return;
-    const drag = {
-      kind,
-      selected: !currentlySelected,
-      ids: new Set([staffId]),
-    };
-    dragRef.current = drag;
-    setDragPreview(drag);
-  }
+  }, [askLeaveReason, canEdit, date, toggleStaffAbsences]);
 
   function extendDrag(kind: StaffAbsenceKind, staffId: string) {
     const drag = dragRef.current;
@@ -286,11 +305,28 @@ export function DailyStaffSection({ date }: { date: string }) {
                           disabled={!canEdit}
                           aria-pressed={checked}
                           onPointerDown={(event) => {
-                            if (event.button !== 0) return;
-                            event.preventDefault();
-                            startDrag(row.kind, member.id, selected.has(member.id));
+                            if (!canEdit || event.button !== 0) return;
+                            pointerStartRef.current = {
+                              x: event.clientX,
+                              y: event.clientY,
+                              kind: row.kind,
+                              staffId: member.id,
+                              currentlySelected: selected.has(member.id),
+                            };
                           }}
                           onPointerEnter={() => extendDrag(row.kind, member.id)}
+                          onClick={() => {
+                            if (!canEdit) return;
+                            if (ignoreNextClickRef.current) {
+                              ignoreNextClickRef.current = false;
+                              return;
+                            }
+                            if (selected.has(member.id)) {
+                              toggleStaffAbsences(date, row.kind, [member.id], false);
+                              return;
+                            }
+                            askLeaveReason(row.kind, [member.id]);
+                          }}
                           onDragStart={(event) => event.preventDefault()}
                           className={cn(
                             "flex select-none items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors",
@@ -518,70 +554,72 @@ export function DailyStaffSection({ date }: { date: string }) {
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={Boolean(reasonPrompt)}
-        onOpenChange={(open) => {
-          if (!open) setReasonPrompt(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>請假原因</DialogTitle>
-            <DialogDescription>
-              {reasonPrompt
-                ? `請輸入 ${reasonPrompt.names.join("、")} 的請假原因，會顯示於每日缺席報告。`
-                : ""}
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            className="space-y-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!reasonPrompt) return;
-              toggleStaffAbsences(
-                date,
-                reasonPrompt.kind,
-                reasonPrompt.staffIds,
-                true,
-                reasonDraft
-              );
-              setReasonPrompt(null);
-              setReasonDraft("");
-            }}
-          >
-            <div className="grid gap-1.5">
-              <Label htmlFor="staff-day-reason">請假原因</Label>
-              <Input
-                id="staff-day-reason"
-                value={reasonDraft}
-                placeholder="例如：發燒、覆診、講座"
-                autoFocus
-                onChange={(event) => setReasonDraft(event.target.value)}
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  if (!reasonPrompt) return;
-                  toggleStaffAbsences(
-                    date,
-                    reasonPrompt.kind,
-                    reasonPrompt.staffIds,
-                    true
-                  );
-                  setReasonPrompt(null);
-                  setReasonDraft("");
-                }}
+      {reasonPrompt && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4"
+              onMouseDown={() => {
+                if (Date.now() - promptGuardRef.current < 300) return;
+              }}
+            >
+              <div
+                className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl ring-1 ring-black/10"
+                onMouseDown={(event) => event.stopPropagation()}
               >
-                略過
-              </Button>
-              <Button type="submit">確定</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+                <p className="text-lg font-semibold text-slate-900">請假原因</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  請輸入 {reasonPrompt.names.join("、")} 的請假原因，會顯示於每日缺席報告。
+                </p>
+                <form
+                  className="mt-4 space-y-3"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    toggleStaffAbsences(
+                      date,
+                      reasonPrompt.kind,
+                      reasonPrompt.staffIds,
+                      true,
+                      reasonDraft
+                    );
+                    setReasonPrompt(null);
+                    setReasonDraft("");
+                  }}
+                >
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="staff-day-reason">請假原因</Label>
+                    <Input
+                      id="staff-day-reason"
+                      value={reasonDraft}
+                      placeholder="例如：發燒、覆診、講座"
+                      autoFocus
+                      onChange={(event) => setReasonDraft(event.target.value)}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        toggleStaffAbsences(
+                          date,
+                          reasonPrompt.kind,
+                          reasonPrompt.staffIds,
+                          true
+                        );
+                        setReasonPrompt(null);
+                        setReasonDraft("");
+                      }}
+                    >
+                      略過
+                    </Button>
+                    <Button type="submit">確定</Button>
+                  </div>
+                </form>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
