@@ -81,10 +81,12 @@ export function DailySeniorReportPage({
         <ClassMetricsTable
           title="中四至中六"
           classes={senior}
-          totalLabel="全校"
+          totalLabel="全校數據"
           totals={{
             absent: payload.totalAbsent,
+            attendanceRate: payload.totalAttendanceRate,
             late: payload.totalLate,
+            punctualityRate: payload.schoolPunctualityRate,
           }}
         />
       </div>
@@ -198,7 +200,9 @@ function ClassMetricsTable({
   totalLabel?: string;
   totals?: {
     absent?: number;
+    attendanceRate?: number;
     late?: number;
+    punctualityRate?: number;
   };
 }) {
   const showSchoolTotal = Boolean(totalLabel && totals);
@@ -248,7 +252,11 @@ function ClassMetricsTable({
               </td>
             ))}
             {showSchoolTotal ? (
-              <td className="whitespace-nowrap border border-zinc-300 px-1 py-1" />
+              <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">
+                {totals?.attendanceRate != null
+                  ? formatPercentExact(totals.attendanceRate)
+                  : ""}
+              </td>
             ) : null}
           </tr>
           <tr>
@@ -274,7 +282,11 @@ function ClassMetricsTable({
               </td>
             ))}
             {showSchoolTotal ? (
-              <td className="whitespace-nowrap border border-zinc-300 px-1 py-1" />
+              <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">
+                {totals?.punctualityRate != null
+                  ? formatPercentExact(totals.punctualityRate)
+                  : ""}
+              </td>
             ) : null}
           </tr>
         </tbody>

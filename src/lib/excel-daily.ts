@@ -368,8 +368,10 @@ function writeStatsFooter(
   const juniorEnd = writeClassMetricTable(sheet, startRow + 5, "中一至中三", junior);
   return writeClassMetricTable(sheet, juniorEnd + 2, "中四至中六", senior, {
     absent: payload.totalAbsent,
+    attendanceRate: payload.totalAttendanceRate,
     late: payload.totalLate,
-    totalLabel: "全校",
+    punctualityRate: payload.schoolPunctualityRate,
+    totalLabel: "全校數據",
   });
 }
 
@@ -380,7 +382,9 @@ function writeClassMetricTable(
   blocks: DailyClassBlock[],
   schoolTotal?: {
     absent: number;
+    attendanceRate: number;
     late: number;
+    punctualityRate: number;
     totalLabel: string;
   }
 ): number {
@@ -416,7 +420,7 @@ function writeClassMetricTable(
     startRow + 2,
     "出席百分比 :",
     blocks.map((item) => item.attendanceRate),
-    "",
+    schoolTotal ? schoolTotal.attendanceRate : undefined,
     true,
     Boolean(schoolTotal)
   );
@@ -434,7 +438,7 @@ function writeClassMetricTable(
     startRow + 4,
     "守時百分比 :",
     blocks.map((item) => item.punctualityRate),
-    "",
+    schoolTotal ? schoolTotal.punctualityRate : undefined,
     true,
     Boolean(schoolTotal)
   );
@@ -462,6 +466,7 @@ function writeClassMetricRow(
     mergeValue(sheet, row, CLASS_TOTAL_START, row, CLASS_TOTAL_END, total ?? "", {
       ...centerStyle(),
       font: { bold: true, size: 8 },
+      numFmt: percent && typeof total === "number" ? "0.00%" : undefined,
     });
   }
   sheet.getRow(row).height = METRIC_ROW_HEIGHT;

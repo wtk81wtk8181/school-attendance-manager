@@ -295,7 +295,9 @@ function renderClassMetrics(
   schoolTotal?: {
     label: string;
     absent: number;
+    attendanceRate: number;
     late: number;
+    punctualityRate: number;
   }
 ): string {
   const headerCells = classes
@@ -317,7 +319,12 @@ function renderClassMetrics(
     : "";
   const absentTotal = schoolTotal ? `<td>${schoolTotal.absent}</td>` : "";
   const lateTotal = schoolTotal ? `<td>${schoolTotal.late}</td>` : "";
-  const emptyTotal = schoolTotal ? "<td></td>" : "";
+  const attendanceTotal = schoolTotal
+    ? `<td>${escapeHtml(formatPercentExact(schoolTotal.attendanceRate))}</td>`
+    : "";
+  const punctualityTotal = schoolTotal
+    ? `<td>${escapeHtml(formatPercentExact(schoolTotal.punctualityRate))}</td>`
+    : "";
 
   return `
     <section class="metrics-box">
@@ -342,7 +349,7 @@ function renderClassMetrics(
           <tr>
             <td class="label">出席百分比</td>
             ${attendanceCells}
-            ${emptyTotal}
+            ${attendanceTotal}
           </tr>
           <tr>
             <td class="label">遲到人數</td>
@@ -352,7 +359,7 @@ function renderClassMetrics(
           <tr>
             <td class="label">守時百分比</td>
             ${punctualityCells}
-            ${emptyTotal}
+            ${punctualityTotal}
           </tr>
         </tbody>
       </table>
@@ -391,9 +398,11 @@ function renderSeniorPage(payload: DailySchoolReportPayload): string {
           ${renderFormStats(payload)}
           ${renderClassMetrics("中一至中三", payload.classes.slice(0, 15))}
           ${renderClassMetrics("中四至中六", senior, {
-            label: "全校",
+            label: "全校數據",
             absent: payload.totalAbsent,
+            attendanceRate: payload.totalAttendanceRate,
             late: payload.totalLate,
+            punctualityRate: payload.schoolPunctualityRate,
           })}
         </div>
       </article>
