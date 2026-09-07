@@ -5,7 +5,6 @@ import {
 } from "@/lib/daily-absence-display";
 import { SCHOOL_NAME } from "@/lib/seed";
 import {
-  classMetricTotals,
   formatDailyAbsenceLine,
   type DailyClassBlock,
   type DailySchoolReportPayload,
@@ -79,11 +78,7 @@ export async function buildDailySchoolWorkbook(
     juniorSheet,
     juniorStaffEnd + 1,
     "中一至中三",
-    junior,
-    {
-      ...classMetricTotals(junior),
-      totalLabel: "TOTAL",
-    }
+    junior
   );
   juniorSheet.pageSetup.printArea = `A1:X${juniorLastRow}`;
 
@@ -370,16 +365,11 @@ function writeStatsFooter(
 
   const junior = payload.classes.slice(0, 15);
   const senior = payload.classes.slice(15, 30);
-  const seniorEnd = writeClassMetricTable(sheet, startRow + 5, "中四至中六", senior, {
+  const juniorEnd = writeClassMetricTable(sheet, startRow + 5, "中一至中三", junior);
+  return writeClassMetricTable(sheet, juniorEnd + 2, "中四至中六", senior, {
     absent: payload.totalAbsent,
-    attendanceRate: payload.totalAttendanceRate,
     late: payload.totalLate,
-    punctualityRate: payload.schoolPunctualityRate,
-    totalLabel: "TOTAL",
-  });
-  return writeClassMetricTable(sheet, seniorEnd + 2, "中一至中三", junior, {
-    ...classMetricTotals(junior),
-    totalLabel: "TOTAL",
+    totalLabel: "全校",
   });
 }
 
@@ -388,11 +378,9 @@ function writeClassMetricTable(
   startRow: number,
   title: string,
   blocks: DailyClassBlock[],
-  totals: {
+  schoolTotal?: {
     absent: number;
-    attendanceRate: number;
     late: number;
-    punctualityRate: number;
     totalLabel: string;
   }
 ): number {
@@ -401,15 +389,17 @@ function writeClassMetricTable(
     const col = CLASS_CODE_START + index;
     mergeValue(sheet, startRow, col, startRow, col, block.className, headerStyle(8));
   });
-  mergeValue(
-    sheet,
-    startRow,
-    CLASS_TOTAL_START,
-    startRow,
-    CLASS_TOTAL_END,
-    totals.totalLabel,
-    headerStyle()
-  );
+  if (schoolTotal) {
+    mergeValue(
+      sheet,
+      startRow,
+      CLASS_TOTAL_START,
+      startRow,
+      CLASS_TOTAL_END,
+      schoolTotal.totalLabel,
+      headerStyle()
+    );
+  }
   sheet.getRow(startRow).height = METRIC_ROW_HEIGHT;
 
   writeClassMetricRow(
@@ -417,32 +407,36 @@ function writeClassMetricTable(
     startRow + 1,
     "缺席人數",
     blocks.map((item) => item.absentCount),
-    totals.absent,
-    false
+    schoolTotal ? schoolTotal.absent : undefined,
+    false,
+    Boolean(schoolTotal)
   );
   writeClassMetricRow(
     sheet,
     startRow + 2,
     "出席百分比 :",
     blocks.map((item) => item.attendanceRate),
-    totals.attendanceRate,
-    true
+    "",
+    true,
+    Boolean(schoolTotal)
   );
   writeClassMetricRow(
     sheet,
     startRow + 3,
     "學生遲到人數：",
     blocks.map((item) => item.lateCount || 0),
-    totals.late,
-    false
+    schoolTotal ? schoolTotal.late : undefined,
+    false,
+    Boolean(schoolTotal)
   );
   writeClassMetricRow(
     sheet,
     startRow + 4,
     "守時百分比 :",
     blocks.map((item) => item.punctualityRate),
-    totals.punctualityRate,
-    true
+    "",
+    true,
+    Boolean(schoolTotal)
   );
   return startRow + 4;
 }
@@ -452,8 +446,9 @@ function writeClassMetricRow(
   row: number,
   label: string,
   values: Array<number | string>,
-  total: number,
-  percent: boolean
+  total: number | string | undefined,
+  percent = false,
+  writeTotal = false
 ) {
   mergeValue(sheet, row, 1, row, CLASS_LABEL_END, label, labelStyle());
   values.forEach((value, index) => {
@@ -463,11 +458,12 @@ function writeClassMetricRow(
       numFmt: percent ? "0.00%" : undefined,
     });
   });
-  mergeValue(sheet, row, CLASS_TOTAL_START, row, CLASS_TOTAL_END, total, {
-    ...centerStyle(),
-    font: { bold: true, size: 8 },
-    numFmt: percent ? "0.00%" : undefined,
-  });
+  if (writeTotal) {
+    mergeValue(sheet, row, CLASS_TOTAL_START, row, CLASS_TOTAL_END, total ?? "", {
+      ...centerStyle(),
+      font: { bold: true, size: 8 },
+    });
+  }
   sheet.getRow(row).height = METRIC_ROW_HEIGHT;
 }
 

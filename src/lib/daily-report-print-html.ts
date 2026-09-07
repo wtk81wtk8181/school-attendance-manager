@@ -6,11 +6,7 @@ import {
 } from "@/lib/daily-absence-display";
 import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
-import {
-  classMetricTotals,
-  type DailyClassBlock,
-  type DailySchoolReportPayload,
-} from "@/lib/daily-report";
+import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
 
 const PRINT_CSS = `
   @page { size: A4 portrait; margin: 8mm; }
@@ -296,12 +292,10 @@ function renderFormStats(payload: DailySchoolReportPayload): string {
 function renderClassMetrics(
   title: string,
   classes: DailyClassBlock[],
-  totalLabel: string,
-  totals: {
+  schoolTotal?: {
+    label: string;
     absent: number;
-    attendanceRate: number;
     late: number;
-    punctualityRate: number;
   }
 ): string {
   const headerCells = classes
@@ -318,6 +312,12 @@ function renderClassMetrics(
   const punctualityCells = classes
     .map((item) => `<td>${escapeHtml(formatPercentExact(item.punctualityRate))}</td>`)
     .join("");
+  const totalHeader = schoolTotal
+    ? `<th>${escapeHtml(schoolTotal.label)}</th>`
+    : "";
+  const absentTotal = schoolTotal ? `<td>${schoolTotal.absent}</td>` : "";
+  const lateTotal = schoolTotal ? `<td>${schoolTotal.late}</td>` : "";
+  const emptyTotal = schoolTotal ? "<td></td>" : "";
 
   return `
     <section class="metrics-box">
@@ -330,29 +330,29 @@ function renderClassMetrics(
           <tr>
             <th class="label">班別</th>
             ${headerCells}
-            <th>${escapeHtml(totalLabel)}</th>
+            ${totalHeader}
           </tr>
         </thead>
         <tbody>
           <tr>
             <td class="label">缺席人數</td>
             ${absentCells}
-            <td>${totals.absent}</td>
+            ${absentTotal}
           </tr>
           <tr>
             <td class="label">出席百分比</td>
             ${attendanceCells}
-            <td>${escapeHtml(formatPercentExact(totals.attendanceRate))}</td>
+            ${emptyTotal}
           </tr>
           <tr>
             <td class="label">遲到人數</td>
             ${lateCells}
-            <td>${totals.late}</td>
+            ${lateTotal}
           </tr>
           <tr>
             <td class="label">守時百分比</td>
             ${punctualityCells}
-            <td>${escapeHtml(formatPercentExact(totals.punctualityRate))}</td>
+            ${emptyTotal}
           </tr>
         </tbody>
       </table>
@@ -371,7 +371,7 @@ function renderJuniorPage(payload: DailySchoolReportPayload): string {
           ${renderClassColumn(junior)}
         </div>
         ${renderStaffSection(payload)}
-        ${renderClassMetrics("中一至中三", junior, "TOTAL", classMetricTotals(junior))}
+        ${renderClassMetrics("中一至中三", junior)}
       </article>
     </div>
   `;
@@ -389,18 +389,12 @@ function renderSeniorPage(payload: DailySchoolReportPayload): string {
         </div>
         <div class="space-y">
           ${renderFormStats(payload)}
-          ${renderClassMetrics("中四至中六", senior, "TOTAL", {
+          ${renderClassMetrics("中一至中三", payload.classes.slice(0, 15))}
+          ${renderClassMetrics("中四至中六", senior, {
+            label: "全校",
             absent: payload.totalAbsent,
-            attendanceRate: payload.totalAttendanceRate,
             late: payload.totalLate,
-            punctualityRate: payload.schoolPunctualityRate,
           })}
-          ${renderClassMetrics(
-            "中一至中三",
-            payload.classes.slice(0, 15),
-            "TOTAL",
-            classMetricTotals(payload.classes.slice(0, 15))
-          )}
         </div>
       </article>
     </div>

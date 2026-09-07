@@ -6,11 +6,7 @@ import {
   splitAbsenceLinesIntoColumns,
 } from "@/lib/daily-absence-display";
 import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
-import {
-  classMetricTotals,
-  type DailyClassBlock,
-  type DailySchoolReportPayload,
-} from "@/lib/daily-report";
+import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
 
 export function DailyAbsenceReport({
   payload,
@@ -51,12 +47,7 @@ export function DailyJuniorReportPage({
       <StaffSection payload={payload} />
 
       <div className="mt-3 print:mt-2">
-        <ClassMetricsTable
-          title="中一至中三"
-          classes={junior}
-          totalLabel="TOTAL"
-          totals={classMetricTotals(junior)}
-        />
+        <ClassMetricsTable title="中一至中三" classes={junior} />
       </div>
     </article>
   );
@@ -84,21 +75,17 @@ export function DailySeniorReportPage({
       <div className="mt-3 space-y-2 print:mt-2 print:space-y-1">
         <FormStatsTable payload={payload} />
         <ClassMetricsTable
-          title="中四至中六"
-          classes={senior}
-          totalLabel="TOTAL"
-          totals={{
-            absent: payload.totalAbsent,
-            attendanceRate: payload.totalAttendanceRate,
-            late: payload.totalLate,
-            punctualityRate: payload.schoolPunctualityRate,
-          }}
-        />
-        <ClassMetricsTable
           title="中一至中三"
           classes={payload.classes.slice(0, 15)}
-          totalLabel="TOTAL"
-          totals={classMetricTotals(payload.classes.slice(0, 15))}
+        />
+        <ClassMetricsTable
+          title="中四至中六"
+          classes={senior}
+          totalLabel="全校"
+          totals={{
+            absent: payload.totalAbsent,
+            late: payload.totalLate,
+          }}
         />
       </div>
     </article>
@@ -208,14 +195,14 @@ function ClassMetricsTable({
 }: {
   title: string;
   classes: DailyClassBlock[];
-  totalLabel: string;
-  totals: {
-    absent: number;
-    attendanceRate: number;
-    late: number;
-    punctualityRate: number;
+  totalLabel?: string;
+  totals?: {
+    absent?: number;
+    late?: number;
   };
 }) {
+  const showSchoolTotal = Boolean(totalLabel && totals);
+
   return (
     <section className="rounded border border-zinc-300">
       <h3 className="border-b border-zinc-300 bg-slate-50 px-2 py-1 text-center text-xs font-semibold">
@@ -232,7 +219,9 @@ function ClassMetricsTable({
                 {item.className}
               </th>
             ))}
-            <th className="whitespace-nowrap border border-zinc-300 px-1 py-1">{totalLabel}</th>
+            {showSchoolTotal ? (
+              <th className="whitespace-nowrap border border-zinc-300 px-1 py-1">{totalLabel}</th>
+            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -245,7 +234,9 @@ function ClassMetricsTable({
                 {item.absentCount}
               </td>
             ))}
-            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">{totals.absent}</td>
+            {showSchoolTotal ? (
+              <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">{totals?.absent}</td>
+            ) : null}
           </tr>
           <tr>
             <td className="whitespace-nowrap border border-zinc-300 px-1 py-1 text-left">
@@ -256,9 +247,9 @@ function ClassMetricsTable({
                 {formatPercentExact(item.attendanceRate)}
               </td>
             ))}
-            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">
-              {formatPercentExact(totals.attendanceRate)}
-            </td>
+            {showSchoolTotal ? (
+              <td className="whitespace-nowrap border border-zinc-300 px-1 py-1" />
+            ) : null}
           </tr>
           <tr>
             <td className="whitespace-nowrap border border-zinc-300 px-1 py-1 text-left">
@@ -269,7 +260,9 @@ function ClassMetricsTable({
                 {item.lateCount}
               </td>
             ))}
-            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">{totals.late}</td>
+            {showSchoolTotal ? (
+              <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">{totals?.late}</td>
+            ) : null}
           </tr>
           <tr>
             <td className="whitespace-nowrap border border-zinc-300 px-1 py-1 text-left">
@@ -280,9 +273,9 @@ function ClassMetricsTable({
                 {formatPercentExact(item.punctualityRate)}
               </td>
             ))}
-            <td className="whitespace-nowrap border border-zinc-300 px-1 py-1">
-              {formatPercentExact(totals.punctualityRate)}
-            </td>
+            {showSchoolTotal ? (
+              <td className="whitespace-nowrap border border-zinc-300 px-1 py-1" />
+            ) : null}
           </tr>
         </tbody>
       </table>
