@@ -360,7 +360,7 @@ export default function ReportsPage() {
       toast.success(`已產生 ${result.filename}`);
       downloadBase64Xlsx(result.filename, result.fileBase64);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "無法產生黃sir每月報告。");
+      toast.error(error instanceof Error ? error.message : "無法產生每月報告。");
     } finally {
       setWongBusy(false);
     }
@@ -544,11 +544,11 @@ export default function ReportsPage() {
         </AccentCard>
         <AccentCard accent="default">
           <CardHeader>
-            <CardTitle className="text-base">黃sir每月報告</CardTitle>
+            <CardTitle className="text-base">每月報告</CardTitle>
             <CardDescription>
               {wongReport.monthLabel}　{wongReport.classes.length} 班　有紀錄{" "}
               {wongReport.totals.studentsWithIssues} 人　未有醫生紙{" "}
-              {wongReport.totals.missingDoctorCount} 人（Excel 黃色標示）
+              {wongReport.totals.missingDoctorCount} 人（Excel 黃色標示；欄位中英對照）
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

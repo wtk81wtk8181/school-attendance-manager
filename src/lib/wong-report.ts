@@ -15,6 +15,7 @@ export interface WongStudentRow {
   classLabel: string;
   studentNo: string;
   name: string;
+  nameEn: string;
   teacher: string;
   countedAbsenceDays: number;
   missingDoctorDates: string[];
@@ -74,6 +75,7 @@ function buildStudentRow(
     classLabel: classLabel(student.className),
     studentNo: student.studentNo,
     name: student.name,
+    nameEn: student.nameEn,
     teacher,
     countedAbsenceDays: counted,
     missingDoctorDates,

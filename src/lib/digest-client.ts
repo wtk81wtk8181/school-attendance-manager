@@ -103,7 +103,7 @@ export async function requestWongReport(input: {
   recipients: Array<{ name: string; email: string }>;
   sendEmail: boolean;
 }): Promise<DigestSendResult> {
-  return postReport("/api/report/wong", input, "無法產生黃sir每月報告。");
+  return postReport("/api/report/wong", input, "無法產生每月報告。");
 }
 
 export function downloadBase64Xlsx(filename: string, base64: string) {
