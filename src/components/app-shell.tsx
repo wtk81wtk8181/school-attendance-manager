@@ -9,6 +9,7 @@ import {
   CalendarClock,
   Check,
   ClipboardList,
+  Clock,
   Database,
   FileWarning,
   History,
@@ -41,6 +42,7 @@ import { classLabel } from "@/lib/rules";
 const officeNav = [
   { href: "/dashboard", label: "總覽", icon: LayoutDashboard },
   { href: "/students", label: "學生出勤", icon: Users },
+  { href: "/late", label: "遲到紀錄", icon: Clock },
   { href: "/reviews", label: "文件審核", icon: ClipboardList },
   { href: "/warnings", label: "警告信", icon: FileWarning },
   { href: "/reports", label: "報表導出", icon: BarChart3 },
@@ -53,6 +55,7 @@ const officeNav = [
 const homeroomNav = [
   { href: "/dashboard", label: "總覽", icon: LayoutDashboard },
   { href: "/students", label: "本班出勤", icon: Users },
+  { href: "/late", label: "遲到紀錄", icon: Clock },
   { href: "/warnings", label: "警告信", icon: FileWarning },
   { href: "/reports", label: "報表", icon: BarChart3 },
 ];

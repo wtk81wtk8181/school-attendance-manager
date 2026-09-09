@@ -62,12 +62,14 @@ export function AttendanceMark({
   value,
   record,
   disabled,
+  statuses,
   onChange,
   onDetailsChange,
 }: {
   value: DayAttendance;
   record?: AbsenceRecord;
   disabled?: boolean;
+  statuses?: DayAttendance[];
   onChange?: (
     value: DayAttendance,
     extras?: {
@@ -91,6 +93,9 @@ export function AttendanceMark({
   const [earlyReason, setEarlyReason] = useState("");
   const [earlyPickup, setEarlyPickup] = useState<EarlyPickup>("father");
   const [earlyAt, setEarlyAt] = useState(hongKongHHMM());
+  const options = statuses?.length
+    ? OPTIONS.filter((item) => statuses.includes(item.value))
+    : OPTIONS;
 
   function openEarlyDialog() {
     setEarlyReason(
@@ -117,7 +122,7 @@ export function AttendanceMark({
   return (
     <div className="space-y-2">
       <div className="inline-flex max-w-xl flex-wrap rounded-lg border bg-white p-0.5">
-        {OPTIONS.map((option) => {
+        {options.map((option) => {
           const selected = value === option.value;
           return (
             <button
