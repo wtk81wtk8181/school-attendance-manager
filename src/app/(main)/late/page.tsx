@@ -121,6 +121,39 @@ export default function LateRecordsPage() {
   const selectedDayLate = lateRecords.filter((item) => item.record.date === schoolDay).length;
   const selectedTeacher = klass !== "all" ? CLASS_TEACHERS[klass] : undefined;
   const today = hongKongToday();
+  const schoolStudentById = useMemo(() => {
+    const source = isOffice ? state.students : visibleStudents;
+    return new Map(source.map((item) => [item.id, item]));
+  }, [isOffice, state.students, visibleStudents]);
+  const todayLateStudents = useMemo(() => {
+    return state.absences
+      .filter((item) => item.eclassStatus === "late" && item.date === today)
+      .map((item) => {
+        const student = schoolStudentById.get(item.studentId);
+        if (!student) return null;
+        return {
+          record: item,
+          student,
+          lateCount: lateOccurrences(
+            state.absences.filter((row) => row.studentId === student.id)
+          ),
+        };
+      })
+      .filter(
+        (
+          item
+        ): item is {
+          record: (typeof state.absences)[number];
+          student: Student;
+          lateCount: number;
+        } => Boolean(item)
+      )
+      .sort(
+        (a, b) =>
+          a.student.className.localeCompare(b.student.className) ||
+          a.student.studentNo.localeCompare(b.student.studentNo)
+      );
+  }, [schoolStudentById, state.absences, today]);
   const maxSchoolDay = laterIso(state.academicYear.end, today);
   const previousDay = previousSchoolDate(schoolDay);
   const nextDay = nextSchoolDate(schoolDay);
@@ -195,6 +228,74 @@ export default function LateRecordsPage() {
           </Button>
         </div>
       ) : null}
+
+      <section className="overflow-hidden rounded-xl border border-sky-200 bg-sky-50/70">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-sky-200 px-4 py-2.5">
+          <h2 className="text-sm font-semibold text-sky-950">
+            {isOffice ? "全校當天遲到" : "當天遲到學生名單"}
+          </h2>
+          <p className="text-xs text-sky-800">
+            {formatDate(today)}　{todayLateStudents.length} 人
+          </p>
+        </div>
+        {todayLateStudents.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-sky-800/80">
+            今天尚未有遲到紀錄。
+          </p>
+        ) : (
+          <div className="bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>班別</TableHead>
+                  <TableHead>姓名</TableHead>
+                  <TableHead>詳情</TableHead>
+                  <TableHead>醫生證明</TableHead>
+                  <TableHead>遲到總次數</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {todayLateStudents.map(({ record, student, lateCount }) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="whitespace-nowrap">
+                      {classLabel(student.className)}
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/students/${student.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {student.name}
+                      </Link>
+                      <p className="text-xs text-slate-400">
+                        {student.studentNo}　{student.nameEn}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <AttendanceMark
+                        value="late"
+                        record={record}
+                        disabled={!isOffice}
+                        statuses={["present", "late"]}
+                        onChange={(status, extras) =>
+                          markLate(student.id, record.date, status, extras)
+                        }
+                        onDetailsChange={(next) =>
+                          updateAbsenceDetails(record.id, next)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {isDoctorExemptedLate(record) ? "已交（不計違規）" : "—"}
+                    </TableCell>
+                    <TableCell>{lateCount} 次</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
 
       {isOffice ? (
         <section className="space-y-2 rounded-xl border border-slate-200 bg-white px-3 py-3 sm:px-4">
