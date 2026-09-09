@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { CalendarPlus, Trash2 } from "lucide-react";
+import { CalendarPlus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -31,13 +31,16 @@ import {
 } from "@/lib/student-leave";
 import { classLabel, listClasses } from "@/lib/rules";
 import { visibleRosterStudents } from "@/lib/hidden-students";
+import { formatShortDate } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import type { StudentLeaveCategory } from "@/lib/types";
+import type { StudentLeaveCategory, StudentLeaveRecord } from "@/lib/types";
 import { toast } from "sonner";
 
 export function StudentLeaveSection({ date }: { date: string }) {
-  const { state, addStudentLeaves, removeStudentLeave } = useStore();
+  const { state, addStudentLeaves, removeStudentLeave, updateStudentLeave } = useStore();
   const [open, setOpen] = useState(false);
+  const [editingLeave, setEditingLeave] = useState<StudentLeaveRecord | null>(null);
+  const [listQuery, setListQuery] = useState("");
   const [classFilter, setClassFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
@@ -75,9 +78,29 @@ export function StudentLeaveSection({ date }: { date: string }) {
   );
   const selectedSet = useMemo(() => new Set(selectedStudentIds), [selectedStudentIds]);
   const dayLeaves = studentLeavesForDate(state.studentLeaveRecords, date);
-  const upcomingLeaves = (state.studentLeaveRecords ?? [])
-    .filter((item) => item.endDate >= date)
-    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const allLeaves = useMemo(
+    () =>
+      [...(state.studentLeaveRecords ?? [])].sort(
+        (a, b) =>
+          b.startDate.localeCompare(a.startDate) ||
+          a.className.localeCompare(b.className) ||
+          a.studentName.localeCompare(b.studentName)
+      ),
+    [state.studentLeaveRecords]
+  );
+  const listedLeaves = useMemo(() => {
+    const q = listQuery.trim().toLowerCase();
+    if (!q) return allLeaves;
+    return allLeaves.filter(
+      (leave) =>
+        leave.studentName.toLowerCase().includes(q) ||
+        leave.className.toLowerCase().includes(q) ||
+        classLabel(leave.className).toLowerCase().includes(q) ||
+        leave.activity.toLowerCase().includes(q) ||
+        leave.reason.toLowerCase().includes(q) ||
+        studentLeaveCategoryLabel(leave.category).toLowerCase().includes(q)
+    );
+  }, [allLeaves, listQuery]);
 
   function resetForm() {
     setSelectedStudentIds([]);
@@ -86,10 +109,31 @@ export function StudentLeaveSection({ date }: { date: string }) {
   }
 
   function openDialog() {
+    setEditingLeave(null);
     setStartDate(date);
     setEndDate(date);
     resetForm();
     setOpen(true);
+  }
+
+  function openEdit(leave: StudentLeaveRecord) {
+    setEditingLeave(leave);
+    setCategory(leave.category);
+    setStatus(leave.status);
+    setStartDate(leave.startDate);
+    setEndDate(leave.endDate);
+    setReason(leave.reason);
+    setActivity(leave.activity);
+    setSelectedStudentIds([leave.studentId]);
+    setOpen(true);
+  }
+
+  function closeDialog(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setEditingLeave(null);
+      resetForm();
+    }
   }
 
   function toggleStudent(studentId: string, checked: boolean) {
@@ -104,6 +148,20 @@ export function StudentLeaveSection({ date }: { date: string }) {
 
   function submitLeave(event: FormEvent) {
     event.preventDefault();
+    if (editingLeave) {
+      const updated = updateStudentLeave(editingLeave.id, {
+        category,
+        status,
+        startDate,
+        endDate: endDate || startDate,
+        reason,
+        activity,
+      });
+      if (!updated) return;
+      closeDialog(false);
+      toast.success("已更新學生預先請假。");
+      return;
+    }
     if (selectedStudentIds.length === 0) {
       toast.error("請至少選擇一名學生。");
       return;
@@ -123,8 +181,7 @@ export function StudentLeaveSection({ date }: { date: string }) {
       }
       return;
     }
-    setOpen(false);
-    resetForm();
+    closeDialog(false);
     toast.success(
       added === 1
         ? "已登記 1 名學生的預先請假，到日會自動顯示於缺席名單。"
@@ -152,21 +209,127 @@ export function StudentLeaveSection({ date }: { date: string }) {
           <p className="text-sm font-medium text-sky-950">當日已登記的預先請假</p>
           <ul className="mt-1 space-y-1 text-sm text-sky-950">
             {dayLeaves.map((leave) => (
-              <li key={leave.id}>{formatStudentLeaveLine(leave)}</li>
+              <li key={leave.id} className="flex items-start justify-between gap-2">
+                <span>{formatStudentLeaveLine(leave)}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => openEdit(leave)}
+                >
+                  <Pencil className="size-3.5" />
+                  編輯
+                </Button>
+              </li>
             ))}
           </ul>
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <section className="space-y-2 rounded-lg border p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="font-medium">已登記的學生請假</p>
+            <p className="text-xs text-muted-foreground">
+              可更改日期、類別、活動或原因；更改後請按頁面上方「確定儲存」寫入資料庫。
+            </p>
+          </div>
+          <Input
+            className="w-full sm:w-56"
+            value={listQuery}
+            placeholder="搜尋姓名、班別或活動"
+            onChange={(event) => setListQuery(event.target.value)}
+          />
+        </div>
+        {listedLeaves.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            {allLeaves.length === 0 ? "尚未有學生預先請假紀錄。" : "找不到符合搜尋的請假紀錄。"}
+          </p>
+        ) : (
+          <div className="max-h-[28rem] overflow-auto rounded-md border">
+            <table className="w-full text-left text-sm">
+              <thead className="sticky top-0 bg-slate-50 text-xs text-slate-500">
+                <tr>
+                  <th className="px-3 py-2 font-medium">學生</th>
+                  <th className="px-3 py-2 font-medium">日期</th>
+                  <th className="px-3 py-2 font-medium">類別</th>
+                  <th className="px-3 py-2 font-medium">狀態</th>
+                  <th className="px-3 py-2 font-medium">活動／原因</th>
+                  <th className="px-3 py-2 font-medium" />
+                </tr>
+              </thead>
+              <tbody>
+                {listedLeaves.map((leave) => (
+                  <tr key={leave.id} className="border-t">
+                    <td className="px-3 py-2">
+                      <p className="font-medium">
+                        {classLabel(leave.className)}　{leave.studentName}
+                      </p>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                      {formatShortDate(leave.startDate)}
+                      {leave.endDate !== leave.startDate
+                        ? ` 至 ${formatShortDate(leave.endDate)}`
+                        : ""}
+                    </td>
+                    <td className="px-3 py-2">
+                      {studentLeaveCategoryLabel(leave.category)}
+                    </td>
+                    <td className="px-3 py-2">
+                      {leave.status === "leave" ? "請假" : "缺席"}
+                    </td>
+                    <td className="px-3 py-2 text-slate-600">
+                      {[leave.activity.trim(), leave.reason.trim()]
+                        .filter(Boolean)
+                        .join("／") || "—"}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="xs"
+                          onClick={() => openEdit(leave)}
+                        >
+                          <Pencil className="size-3.5" />
+                          編輯
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => removeStudentLeave(leave.id)}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <Dialog open={open} onOpenChange={closeDialog}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>登記學生預先請假</DialogTitle>
+            <DialogTitle>
+              {editingLeave ? "編輯學生預先請假" : "登記學生預先請假"}
+            </DialogTitle>
             <DialogDescription>
-              可一次選擇多名學生，登記同一活動及日期範圍。若當日未有其他缺席紀錄，系統會自動顯示於缺席名單。
+              {editingLeave
+                ? `${classLabel(editingLeave.className)}　${editingLeave.studentName}。可更改日期、類別、活動或原因。`
+                : "可一次選擇多名學生，登記同一活動及日期範圍。若當日未有其他缺席紀錄，系統會自動顯示於缺席名單。"}
             </DialogDescription>
           </DialogHeader>
           <form className="space-y-3" onSubmit={submitLeave}>
+            {editingLeave ? (
+              <div className="rounded-lg border bg-slate-50 px-3 py-2 text-sm">
+                {classLabel(editingLeave.className)}　{editingLeave.studentName}
+              </div>
+            ) : null}
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
                 <Label>類別</Label>
@@ -241,6 +404,7 @@ export function StudentLeaveSection({ date }: { date: string }) {
               />
             </div>
 
+            {editingLeave ? null : (
             <div className="space-y-2 rounded-lg border p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Label>選擇學生（已選 {selectedStudentIds.length} 人）</Label>
@@ -312,46 +476,21 @@ export function StudentLeaveSection({ date }: { date: string }) {
                 </div>
               </ScrollArea>
             </div>
+            )}
 
             <DialogFooter>
-              <Button type="submit" disabled={selectedStudentIds.length === 0}>
-                {selectedStudentIds.length <= 1
-                  ? "登記請假"
-                  : `批量登記 ${selectedStudentIds.length} 人`}
+              <Button
+                type="submit"
+                disabled={!editingLeave && selectedStudentIds.length === 0}
+              >
+                {editingLeave
+                  ? "儲存更改"
+                  : selectedStudentIds.length <= 1
+                    ? "登記請假"
+                    : `批量登記 ${selectedStudentIds.length} 人`}
               </Button>
             </DialogFooter>
           </form>
-
-          {upcomingLeaves.length > 0 && (
-            <div className="space-y-2 border-t pt-3">
-              <p className="text-sm font-medium">已登記的請假（{upcomingLeaves.length}）</p>
-              <div className="max-h-48 space-y-2 overflow-y-auto">
-                {upcomingLeaves.map((leave) => (
-                  <div
-                    key={leave.id}
-                    className="flex items-start justify-between gap-2 rounded-md border px-3 py-2 text-sm"
-                  >
-                    <div>
-                      <p>{formatStudentLeaveLine(leave)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {leave.startDate}
-                        {leave.endDate !== leave.startDate ? ` 至 ${leave.endDate}` : ""}
-                        　{leave.status === "leave" ? "請假" : "缺席"}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeStudentLeave(leave.id)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </div>

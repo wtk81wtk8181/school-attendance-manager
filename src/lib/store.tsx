@@ -176,6 +176,17 @@ interface StoreValue {
     activity: string;
   }) => { added: number; skipped: number };
   removeStudentLeave: (id: string) => void;
+  updateStudentLeave: (
+    id: string,
+    input: {
+      category: StudentLeaveCategory;
+      status: "leave" | "absent";
+      startDate: string;
+      endDate: string;
+      reason: string;
+      activity: string;
+    }
+  ) => boolean;
   restoreHiddenStudent: (studentId: string) => void;
   toggleAppearanceCategory: (
     studentId: string,
@@ -1801,6 +1812,82 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [currentUser]
   );
 
+  const updateStudentLeave = useCallback(
+    (
+      id: string,
+      input: {
+        category: StudentLeaveCategory;
+        status: "leave" | "absent";
+        startDate: string;
+        endDate: string;
+        reason: string;
+        activity: string;
+      }
+    ) => {
+      if (currentUser?.role !== "office") {
+        toast.error("只有校務處職員可以更改學生請假。");
+        return false;
+      }
+      if (!input.startDate) return false;
+      let updated = false;
+      let overlapping = false;
+      let missing = false;
+      patch((prev) => {
+        const current = (prev.studentLeaveRecords ?? []).find((item) => item.id === id);
+        if (!current) {
+          missing = true;
+          return prev;
+        }
+        const endDate =
+          input.endDate && input.endDate >= input.startDate
+            ? input.endDate
+            : input.startDate;
+        overlapping = (prev.studentLeaveRecords ?? []).some(
+          (item) =>
+            item.id !== id &&
+            item.studentId === current.studentId &&
+            item.startDate <= endDate &&
+            item.endDate >= input.startDate
+        );
+        if (overlapping) return prev;
+        updated = true;
+        return withAudit(
+          {
+            ...prev,
+            studentLeaveRecords: (prev.studentLeaveRecords ?? []).map((item) =>
+              item.id === id
+                ? {
+                    ...item,
+                    category: input.category,
+                    status: input.status,
+                    startDate: input.startDate,
+                    endDate,
+                    reason: input.reason.trim(),
+                    activity: input.activity.trim(),
+                    updatedAt: nowIso(),
+                  }
+                : item
+            ),
+          },
+          "更新學生預先請假",
+          `${current.studentName}（${current.className}）${input.startDate}${
+            endDate !== input.startDate ? ` 至 ${endDate}` : ""
+          }`
+        );
+      });
+      if (missing) {
+        toast.error("找不到這筆預先請假紀錄。");
+        return false;
+      }
+      if (overlapping) {
+        toast.error("這位學生在所選日期已有另一筆預先請假紀錄。");
+        return false;
+      }
+      return updated;
+    },
+    [currentUser]
+  );
+
   const restoreHiddenStudent = useCallback(
     (studentId: string) => {
       if (currentUser?.role !== "office") {
@@ -2230,6 +2317,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStudentLeave,
       addStudentLeaves,
       removeStudentLeave,
+      updateStudentLeave,
       restoreHiddenStudent,
       toggleAppearanceCategory,
       clearAppearanceIssue,
@@ -2272,6 +2360,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addStudentLeave,
       addStudentLeaves,
       removeStudentLeave,
+      updateStudentLeave,
       restoreHiddenStudent,
       toggleAppearanceCategory,
       clearAppearanceIssue,

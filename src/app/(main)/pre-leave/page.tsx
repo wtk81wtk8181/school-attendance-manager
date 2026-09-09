@@ -33,10 +33,10 @@ export default function PreLeavePage() {
   }
 
   return (
-    <PageShell className="max-w-4xl">
+    <PageShell className="max-w-5xl">
       <PageHeader
         title="預先請假"
-        description="學生及教職員均可提早登記請假；到請假當日會自動顯示於總覽、每日缺席報告及電郵。"
+        description="學生及教職員均可提早登記請假；已登記的學生請假可在此更改日期、類別或原因。到請假當日會自動顯示於總覽、每日缺席報告及電郵。"
       />
 
       <Card>
