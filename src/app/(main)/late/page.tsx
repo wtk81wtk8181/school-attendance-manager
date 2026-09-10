@@ -22,7 +22,7 @@ import { hongKongToday } from "@/lib/digest";
 import { formatDate, formatShortDate } from "@/lib/format";
 import { CLASS_STREAMS, CLASS_TEACHERS } from "@/lib/roster";
 import {
-  attendanceStatusLabel,
+  attendanceStatusLabelForRecord,
   buildStudentStats,
   classLabel,
   formLabel,
@@ -601,13 +601,10 @@ export default function LateRecordsPage() {
                           {student.studentNo}　{student.nameEn}
                           {klass === "all" ? `　${classLabel(student.className)}` : ""}
                         </p>
-                        {earlyToday ? (
+                        {dayRecord && (earlyToday || (dayStatus !== "present" && !lateToday)) ? (
                           <p className="mt-1 text-xs text-slate-500">
-                            當日已記早退{lateToday ? "及遲到" : "，仍可同時記遲到"}
-                          </p>
-                        ) : dayStatus !== "present" && dayStatus !== "late" ? (
-                          <p className="mt-1 text-xs text-slate-500">
-                            當日已記{attendanceStatusLabel(dayStatus)}
+                            當日已記{attendanceStatusLabelForRecord(dayRecord)}
+                            {earlyToday && !lateToday ? "，仍可同時記遲到" : ""}
                           </p>
                         ) : null}
                       </TableCell>

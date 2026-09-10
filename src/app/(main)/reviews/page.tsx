@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { studentMatchesQuery } from "@/lib/student-leave";
-import { classLabel, filterClassNames, formLabel, listClasses } from "@/lib/rules";
+import { classLabel, filterClassNames, formLabel, listClasses, recordHasEarly, recordHasLate } from "@/lib/rules";
 import { useStore } from "@/lib/store";
 import type { DocumentType, EclassStatus, FormLevel, ReviewStatus } from "@/lib/types";
 
@@ -70,7 +70,15 @@ export default function ReviewsPage() {
         if (form !== "all" && student.className[0] !== form) return false;
         if (from && item.date < from) return false;
         if (to && item.date > to) return false;
-        if (eclassStatus !== "all" && item.eclassStatus !== eclassStatus) return false;
+        if (eclassStatus !== "all") {
+          const matchesStatus =
+            eclassStatus === "late"
+              ? recordHasLate(item)
+              : eclassStatus === "early"
+                ? recordHasEarly(item)
+                : item.eclassStatus === eclassStatus;
+          if (!matchesStatus) return false;
+        }
         if (documentType !== "all" && item.documentType !== documentType) return false;
         return true;
       })

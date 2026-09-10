@@ -1,5 +1,5 @@
 import {
-  attendanceStatusLabel,
+  attendanceStatusLabelForRecord,
   classLabel,
   isCountedTowardAbsence,
   isLateViolation,
@@ -172,7 +172,7 @@ export function buildMonthlyReport(
       name: student.name,
       nameEn: student.nameEn,
       teacher: student.homeroomTeacherName,
-      status: attendanceStatusLabel(record.eclassStatus),
+      status: attendanceStatusLabelForRecord(record),
       days: record.days,
       reason: formatAbsenceRecordLine(student.name, record),
       documentType: documentLabels[record.documentType],

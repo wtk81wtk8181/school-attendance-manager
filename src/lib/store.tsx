@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lateOccurrences, neededWarningTypes, recordHasEarly, recordHasLate } from "@/lib/rules";
+import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lateOccurrences, neededWarningTypes, recordHasEarly, recordHasLate, attendanceStatusLabelForRecord } from "@/lib/rules";
 import { studentsHomeroomTeachersChanged } from "@/lib/roster";
 import { formAHiddenStudentsChanged } from "@/lib/hidden-students";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
@@ -1146,18 +1146,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const combined = nextAbsences.find(
           (item) => item.studentId === studentId && item.date === date
         );
-        const statusLabel =
-          combined && recordHasLate(combined) && recordHasEarly(combined)
-            ? "遲到及早退"
-            : status === "absent"
-              ? "缺席"
-              : status === "late"
-                ? "遲到"
-                : status === "leave"
-                  ? "事假"
-                  : status === "half_absent"
-                    ? "半日缺席"
-                    : "早退";
+        const statusLabel = combined
+          ? attendanceStatusLabelForRecord(combined)
+          : attendanceStatusLabelForRecord({
+              eclassStatus: status,
+            });
 
         return withAudit(
           applyLongAbsenceHide(
@@ -1180,14 +1173,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
       });
 
-      const labels: Record<DayAttendance, string> = {
-        present: "出席",
-        absent: "缺席",
-        late: "遲到",
-        leave: "事假",
-        half_absent: "半日缺席",
-        early: "早退",
-      };
       const hiddenNow = isStudentHidden(
         memory.hiddenStudents,
         memory.hiddenStudentRemovals,
@@ -1201,8 +1186,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
       } else if (extrasTouched && currentStatus === status) {
         toast.success("已更新時間／早退資料。請按「確定儲存」寫入資料庫。");
+      } else if (status === "present") {
+        toast.success("已標記為出席。請按「確定儲存」寫入資料庫。");
       } else {
-        toast.success(`已標記為${labels[status]}。請按「確定儲存」寫入資料庫。`);
+        const resolved = resolveCombinedAttendance(existingNow, status, extras);
+        toast.success(
+          `已標記為${attendanceStatusLabelForRecord({
+            eclassStatus: resolved.status,
+            alsoLate: resolved.alsoLate,
+            alsoEarly: resolved.alsoEarly,
+          })}。請按「確定儲存」寫入資料庫。`
+        );
       }
     },
     [currentUser]

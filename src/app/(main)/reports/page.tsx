@@ -25,7 +25,7 @@ import {
 import { downloadCsv, formatPercent, formatPercentExact, formatShortDate } from "@/lib/format";
 import { formatAbsenceRecordLine } from "@/lib/attendance-extras";
 import {
-  attendanceStatusLabel,
+  attendanceStatusLabelForRecord,
   buildStudentStats,
   classLabel,
   countedAbsenceDaysOnOrBefore,
@@ -426,7 +426,7 @@ export default function ReportsPage() {
           student ? classLabel(student.className) : "",
           student?.studentNo ?? "",
           displayName,
-          attendanceStatusLabel(item.eclassStatus),
+          attendanceStatusLabelForRecord(item),
           item.days,
           formatAbsenceRecordLine(displayName || student?.name || "", item),
           item.calledBy ?? "",

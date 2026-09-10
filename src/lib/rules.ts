@@ -51,11 +51,25 @@ export function recordHasEarly(record: Pick<AbsenceRecord, "eclassStatus" | "als
   return record.eclassStatus === "early" || record.alsoEarly === true;
 }
 
+export function attendanceStatusesForRecord(
+  record: Pick<AbsenceRecord, "eclassStatus" | "alsoLate" | "alsoEarly">
+): Exclude<DayAttendance, "present">[] {
+  const statuses: Exclude<DayAttendance, "present">[] = [];
+  const primary = record.eclassStatus;
+  if (primary !== "late" && primary !== "early") {
+    statuses.push(primary);
+  }
+  if (recordHasLate(record)) statuses.push("late");
+  if (recordHasEarly(record)) statuses.push("early");
+  return statuses;
+}
+
 export function attendanceStatusLabelForRecord(
   record: Pick<AbsenceRecord, "eclassStatus" | "alsoLate" | "alsoEarly">
 ): string {
-  if (recordHasLate(record) && recordHasEarly(record)) return "遲到及早退";
-  return attendanceStatusLabel(record.eclassStatus);
+  return attendanceStatusesForRecord(record)
+    .map((status) => attendanceStatusLabel(status))
+    .join("、");
 }
 
 export function classLabel(className: string): string {

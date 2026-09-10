@@ -16,7 +16,7 @@ import {
 import { formatAbsenceRecordLine } from "@/lib/attendance-extras";
 import { formatShortDate } from "@/lib/format";
 import {
-  attendanceStatusLabel,
+  attendanceStatusLabelForRecord,
   classLabel,
   formatDays,
   isCountedTowardAbsence,
@@ -132,7 +132,7 @@ export function AbsenceTable({
                     )}
                   </TableCell>
                 ) : null}
-                <TableCell>{attendanceStatusLabel(record.eclassStatus)}</TableCell>
+                <TableCell>{attendanceStatusLabelForRecord(record)}</TableCell>
                 <TableCell>{formatDays(record.days)}</TableCell>
                 <TableCell className="max-w-[280px] whitespace-normal">
                   {formatAbsenceRecordLine(student?.name ?? "", record)}
