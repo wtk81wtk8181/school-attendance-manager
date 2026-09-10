@@ -158,9 +158,10 @@ export function buildAppearanceReport(
   appearanceIssues: AppearanceIssue[] | undefined,
   appearanceIssueRemovals: AppearanceIssueRemoval[] | undefined,
   yearMonth: string,
-  academicYear: string
+  academicYear: string,
+  excludeFromHeadcount?: Set<string>
 ): AppearanceReportPayload {
-  const monthly = buildMonthlyReport(students, absences, yearMonth);
+  const monthly = buildMonthlyReport(students, absences, yearMonth, excludeFromHeadcount);
   const byClass = new Map(monthly.classes.map((item) => [item.className, item]));
   const flaggedIds = new Set(
     students

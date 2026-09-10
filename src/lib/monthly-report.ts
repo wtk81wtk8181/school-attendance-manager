@@ -103,26 +103,29 @@ function hongKongToday(): string {
 export function buildMonthlyReport(
   students: Student[],
   absences: AbsenceRecord[],
-  yearMonth: string
+  yearMonth: string,
+  excludeFromHeadcount?: Set<string>
 ): MonthlyReportPayload {
   const { start, end } = monthRange(yearMonth);
   const inRange = absences.filter((item) => item.date >= start && item.date <= end);
   const classes = [...new Set(students.map((item) => item.className))].sort();
   const schoolDaysInMonth = weekdayCount(start, end);
+  const excluded = excludeFromHeadcount ?? new Set<string>();
 
   const summaries: ClassMonthlySummary[] = classes.map((className) => {
     const classStudents = students.filter((item) => item.className === className);
+    const headcountStudents = classStudents.filter((item) => !excluded.has(item.id));
     const classRecords = inRange.filter((item) =>
-      classStudents.some((student) => student.id === item.studentId)
+      headcountStudents.some((student) => student.id === item.studentId)
     );
     const nonApproved = classRecords.filter(isCountedTowardAbsence);
     const countedAbsenceDays = nonApproved.reduce((sum, item) => sum + item.days, 0);
     const absentees = new Set(nonApproved.map((item) => item.studentId));
-    // 全班平均出席率（獲批請假不計入）
+    // 全班平均出席率（獲批請假不計入；Form A 不計入人數）
     const totalRate =
-      classStudents.length === 0
+      headcountStudents.length === 0
         ? 100
-        : classStudents.reduce((sum, student) => {
+        : headcountStudents.reduce((sum, student) => {
             const records = classRecords.filter((item) => item.studentId === student.id);
             const days = records
               .filter(isCountedTowardAbsence)
@@ -136,7 +139,7 @@ export function buildMonthlyReport(
       className,
       classLabel: classLabel(className),
       teacher: classStudents[0]?.homeroomTeacherName ?? "",
-      studentCount: classStudents.length,
+      studentCount: headcountStudents.length,
       schoolDaysInMonth,
       absentCount: classRecords.filter(
         (item) => item.eclassStatus === "absent" || item.eclassStatus === "half_absent"
@@ -153,7 +156,7 @@ export function buildMonthlyReport(
       pendingDays: pendingDays(classRecords),
       studentsWithAbsence: absentees.size,
       attendanceRate:
-        classStudents.length === 0 ? 100 : totalRate / classStudents.length,
+        headcountStudents.length === 0 ? 100 : totalRate / headcountStudents.length,
     };
   });
 

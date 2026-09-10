@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { absencesIncludingFormACarry, hiddenStudentIdSet } from "@/lib/hidden-students";
 import { buildDigest } from "@/lib/digest";
 import { downloadBase64Xlsx, requestDigestSend } from "@/lib/digest-client";
 import { useStore } from "@/lib/store";
@@ -18,7 +19,18 @@ export function useAbsenceDigest() {
       trigger: DigestTrigger;
       download?: boolean;
     }) => {
-      const payload = buildDigest(state.students, state.absences, options.schoolDay);
+      const payload = buildDigest(
+        state.students,
+        absencesIncludingFormACarry(
+          state.absences,
+          state.hiddenStudents,
+          state.hiddenStudentRemovals,
+          state.clearedAttendance,
+          options.schoolDay
+        ),
+        options.schoolDay,
+        hiddenStudentIdSet(state.hiddenStudents, state.hiddenStudentRemovals)
+      );
       const recipients = state.digestRecipients.filter((item) => item.enabled);
       if (options.sendEmail && recipients.length === 0) {
         toast.error("請先加入至少一位收件人。");
@@ -63,7 +75,15 @@ export function useAbsenceDigest() {
         setBusy(false);
       }
     },
-    [recordDigestSend, state.absences, state.digestRecipients, state.students]
+    [
+      recordDigestSend,
+      state.absences,
+      state.clearedAttendance,
+      state.digestRecipients,
+      state.hiddenStudentRemovals,
+      state.hiddenStudents,
+      state.students,
+    ]
   );
 
   return { busy, run };

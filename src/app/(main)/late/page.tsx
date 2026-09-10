@@ -29,6 +29,8 @@ import {
   getDayAttendance,
   isDoctorExemptedLate,
   lateOccurrences,
+  recordHasEarly,
+  recordHasLate,
 } from "@/lib/rules";
 import { useStore } from "@/lib/store";
 import { nextSchoolDate, previousSchoolDate } from "@/lib/hidden-students";
@@ -92,7 +94,7 @@ export default function LateRecordsPage() {
     );
 
   const lateRecords = state.absences
-    .filter((item) => item.eclassStatus === "late")
+    .filter((item) => recordHasLate(item))
     .filter((item) => showAllDates || item.date === schoolDay)
     .map((item) => {
       const student = studentById.get(item.studentId);
@@ -127,7 +129,7 @@ export default function LateRecordsPage() {
   }, [isOffice, state.students, visibleStudents]);
   const todayLateStudents = useMemo(() => {
     return state.absences
-      .filter((item) => item.eclassStatus === "late" && item.date === today)
+      .filter((item) => recordHasLate(item) && item.date === today)
       .map((item) => {
         const student = schoolStudentById.get(item.studentId);
         if (!student) return null;
@@ -178,9 +180,18 @@ export default function LateRecordsPage() {
     status: DayAttendance,
     extras?: Parameters<typeof setDayAttendance>[3]
   ) {
+    const record = state.absences.find(
+      (item) => item.studentId === studentId && item.date === date
+    );
     const current = getDayAttendance(state.absences, studentId, date);
-    if (status === "present" && current !== "present" && current !== "late") {
-      return;
+    if (status === "present") {
+      if (record && recordHasEarly(record) && recordHasLate(record)) {
+        setDayAttendance(studentId, date, "early", { alsoLate: false });
+        return;
+      }
+      if (current !== "present" && current !== "late" && !record?.alsoLate) {
+        return;
+      }
     }
     setDayAttendance(studentId, date, status, extras);
   }
@@ -193,7 +204,7 @@ export default function LateRecordsPage() {
         title="遲到紀錄"
         description={
           isOffice
-            ? "查看學生遲到紀錄，並按班、按上課日記錄遲到。操作與學生出勤頁的「遲到」相同；有醫生證明仍會記錄遲到，但不計入違規次數。標記後請按「確定儲存」。"
+            ? "查看學生遲到紀錄，並按班、按上課日記錄遲到。遲到可與當日早退同時登記。有醫生證明仍會記錄遲到，但不計入違規次數。標記後請按「確定儲存」。"
             : "查看本班學生遲到紀錄。老師帳號為唯讀。"
         }
       />
@@ -213,7 +224,7 @@ export default function LateRecordsPage() {
             {usingDatabase
               ? pendingSave
                 ? "已在本機標記遲到，尚未寫入雲端資料庫。"
-                : `已與資料庫同步（${state.absences.filter((item) => item.eclassStatus === "late").length} 筆遲到紀錄）。`
+                : `已與資料庫同步（${state.absences.filter((item) => recordHasLate(item)).length} 筆遲到紀錄）。`
               : "此裝置未連接資料庫，另一部電腦看不到這裡的變更。"}
           </p>
           <Button
@@ -561,21 +572,23 @@ export default function LateRecordsPage() {
               </TableHeader>
               <TableBody>
                 {roster.map((student) => {
+                  const dayRecord = state.absences.find(
+                    (row) => row.studentId === student.id && row.date === schoolDay
+                  );
                   const dayStatus = getDayAttendance(
                     state.absences,
                     student.id,
                     schoolDay
                   );
-                  const record = state.absences.find(
-                    (row) => row.studentId === student.id && row.date === schoolDay
-                  );
                   const lateCount = lateOccurrences(
                     state.absences.filter((row) => row.studentId === student.id)
                   );
+                  const lateToday = dayRecord ? recordHasLate(dayRecord) : dayStatus === "late";
+                  const earlyToday = dayRecord ? recordHasEarly(dayRecord) : dayStatus === "early";
                   return (
                     <TableRow
                       key={student.id}
-                      className={dayStatus === "late" ? "bg-sky-50/70" : undefined}
+                      className={lateToday ? "bg-sky-50/70" : undefined}
                     >
                       <TableCell>
                         <Link
@@ -588,7 +601,11 @@ export default function LateRecordsPage() {
                           {student.studentNo}　{student.nameEn}
                           {klass === "all" ? `　${classLabel(student.className)}` : ""}
                         </p>
-                        {dayStatus !== "present" && dayStatus !== "late" ? (
+                        {earlyToday ? (
+                          <p className="mt-1 text-xs text-slate-500">
+                            當日已記早退{lateToday ? "及遲到" : "，仍可同時記遲到"}
+                          </p>
+                        ) : dayStatus !== "present" && dayStatus !== "late" ? (
                           <p className="mt-1 text-xs text-slate-500">
                             當日已記{attendanceStatusLabel(dayStatus)}
                           </p>
@@ -597,14 +614,14 @@ export default function LateRecordsPage() {
                       <TableCell>
                         <AttendanceMark
                           value={dayStatus}
-                          record={record}
+                          record={dayRecord}
                           disabled={!isOffice}
                           statuses={["present", "late"]}
                           onChange={(status, extras) =>
                             markLate(student.id, schoolDay, status, extras)
                           }
                           onDetailsChange={(next) => {
-                            if (record) updateAbsenceDetails(record.id, next);
+                            if (dayRecord) updateAbsenceDetails(dayRecord.id, next);
                           }}
                         />
                       </TableCell>

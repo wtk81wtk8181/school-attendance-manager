@@ -43,6 +43,7 @@ import { buildAppearanceReport } from "@/lib/appearance-report";
 import { hongKongToday, resolveDigestSchoolDay } from "@/lib/digest";
 import { buildWongReport } from "@/lib/wong-report";
 import { buildMonthlyReport, currentYearMonth, monthRange } from "@/lib/monthly-report";
+import { absencesIncludingFormACarry, hiddenStudentIdSet } from "@/lib/hidden-students";
 import { EmailRecipientPicker } from "@/components/email-recipient-picker";
 import {
   downloadBase64Xlsx,
@@ -160,9 +161,29 @@ export default function ReportsPage() {
     filteredWarningStudents.some((student) => student.id === item.studentId)
   );
 
+  const excludeFromHeadcount = hiddenStudentIdSet(
+    state.hiddenStudents,
+    state.hiddenStudentRemovals
+  );
+  const monthlyThrough = monthRange(month).end > today ? today : monthRange(month).end;
+  const absencesForMonth = absencesIncludingFormACarry(
+    state.absences,
+    state.hiddenStudents,
+    state.hiddenStudentRemovals,
+    state.clearedAttendance,
+    monthlyThrough
+  );
+  const absencesForDay = absencesIncludingFormACarry(
+    state.absences,
+    state.hiddenStudents,
+    state.hiddenStudentRemovals,
+    state.clearedAttendance,
+    reportDay
+  );
+
   const dailyRows = buildDailyAbsenceRows(
     filteredStudents,
-    state.absences,
+    absencesForDay,
     reportDay,
     state.studentLeaveRecords
   );
@@ -177,25 +198,32 @@ export default function ReportsPage() {
     state.staffLeaveRecords,
     state.studentLeaveRecords,
     state.hiddenStudents,
-    state.hiddenStudentRemovals
+    state.hiddenStudentRemovals,
+    state.clearedAttendance
   );
 
-  const monthlyReport = buildMonthlyReport(visibleStudents, state.absences, month);
+  const monthlyReport = buildMonthlyReport(
+    visibleStudents,
+    absencesForMonth,
+    month,
+    excludeFromHeadcount
+  );
 
   const wongReport = buildWongReport(
     visibleStudents,
-    state.absences,
+    absencesForMonth,
     month,
     state.academicYear.label
   );
 
   const appearanceReport = buildAppearanceReport(
     visibleStudents,
-    state.absences,
+    absencesForMonth,
     state.appearanceIssues,
     state.appearanceIssueRemovals,
     month,
-    state.academicYear.label
+    state.academicYear.label,
+    excludeFromHeadcount
   );
 
   const loReport = buildLoReport(
@@ -208,7 +236,8 @@ export default function ReportsPage() {
     state.studentLeaveRecords,
     state.hiddenStudents,
     state.hiddenStudentRemovals,
-    state.academicYear.label
+    state.academicYear.label,
+    state.clearedAttendance
   );
 
   function exportDailyPdf() {
@@ -767,7 +796,9 @@ export default function ReportsPage() {
                       {row.studentNo}　{row.status}
                       {row.days === 0.5 ? "（半日）" : ""}
                     </span>
-                    {row.statusKey === "half_absent" || row.statusKey === "early" ? (
+                    {row.statusKey === "half_absent" ||
+                    row.statusKey === "early" ||
+                    row.alsoEarly ? (
                       <p className="mt-1 text-xs text-slate-400">
                         {formatDailyAbsenceLine(row)}
                       </p>

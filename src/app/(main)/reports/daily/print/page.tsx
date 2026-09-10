@@ -59,7 +59,8 @@ function DailyAbsencePrintBody() {
         isSample ? [] : state.staffLeaveRecords,
         isSample ? [] : state.studentLeaveRecords,
         state.hiddenStudents,
-        state.hiddenStudentRemovals
+        state.hiddenStudentRemovals,
+        isSample ? [] : state.clearedAttendance
       ),
     [
       schoolDay,
@@ -74,6 +75,7 @@ function DailyAbsencePrintBody() {
       state.staffMembers,
       state.hiddenStudents,
       state.hiddenStudentRemovals,
+      state.clearedAttendance,
     ]
   );
 

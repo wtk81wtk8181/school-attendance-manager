@@ -24,16 +24,24 @@ import {
   needsDocumentChase,
 } from "@/lib/rules";
 import { formatDate, formatPercent, formatShortDate } from "@/lib/format";
+import { hongKongToday } from "@/lib/digest";
 import { useStore } from "@/lib/store";
-import { formACases } from "@/lib/hidden-students";
+import { absencesIncludingFormACarry, formACases } from "@/lib/hidden-students";
 
 export default function DashboardPage() {
   const { state, visibleStudents, warningStudents, currentUser, ready } = useStore();
 
   if (!ready) return <PageSkeleton tiles={4} lines={5} />;
 
+  const absencesForStats = absencesIncludingFormACarry(
+    state.absences,
+    state.hiddenStudents,
+    state.hiddenStudentRemovals,
+    state.clearedAttendance,
+    hongKongToday()
+  );
   const stats = visibleStudents.map((student) =>
-    buildStudentStats(student, state.absences, state.academicYear.schoolDays)
+    buildStudentStats(student, absencesForStats, state.academicYear.schoolDays)
   );
   const warningCount = stats.filter((item) => item.level === "warning").length;
   const overCount = stats.filter((item) => item.level === "over").length;
@@ -65,7 +73,7 @@ export default function DashboardPage() {
     .sort((a, b) => b.countedDays - a.countedDays);
   const formAStudents = formACases(
     state.students,
-    state.absences,
+    absencesForStats,
     state.hiddenStudents,
     state.hiddenStudentRemovals
   );
@@ -89,7 +97,7 @@ export default function DashboardPage() {
               教育局 Form A 申報提醒
             </CardTitle>
             <CardDescription>
-              連續七個上課日缺席（不計算星期六、日）須向教育局申報 Form A。達標學生會從班別名單隱藏。
+              連續七個上課日缺席（不計算星期六、日）須向教育局申報 Form A。達標學生不計入班內總人數，名單仍會顯示並繼續每日計缺席。
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-slate-600">

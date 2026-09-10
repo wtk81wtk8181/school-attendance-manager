@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { EARLY_PICKUP_OPTIONS, earlyPickupLabel } from "@/lib/attendance-extras";
 import { hongKongHHMM } from "@/lib/digest";
+import { recordHasLate } from "@/lib/rules";
 import { cn } from "@/lib/utils";
 import type { AbsenceRecord, ContactMethod, DayAttendance, DocumentType, EarlyPickup } from "@/lib/types";
 
@@ -77,6 +78,8 @@ export function AttendanceMark({
       earlyReason?: string;
       earlyPickup?: EarlyPickup;
       earlyAt?: string;
+      alsoLate?: boolean;
+      alsoEarly?: boolean;
     }
   ) => void;
   onDetailsChange?: (next: {
@@ -111,10 +114,13 @@ export function AttendanceMark({
   function submitEarly(event: FormEvent) {
     event.preventDefault();
     if (!earlyReason.trim()) return;
+    const keepLate = value === "late" || Boolean(record?.alsoLate);
     onChange?.("early", {
       earlyReason: earlyReason.trim(),
       earlyPickup,
       earlyAt: earlyAt || hongKongHHMM(),
+      alsoEarly: keepLate ? true : undefined,
+      alsoLate: keepLate ? true : undefined,
     });
     setEarlyOpen(false);
   }
@@ -123,7 +129,14 @@ export function AttendanceMark({
     <div className="space-y-2">
       <div className="inline-flex max-w-xl flex-wrap rounded-lg border bg-white p-0.5">
         {options.map((option) => {
-          const selected = value === option.value;
+          const lateOn = value === "late" || Boolean(record?.alsoLate);
+          const earlyOn = value === "early" || Boolean(record?.alsoEarly);
+          const selected =
+            option.value === "late"
+              ? lateOn
+              : option.value === "early"
+                ? earlyOn
+                : value === option.value;
           return (
             <button
               key={option.value}
@@ -132,6 +145,14 @@ export function AttendanceMark({
               onClick={() => {
                 if (option.value === "early") {
                   openEarlyDialog();
+                  return;
+                }
+                if (option.value === "late") {
+                  if (earlyOn) {
+                    onChange?.("late", { alsoLate: true });
+                    return;
+                  }
+                  onChange?.("late");
                   return;
                 }
                 if (option.value === "half_absent") {
@@ -180,7 +201,8 @@ export function AttendanceMark({
       ) : null}
 
       {record &&
-      ["absent", "late", "leave", "half_absent"].includes(value) ? (
+      (["absent", "late", "leave", "half_absent"].includes(value) ||
+        recordHasLate(record)) ? (
         <div className="flex flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
           <AbsenceDetailFields
             compact
@@ -191,7 +213,7 @@ export function AttendanceMark({
             contactMethod={record.contactMethod}
             contactedOn={record.contactedOn ?? ""}
             recordDate={record.date}
-            eclassStatus={record.eclassStatus}
+            eclassStatus={recordHasLate(record) ? "late" : record.eclassStatus}
             documentType={record.documentType}
             documentSubmitted={record.documentSubmitted}
             disabled={disabled}
@@ -200,10 +222,11 @@ export function AttendanceMark({
         </div>
       ) : null}
 
-      {value === "early" && record ? (
+      {(value === "early" || record?.alsoEarly) && record ? (
         <p className="text-xs text-slate-400">
           {record.reason?.trim() && record.reason !== "早退" ? `因${record.reason}` : ""}
           於{record.earlyAt || "—"}早退（{earlyPickupLabel(record.earlyPickup)}），計入 0.5 日缺席
+          {recordHasLate(record) ? "；同日遲到" : ""}
           {!disabled ? (
             <button
               type="button"
@@ -221,7 +244,7 @@ export function AttendanceMark({
           <DialogHeader>
             <DialogTitle>登記早退</DialogTitle>
             <DialogDescription>
-              請填寫早退原因、離開方式及時間。早退會計入 0.5 日缺席。時間預設為現在，可再修改。
+              請填寫早退原因、離開方式及時間。早退會計入 0.5 日缺席。若當日亦遲到，可同時保留遲到紀錄。時間預設為現在，可再修改。
             </DialogDescription>
           </DialogHeader>
           <form className="space-y-3" onSubmit={submitEarly}>

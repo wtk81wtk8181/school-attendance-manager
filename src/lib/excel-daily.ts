@@ -206,7 +206,8 @@ function classAbsenceLines(
       (row.statusKey === "absent" ||
         row.statusKey === "leave" ||
         row.statusKey === "half_absent" ||
-        row.statusKey === "early")
+        row.statusKey === "early" ||
+        row.alsoEarly)
   );
   if (classRows.length > 0) {
     return classRows.map(formatDailyAbsenceLine);

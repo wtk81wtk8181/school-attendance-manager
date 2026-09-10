@@ -1,4 +1,10 @@
-import type { AbsenceRecord, HiddenStudent, HiddenStudentRemoval, Student } from "@/lib/types";
+import type {
+  AbsenceRecord,
+  AttendanceClear,
+  HiddenStudent,
+  HiddenStudentRemoval,
+  Student,
+} from "@/lib/types";
 
 export const CONSECUTIVE_ABSENT_LIMIT = 7;
 
@@ -55,25 +61,25 @@ export function consecutiveAbsentDates(
 
 export function consecutiveAbsentStreak(
   absences: AbsenceRecord[],
-  studentId: string
+  studentId: string,
+  asOfDate?: string,
+  notBeforeDate?: string
 ): number {
   const dates = consecutiveAbsentDates(absences, studentId);
   if (dates.length === 0) return 0;
 
   const dateSet = new Set(dates);
-  let longest = 1;
+  let cursor = asOfDate ?? dates[dates.length - 1];
+  if (!isWeekday(cursor)) cursor = previousSchoolDate(cursor);
+  if (notBeforeDate && cursor < notBeforeDate) return 0;
+  if (!dateSet.has(cursor)) return 0;
 
-  for (const start of dates) {
-    let length = 1;
-    let cursor = start;
-    while (dateSet.has(nextSchoolDate(cursor))) {
-      cursor = nextSchoolDate(cursor);
-      length += 1;
-    }
-    if (length > longest) longest = length;
+  let length = 0;
+  while (dateSet.has(cursor) && (!notBeforeDate || cursor >= notBeforeDate)) {
+    length += 1;
+    cursor = previousSchoolDate(cursor);
   }
-
-  return longest;
+  return length;
 }
 
 export function lastAbsentWeekday(
@@ -123,6 +129,77 @@ export function visibleRosterStudents(
   return students.filter((student) => !hiddenIds.has(student.id));
 }
 
+/** 班內總人數：連續七日缺席（Form A）學生不計入，但名單仍顯示。 */
+export function headcountRosterStudents(
+  students: Student[],
+  hiddenStudents: HiddenStudent[] | undefined,
+  removals: HiddenStudentRemoval[] | undefined
+): Student[] {
+  return visibleRosterStudents(students, hiddenStudents, removals);
+}
+
+export function carriedFormAAbsences(
+  absences: AbsenceRecord[],
+  hiddenStudents: HiddenStudent[] | undefined,
+  removals: HiddenStudentRemoval[] | undefined,
+  clearedAttendance: AttendanceClear[] | undefined,
+  throughDate: string
+): AbsenceRecord[] {
+  const hidden = formAHiddenStudents(hiddenStudents, removals);
+  if (hidden.length === 0 || !throughDate) return [];
+
+  const existing = new Set(absences.map((item) => `${item.studentId}|${item.date}`));
+  const cleared = new Set(
+    (clearedAttendance ?? []).map((item) => `${item.studentId}|${item.date}`)
+  );
+  const carried: AbsenceRecord[] = [];
+
+  for (const student of hidden) {
+    if (!student.lastAbsentDate) continue;
+    let cursor = nextSchoolDate(student.lastAbsentDate);
+    let guard = 0;
+    while (cursor <= throughDate && guard < 400) {
+      guard += 1;
+      const key = `${student.studentId}|${cursor}`;
+      if (!existing.has(key) && !cleared.has(key)) {
+        carried.push({
+          id: `forma-carry-${student.studentId}-${cursor}`,
+          studentId: student.studentId,
+          date: cursor,
+          days: 1,
+          eclassStatus: "absent",
+          reason: "連續缺席（Form A）",
+          documentType: "none",
+          documentSubmitted: false,
+          reviewStatus: "pending",
+          notes: "系統按連續七日缺席自動續計",
+          source: "office",
+        });
+      }
+      cursor = nextSchoolDate(cursor);
+    }
+  }
+
+  return carried;
+}
+
+export function absencesIncludingFormACarry(
+  absences: AbsenceRecord[],
+  hiddenStudents: HiddenStudent[] | undefined,
+  removals: HiddenStudentRemoval[] | undefined,
+  clearedAttendance: AttendanceClear[] | undefined,
+  throughDate: string
+): AbsenceRecord[] {
+  const carried = carriedFormAAbsences(
+    absences,
+    hiddenStudents,
+    removals,
+    clearedAttendance,
+    throughDate
+  );
+  return carried.length === 0 ? absences : [...absences, ...carried];
+}
+
 /** 警告信仍須顯示已隱藏（Form A）學生，只按角色／班別篩選 */
 export function studentsForWarningLetters(
   students: Student[],
@@ -163,8 +240,13 @@ export function formACases(
 
   for (const student of students) {
     if (byId.has(student.id)) continue;
-    if ((removals ?? []).some((item) => item.id === student.id)) continue;
-    const streak = consecutiveAbsentStreak(absences, student.id);
+    const removal = (removals ?? []).find((item) => item.id === student.id);
+    const streak = consecutiveAbsentStreak(
+      absences,
+      student.id,
+      undefined,
+      removal?.removedAt.slice(0, 10)
+    );
     if (streak < CONSECUTIVE_ABSENT_LIMIT) continue;
     byId.set(student.id, {
       id: student.id,

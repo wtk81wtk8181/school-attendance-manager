@@ -1,5 +1,5 @@
 import {
-  attendanceStatusLabel,
+  attendanceStatusLabelForRecord,
   classLabel,
   countedAbsenceDaysOnOrBefore,
   formatNameWithCountedDays,
@@ -39,8 +39,9 @@ import type {
   StudentLeaveRecord,
   HiddenStudent,
   HiddenStudentRemoval,
+  AttendanceClear,
 } from "@/lib/types";
-import { visibleRosterStudents } from "@/lib/hidden-students";
+import { absencesIncludingFormACarry, headcountRosterStudents, hiddenStudentIdSet } from "@/lib/hidden-students";
 
 export interface DailyAbsenceRow {
   id: string;
@@ -66,6 +67,8 @@ export interface DailyAbsenceRow {
   returnedAt: string;
   earlyAt: string;
   earlyPickup?: EarlyPickup;
+  alsoLate?: boolean;
+  alsoEarly?: boolean;
 }
 
 export interface DailyClassBlock {
@@ -137,7 +140,7 @@ export function buildDailyAbsenceRows(
         name: student?.name ?? "未知學生",
         nameEn: student?.nameEn ?? "",
         teacher: student?.homeroomTeacherName ?? "",
-        status: attendanceStatusLabel(item.eclassStatus),
+        status: attendanceStatusLabelForRecord(item),
         statusKey: item.eclassStatus,
         days: item.days,
         countedDays: countedAbsenceDaysOnOrBefore(
@@ -155,6 +158,8 @@ export function buildDailyAbsenceRows(
         returnedAt: item.returnedAt?.trim() || "",
         earlyAt: item.earlyAt?.trim() || "",
         earlyPickup: item.earlyPickup,
+        alsoLate: item.alsoLate,
+        alsoEarly: item.alsoEarly,
       };
     })
     .sort(
@@ -176,8 +181,9 @@ export function formatDailyAbsenceLine(row: DailyAbsenceRow): string {
       row.contactedOn
     );
   }
-  if (row.statusKey === "early") {
-    return `${formatEarlyLeaveReportLine(name, row.reason, row.earlyAt, row.earlyPickup)}（半日）`;
+  if (row.statusKey === "early" || row.alsoEarly) {
+    const earlyLine = `${formatEarlyLeaveReportLine(name, row.reason, row.earlyAt, row.earlyPickup)}（半日）`;
+    return row.alsoLate || row.statusKey === "late" ? `${earlyLine}；遲到` : earlyLine;
   }
   const reason = row.reason.trim() || row.status;
   const half = row.days === 0.5 ? "（半日）" : "";
@@ -240,33 +246,55 @@ export function buildDailySchoolReport(
   staffLeaveRecords: StaffLeaveRecord[] = [],
   studentLeaveRecords: StudentLeaveRecord[] = [],
   hiddenStudents: HiddenStudent[] = [],
-  hiddenStudentRemovals: HiddenStudentRemoval[] = []
+  hiddenStudentRemovals: HiddenStudentRemoval[] = [],
+  clearedAttendance: AttendanceClear[] = []
 ): DailySchoolReportPayload {
-  const roster = visibleRosterStudents(students, hiddenStudents, hiddenStudentRemovals);
-  const rows = buildDailyAbsenceRows(
-    roster,
+  const displayRoster = students;
+  const headcountRoster = headcountRosterStudents(
+    students,
+    hiddenStudents,
+    hiddenStudentRemovals
+  );
+  const excludedIds = hiddenStudentIdSet(hiddenStudents, hiddenStudentRemovals);
+  const absencesForDay = absencesIncludingFormACarry(
     absences,
+    hiddenStudents,
+    hiddenStudentRemovals,
+    clearedAttendance,
+    schoolDay
+  );
+  const rows = buildDailyAbsenceRows(
+    displayRoster,
+    absencesForDay,
     schoolDay,
     studentLeaveRecords
   );
-  const studentIds = new Set(roster.map((item) => item.id));
+  const studentIds = new Set(displayRoster.map((item) => item.id));
   const dayStudentLeaves = studentLeavesForDate(studentLeaveRecords, schoolDay).filter(
     (item) => studentIds.has(item.studentId)
   );
   const classNames = allClassNames();
   const classes: DailyClassBlock[] = classNames.map((className) => {
-    const classStudents = roster.filter((item) => item.className === className);
+    const classStudents = displayRoster.filter((item) => item.className === className);
+    const classHeadcount = headcountRoster.filter((item) => item.className === className);
     const classRows = rows.filter((item) => item.className === className);
+    const countedRows = classRows.filter((item) => !excludedIds.has(item.studentId));
     const notPresent = classRows.filter(
       (item) =>
         item.statusKey === "absent" ||
         item.statusKey === "leave" ||
         item.statusKey === "half_absent"
     );
-    const earlyRows = classRows.filter((item) => item.statusKey === "early");
-    const lateCount = classRows.filter((item) => item.statusKey === "late").length;
-    const registered = classStudents.length;
-    const present = Math.max(0, registered - notPresent.length);
+    const countedNotPresent = notPresent.filter((item) => !excludedIds.has(item.studentId));
+    const earlyRows = classRows.filter(
+      (item) => item.statusKey === "early" || item.alsoEarly
+    );
+    const countedEarly = earlyRows.filter((item) => !excludedIds.has(item.studentId));
+    const lateCount = countedRows.filter(
+      (item) => item.statusKey === "late" || item.alsoLate
+    ).length;
+    const registered = classHeadcount.length;
+    const present = Math.max(0, registered - countedNotPresent.length);
     const form = Number(className[0]) as FormLevel;
     return {
       className,
@@ -274,9 +302,9 @@ export function buildDailySchoolReport(
       form,
       registered,
       present,
-      earlyLeave: earlyRows.length,
+      earlyLeave: countedEarly.length,
       lateCount,
-      absentCount: notPresent.length,
+      absentCount: countedNotPresent.length,
       attendanceRate: rate(present, registered),
       punctualityRate: rate(Math.max(0, present - lateCount), present),
       absenceLines: [...notPresent, ...earlyRows].map(formatDailyAbsenceLine),

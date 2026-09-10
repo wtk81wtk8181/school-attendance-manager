@@ -121,7 +121,7 @@ function WarningLetterCard({
               {classLabel(student.className)} {student.name}
             </p>
             {hidden ? (
-              <p className="mt-0.5 text-xs text-slate-400">已隱藏</p>
+              <p className="mt-0.5 text-xs text-slate-400">不計人數</p>
             ) : null}
             <p className="mt-1 text-xs text-slate-400">{formatDate(letter.issuedAt)}</p>
           </div>
@@ -194,7 +194,7 @@ function WarningLetterTable({
                   </span>
                   {hidden ? (
                     <span className="ml-1.5 text-xs font-normal text-slate-400">
-                      （已隱藏）
+                      （不計人數）
                     </span>
                   ) : null}
                 </TableCell>

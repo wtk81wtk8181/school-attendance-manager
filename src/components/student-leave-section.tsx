@@ -30,7 +30,6 @@ import {
   studentMatchesQuery,
 } from "@/lib/student-leave";
 import { classLabel, listClasses } from "@/lib/rules";
-import { visibleRosterStudents } from "@/lib/hidden-students";
 import { formatShortDate } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { StudentLeaveCategory, StudentLeaveRecord } from "@/lib/types";
@@ -51,15 +50,7 @@ export function StudentLeaveSection({ date }: { date: string }) {
   const [reason, setReason] = useState("");
   const [activity, setActivity] = useState("");
 
-  const roster = useMemo(
-    () =>
-      visibleRosterStudents(
-        state.students,
-        state.hiddenStudents,
-        state.hiddenStudentRemovals
-      ),
-    [state.hiddenStudentRemovals, state.hiddenStudents, state.students]
-  );
+  const roster = useMemo(() => state.students, [state.students]);
   const classes = useMemo(() => listClasses(roster), [roster]);
   const filteredStudents = useMemo(
     () =>

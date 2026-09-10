@@ -80,6 +80,10 @@ export interface AbsenceRecord {
   /** 早退時間，例如 13:15 */
   earlyAt?: string;
   earlyPickup?: EarlyPickup;
+  /** 主狀態為早退時，同日亦記遲到 */
+  alsoLate?: boolean;
+  /** 主狀態為遲到時，同日亦記早退 */
+  alsoEarly?: boolean;
 }
 
 export interface WarningLetter {

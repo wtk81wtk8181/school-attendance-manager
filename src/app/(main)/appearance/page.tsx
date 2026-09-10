@@ -28,6 +28,7 @@ import { downloadBase64Xlsx, requestAppearanceReport } from "@/lib/digest-client
 import { formatPercentExact, formatShortDate } from "@/lib/format";
 import { CLASS_STREAMS, CLASS_TEACHERS } from "@/lib/roster";
 import { classLabel, filterClassNames, formLabel } from "@/lib/rules";
+import { hiddenStudentIdSet } from "@/lib/hidden-students";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import type { FormLevel, Student } from "@/lib/types";
@@ -70,7 +71,8 @@ export default function AppearancePage() {
         state.appearanceIssues,
         state.appearanceIssueRemovals,
         month,
-        state.academicYear.label
+        state.academicYear.label,
+        hiddenStudentIdSet(state.hiddenStudents, state.hiddenStudentRemovals)
       ),
     [
       month,
@@ -78,6 +80,8 @@ export default function AppearancePage() {
       state.academicYear.label,
       state.appearanceIssueRemovals,
       state.appearanceIssues,
+      state.hiddenStudentRemovals,
+      state.hiddenStudents,
       state.students,
     ]
   );

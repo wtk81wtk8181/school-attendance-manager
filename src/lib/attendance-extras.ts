@@ -30,6 +30,8 @@ export const ABSENCE_ADMIN_COLUMNS = [
   "returnedAt",
   "earlyAt",
   "earlyPickup",
+  "alsoLate",
+  "alsoEarly",
 ] as const;
 
 export const EARLY_PICKUP_OPTIONS: Array<{ value: EarlyPickup; label: string }> = [
@@ -41,8 +43,11 @@ export const EARLY_PICKUP_OPTIONS: Array<{ value: EarlyPickup; label: string }> 
   { value: "self", label: "自行離開" },
 ];
 
-export function normalizeAbsenceDays(status: string): 0.5 | 1 {
-  if (status === "half_absent" || status === "early") return 0.5;
+export function normalizeAbsenceDays(
+  status: string,
+  flags?: { alsoEarly?: boolean }
+): 0.5 | 1 {
+  if (status === "half_absent" || status === "early" || flags?.alsoEarly) return 0.5;
   return 1;
 }
 
@@ -78,7 +83,7 @@ export function normalizeAbsenceRecord(record: AbsenceRecord): AbsenceRecord {
   return {
     ...record,
     eclassStatus: status,
-    days: normalizeAbsenceDays(status),
+    days: normalizeAbsenceDays(status, { alsoEarly: record.alsoEarly === true }),
     reason: typeof record.reason === "string" ? record.reason : defaultReason,
     calledBy: optionalString(record.calledBy),
     calledAt: optionalString(record.calledAt),
@@ -93,15 +98,18 @@ export function normalizeAbsenceRecord(record: AbsenceRecord): AbsenceRecord {
     returnedAt: optionalString(record.returnedAt),
     earlyAt: optionalString(record.earlyAt),
     earlyPickup: pickup,
+    alsoLate: record.alsoLate === true ? true : undefined,
+    alsoEarly: record.alsoEarly === true ? true : undefined,
   };
 }
 
 export function reviewStatusForAttendance(
   status: string,
   previousStatus?: string,
-  previousReview?: ReviewStatus
+  previousReview?: ReviewStatus,
+  flags?: { alsoEarly?: boolean }
 ): ReviewStatus {
-  if (status === "late") {
+  if (status === "late" && !flags?.alsoEarly) {
     return previousReview === "rejected" ? "rejected" : "approved";
   }
   if (previousStatus === status && previousReview) return previousReview;
@@ -167,6 +175,8 @@ export function formatAbsenceRecordLine(
     | "calledAt"
     | "contactMethod"
     | "contactedOn"
+    | "alsoLate"
+    | "alsoEarly"
   >
 ): string {
   if (record.eclassStatus === "half_absent") {
@@ -180,13 +190,14 @@ export function formatAbsenceRecordLine(
       record.contactedOn
     );
   }
-  if (record.eclassStatus === "early") {
-    return formatEarlyLeaveReportLine(
+  if (record.eclassStatus === "early" || record.alsoEarly) {
+    const earlyLine = formatEarlyLeaveReportLine(
       name,
       record.reason,
       record.earlyAt ?? "",
       record.earlyPickup
     );
+    return record.alsoLate || record.eclassStatus === "late" ? `${earlyLine}；遲到` : earlyLine;
   }
   return record.reason;
 }

@@ -46,7 +46,7 @@ export const ADMIN_SECTION_LABELS: Record<AdminJsonSection, string> = {
   staffDailyAbsences: "教職員每日缺席",
   staffLeaveRecords: "教職員提早請假",
   studentLeaveRecords: "學生預先請假",
-  hiddenStudents: "連續缺席隱藏學生",
+  hiddenStudents: "連續缺席不計人數學生",
 };
 
 function isObject(value: unknown): value is Record<string, unknown> {

@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lateOccurrences, neededWarningTypes } from "@/lib/rules";
+import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lateOccurrences, neededWarningTypes, recordHasEarly, recordHasLate } from "@/lib/rules";
 import { studentsHomeroomTeachersChanged } from "@/lib/roster";
 import { formAHiddenStudentsChanged } from "@/lib/hidden-students";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
@@ -34,7 +34,6 @@ import {
   isStudentHidden,
   lastAbsentWeekday,
   studentsForWarningLetters,
-  visibleRosterStudents,
 } from "@/lib/hidden-students";
 import {
   applyAdminJsonSections,
@@ -105,6 +104,8 @@ interface AttendanceExtras {
   earlyReason?: string;
   earlyPickup?: EarlyPickup;
   earlyAt?: string;
+  alsoLate?: boolean;
+  alsoEarly?: boolean;
 }
 
 interface AbsenceDetailsInput {
@@ -684,11 +685,17 @@ function auditEntry(
   };
 }
 
-function applyLongAbsenceHide(state: AppState, student: Student): AppState {
+function applyLongAbsenceHide(state: AppState, student: Student, asOfDate?: string): AppState {
   if (isStudentHidden(state.hiddenStudents, state.hiddenStudentRemovals, student.id)) {
     return state;
   }
-  const streak = consecutiveAbsentStreak(state.absences, student.id);
+  const removal = (state.hiddenStudentRemovals ?? []).find((item) => item.id === student.id);
+  const streak = consecutiveAbsentStreak(
+    state.absences,
+    student.id,
+    asOfDate,
+    removal?.removedAt.slice(0, 10)
+  );
   if (streak < CONSECUTIVE_ABSENT_LIMIT) return state;
 
   const lastAbsentDate = lastAbsentWeekday(state.absences, student.id);
@@ -712,7 +719,7 @@ function applyLongAbsenceHide(state: AppState, student: Student): AppState {
         id: `nt-hidden-${student.id}-${Date.now()}`,
         createdAt: nowIso(),
         title: `${student.name}同學已連續七天缺席（需申報教育局 Form A）`,
-        body: `${classLabel(student.className)}　${student.name}已連續 ${streak} 個上課日缺席（不計星期六、日），已從班別名單隱藏。請校務處向教育局申報 Form A。`,
+        body: `${classLabel(student.className)}　${student.name}已連續 ${streak} 個上課日缺席（不計星期六、日），已不計入班內總人數，名單仍會顯示並繼續每日計缺席。請校務處向教育局申報 Form A。`,
         kind: "warning",
         studentId: student.id,
         read: false,
@@ -720,6 +727,34 @@ function applyLongAbsenceHide(state: AppState, student: Student): AppState {
       ...(state.notifications ?? []),
     ],
   };
+}
+
+function resolveCombinedAttendance(
+  existing: AbsenceRecord | undefined,
+  status: Exclude<DayAttendance, "present">,
+  extras?: AttendanceExtras
+): {
+  status: Exclude<DayAttendance, "present">;
+  alsoLate?: boolean;
+  alsoEarly?: boolean;
+} {
+  const hadLate = existing ? recordHasLate(existing) : false;
+  const hadEarly = existing ? recordHasEarly(existing) : false;
+
+  if (extras?.alsoLate === false && hadEarly) {
+    return { status: "early" };
+  }
+  if (extras?.alsoEarly === false && hadLate) {
+    return { status: "late" };
+  }
+  if ((status === "late" && hadEarly) || (status === "early" && hadLate) || extras?.alsoLate || extras?.alsoEarly) {
+    const primary = existing?.eclassStatus === "late" ? "late" : existing?.eclassStatus === "early" ? "early" : status;
+    if (primary === "late") return { status: "late", alsoEarly: true };
+    return { status: "early", alsoLate: true };
+  }
+  if (status === "late") return { status: "late" };
+  if (status === "early") return { status: "early" };
+  return { status };
 }
 
 function withAudit(state: AppState, action: string, detail: string): AppState {
@@ -925,20 +960,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const visibleStudents = useMemo(() => {
     if (!currentUser) return [];
-    const roster = visibleRosterStudents(
-      state.students,
-      state.hiddenStudents,
-      state.hiddenStudentRemovals
-    );
-    if (currentUser.role === "office") return roster;
-    return roster.filter((student) => student.className === state.selectedClassName);
-  }, [
-    currentUser,
-    state.hiddenStudentRemovals,
-    state.hiddenStudents,
-    state.selectedClassName,
-    state.students,
-  ]);
+    if (currentUser.role === "office") return state.students;
+    return state.students.filter((student) => student.className === state.selectedClassName);
+  }, [currentUser, state.selectedClassName, state.students]);
 
   const warningStudents = useMemo(
     () =>
@@ -982,7 +1006,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           (extras.returnedAt !== undefined ||
             extras.earlyReason !== undefined ||
             extras.earlyPickup !== undefined ||
-            extras.earlyAt !== undefined)
+            extras.earlyAt !== undefined ||
+            extras.alsoLate !== undefined ||
+            extras.alsoEarly !== undefined)
       );
       if (currentStatus === status && !extrasTouched) return;
       const wasHidden = isStudentHidden(
@@ -1023,21 +1049,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 student,
                 "校務處"
               ),
-              student
+              student,
+              date
             ),
             "標記出席",
             `${student.name}（${classLabel(student.className)}）${date}`
           );
         } else {
+          const resolved = resolveCombinedAttendance(existing, status, extras);
+          const nextStatus = resolved.status;
           const nowTime = hongKongHHMM();
+          const keepEarly = nextStatus === "early" || resolved.alsoEarly === true;
+          const keepLate = nextStatus === "late" || resolved.alsoLate === true;
           const defaultReason =
-            status === "absent"
+            nextStatus === "absent"
               ? joinReason("病假", "")
-              : status === "late"
+              : nextStatus === "late" && !keepEarly
                 ? "遲到"
-                : status === "leave"
+                : nextStatus === "leave"
                   ? "事假"
-                  : status === "half_absent"
+                  : nextStatus === "half_absent"
                     ? joinReason("病假", "")
                     : "早退";
           const keepReason =
@@ -1045,19 +1076,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               ? existing.reason
               : defaultReason;
           const nextReason =
-            status === "early"
-              ? (extras?.earlyReason?.trim() || keepReason)
+            keepEarly
+              ? extras?.earlyReason?.trim() || keepReason
               : keepReason;
           const nextReview = reviewStatusForAttendance(
-            status,
+            nextStatus,
             existing?.eclassStatus,
-            existing?.reviewStatus
+            existing?.reviewStatus,
+            { alsoEarly: keepEarly && keepLate }
           );
+          const nextDays = normalizeAbsenceDays(nextStatus, { alsoEarly: keepEarly });
           const nextRecord: AbsenceRecord = existing
             ? {
                 ...existing,
-                eclassStatus: status,
-                days: normalizeAbsenceDays(status),
+                eclassStatus: nextStatus,
+                days: nextDays,
                 reason: nextReason,
                 source: "office",
                 notes: "校務處於學生出勤頁更新當日狀態",
@@ -1065,19 +1098,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 reviewedBy: currentUser.id,
                 reviewedAt: nowIso(),
                 returnedAt:
-                  status === "half_absent"
+                  nextStatus === "half_absent"
                     ? extras?.returnedAt ?? existing.returnedAt ?? nowTime
                     : undefined,
-                earlyAt:
-                  status === "early"
-                    ? extras?.earlyAt ?? existing.earlyAt ?? nowTime
-                    : undefined,
-                earlyPickup:
-                  status === "early"
-                    ? extras?.earlyPickup ?? existing.earlyPickup ?? "self"
-                    : undefined,
+                earlyAt: keepEarly
+                  ? extras?.earlyAt ?? existing.earlyAt ?? nowTime
+                  : undefined,
+                earlyPickup: keepEarly
+                  ? extras?.earlyPickup ?? existing.earlyPickup ?? "self"
+                  : undefined,
+                alsoLate: resolved.alsoLate ? true : undefined,
+                alsoEarly: resolved.alsoEarly ? true : undefined,
                 contactedOn:
-                  status === "leave"
+                  nextStatus === "leave"
                     ? existing.contactedOn || date
                     : existing.contactedOn,
               }
@@ -1085,8 +1118,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 id: `ab-office-${studentId}-${date}-${Date.now()}`,
                 studentId,
                 date,
-                days: normalizeAbsenceDays(status),
-                eclassStatus: status,
+                days: nextDays,
+                eclassStatus: nextStatus,
                 reason: nextReason,
                 documentType: "none",
                 documentSubmitted: false,
@@ -1095,10 +1128,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 reviewedAt: nowIso(),
                 notes: "校務處於學生出勤頁登記",
                 source: "office",
-                returnedAt: status === "half_absent" ? extras?.returnedAt ?? nowTime : undefined,
-                earlyAt: status === "early" ? extras?.earlyAt ?? nowTime : undefined,
-                earlyPickup: status === "early" ? extras?.earlyPickup ?? "self" : undefined,
-                contactedOn: status === "leave" ? date : undefined,
+                returnedAt: nextStatus === "half_absent" ? extras?.returnedAt ?? nowTime : undefined,
+                earlyAt: keepEarly ? extras?.earlyAt ?? nowTime : undefined,
+                earlyPickup: keepEarly ? extras?.earlyPickup ?? "self" : undefined,
+                alsoLate: resolved.alsoLate ? true : undefined,
+                alsoEarly: resolved.alsoEarly ? true : undefined,
+                contactedOn: nextStatus === "leave" ? date : undefined,
               };
 
           nextAbsences = existing
@@ -1108,16 +1143,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             : [nextRecord, ...prev.absences];
         }
 
+        const combined = nextAbsences.find(
+          (item) => item.studentId === studentId && item.date === date
+        );
         const statusLabel =
-          status === "absent"
-            ? "缺席"
-            : status === "late"
-              ? "遲到"
-              : status === "leave"
-                ? "事假"
-                : status === "half_absent"
-                  ? "半日缺席"
-                  : "早退";
+          combined && recordHasLate(combined) && recordHasEarly(combined)
+            ? "遲到及早退"
+            : status === "absent"
+              ? "缺席"
+              : status === "late"
+                ? "遲到"
+                : status === "leave"
+                  ? "事假"
+                  : status === "half_absent"
+                    ? "半日缺席"
+                    : "早退";
 
         return withAudit(
           applyLongAbsenceHide(
@@ -1132,7 +1172,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               student,
               "校務處"
             ),
-            student
+            student,
+            date
           ),
           existing ? "更新學生當日狀態" : "登記學生缺席／遲到／事假",
           `${student.name}（${classLabel(student.className)}）${date} → ${statusLabel}`
@@ -1156,7 +1197,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const studentName =
           memory.students.find((item) => item.id === studentId)?.name ?? "該";
         toast.warning(
-          `${studentName}同學已連續七個上課日缺席（不計星期六、日），已從班別名單隱藏。請申報教育局 Form A。`
+          `${studentName}同學已連續七個上課日缺席（不計星期六、日），已不計入班內總人數，名單仍會顯示並繼續每日計缺席。請申報教育局 Form A。`
         );
       } else if (extrasTouched && currentStatus === status) {
         toast.success("已更新時間／早退資料。請按「確定儲存」寫入資料庫。");
@@ -1208,7 +1249,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 student,
                 "校務處"
               ),
-              student
+              student,
+              create.date
             ),
             "更新預先請假資料",
             `${student.name}　${created.date}`
@@ -1891,12 +1933,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const restoreHiddenStudent = useCallback(
     (studentId: string) => {
       if (currentUser?.role !== "office") {
-        toast.error("只有校務處職員可以恢復隱藏學生。");
+        toast.error("只有校務處職員可以把學生加回總人數。");
         return;
       }
       const current = (memory.hiddenStudents ?? []).find((item) => item.studentId === studentId);
       if (!current || !isStudentHidden(memory.hiddenStudents, memory.hiddenStudentRemovals, studentId)) {
-        toast.error("找不到已隱藏的學生。");
+        toast.error("找不到這位不計人數的學生。");
         return;
       }
       patch((prev) => {
@@ -1916,7 +1958,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           `${current.studentName}（${current.className}）`
         );
       });
-      toast.success(`已將${current.studentName}加回班別名單。`);
+      toast.success(`已將${current.studentName}加回班內總人數。`);
     },
     [currentUser]
   );

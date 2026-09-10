@@ -10,6 +10,7 @@ import {
 } from "@/lib/staff";
 import type {
   AbsenceRecord,
+  AttendanceClear,
   FormLevel,
   HiddenStudent,
   HiddenStudentRemoval,
@@ -92,7 +93,8 @@ export function buildLoReport(
   studentLeaveRecords: StudentLeaveRecord[] = [],
   hiddenStudents: HiddenStudent[] = [],
   hiddenStudentRemovals: HiddenStudentRemoval[] = [],
-  academicYearLabel = "2026-2027"
+  academicYearLabel = "2026-2027",
+  clearedAttendance: AttendanceClear[] = []
 ): LoReportPayload {
   const weekStart = mondayOfWeek(schoolDay);
   const dates = weekdaysOf(weekStart);
@@ -112,7 +114,8 @@ export function buildLoReport(
       staffLeaveRecords,
       studentLeaveRecords,
       hiddenStudents,
-      hiddenStudentRemovals
+      hiddenStudentRemovals,
+      clearedAttendance
     );
     const forms: LoFormDayStat[] = report.formStats.map((item) => ({
       form: item.form,

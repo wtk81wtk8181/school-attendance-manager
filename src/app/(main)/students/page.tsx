@@ -38,9 +38,11 @@ import {
   formLabel,
   getDayAttendance,
   progressPercent,
+  recordHasEarly,
+  recordHasLate,
 } from "@/lib/rules";
 import { useStore } from "@/lib/store";
-import { isStudentHidden, nextSchoolDate, previousSchoolDate } from "@/lib/hidden-students";
+import { absencesIncludingFormACarry, hiddenStudentIdSet, isStudentHidden, nextSchoolDate, previousSchoolDate } from "@/lib/hidden-students";
 import type { FormLevel, StudentStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -80,9 +82,31 @@ export default function StudentsPage() {
     }
   }, [form, klass, classes]);
 
+  const absencesForView = useMemo(
+    () =>
+      absencesIncludingFormACarry(
+        state.absences,
+        state.hiddenStudents,
+        state.hiddenStudentRemovals,
+        state.clearedAttendance,
+        schoolDay
+      ),
+    [
+      schoolDay,
+      state.absences,
+      state.clearedAttendance,
+      state.hiddenStudentRemovals,
+      state.hiddenStudents,
+    ]
+  );
+  const excludedFromHeadcount = hiddenStudentIdSet(
+    state.hiddenStudents,
+    state.hiddenStudentRemovals
+  );
+
   const rows = visibleStudents
     .map((student) =>
-      buildStudentStats(student, state.absences, state.academicYear.schoolDays)
+      buildStudentStats(student, absencesForView, state.academicYear.schoolDays)
     )
     .filter((item) => {
       const q = query.trim();
@@ -120,23 +144,29 @@ export default function StudentsPage() {
       (form === "all" || item.className.startsWith(form))
   );
   const selectedDayPresent = rows.filter(
-    (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "present"
+    (item) => getDayAttendance(absencesForView, item.student.id, schoolDay) === "present"
   ).length;
   const selectedDayAbsent = rows.filter(
-    (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "absent"
+    (item) => getDayAttendance(absencesForView, item.student.id, schoolDay) === "absent"
   ).length;
   const selectedDayLeave = rows.filter(
-    (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "leave"
+    (item) => getDayAttendance(absencesForView, item.student.id, schoolDay) === "leave"
   ).length;
-  const selectedDayLate = rows.filter(
-    (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "late"
-  ).length;
+  const selectedDayLate = rows.filter((item) => {
+    const record = absencesForView.find(
+      (row) => row.studentId === item.student.id && row.date === schoolDay
+    );
+    return record ? recordHasLate(record) : false;
+  }).length;
   const selectedDayHalf = rows.filter(
-    (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "half_absent"
+    (item) => getDayAttendance(absencesForView, item.student.id, schoolDay) === "half_absent"
   ).length;
-  const selectedDayEarly = rows.filter(
-    (item) => getDayAttendance(state.absences, item.student.id, schoolDay) === "early"
-  ).length;
+  const selectedDayEarly = rows.filter((item) => {
+    const record = absencesForView.find(
+      (row) => row.studentId === item.student.id && row.date === schoolDay
+    );
+    return record ? recordHasEarly(record) : false;
+  }).length;
   const today = hongKongToday();
   const maxSchoolDay = laterIso(state.academicYear.end, today);
   const previousDay = previousSchoolDate(schoolDay);
@@ -164,7 +194,7 @@ export default function StudentsPage() {
         title={currentUser?.role === "homeroom" ? "本班學生出勤" : "學生出勤"}
         description={
           isOffice
-            ? "請先選班，再選擇上課日（包括已過去的日子），為該班標記出席、缺席、遲到、事假、半日缺席或早退。標記後請按「確定儲存」。"
+            ? "請先選班，再選擇上課日（包括已過去的日子），為該班標記出席、缺席、遲到、事假、半日缺席或早退。遲到與早退可於同一日記錄。標記後請按「確定儲存」。"
             : "點選學生可查看缺席日期、文件與審核狀態。老師帳號為唯讀，可更換班別。"
         }
       />
@@ -424,14 +454,14 @@ export default function StudentsPage() {
         <p className="text-sm text-slate-400">
           {schoolDay}：出席 {selectedDayPresent}　缺席 {selectedDayAbsent}　半日缺席{" "}
           {selectedDayHalf}　遲到 {selectedDayLate}　事假 {selectedDayLeave}　早退 {selectedDayEarly}
-          {hiddenInView.length > 0 ? `　已隱藏 ${hiddenInView.length} 人` : ""}
+          {hiddenInView.length > 0 ? `　不計人數 ${hiddenInView.length} 人` : ""}
         </p>
       ) : null}
 
       {isOffice && hiddenInView.length > 0 ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-medium text-amber-950">
-            連續七個上課日缺席（不計星期六、日），需向教育局申報 Form A；已從該班學生總人數扣除
+            連續七個上課日缺席（不計星期六、日），需向教育局申報 Form A；不計入該班總人數，名單仍顯示並繼續每日計缺席
           </p>
           <ul className="mt-2 space-y-2">
             {hiddenInView.map((item) => (
@@ -449,7 +479,7 @@ export default function StudentsPage() {
                   variant="outline"
                   onClick={() => restoreHiddenStudent(item.studentId)}
                 >
-                  加回名單
+                  加回總人數
                 </Button>
               </li>
             ))}
@@ -470,7 +500,11 @@ export default function StudentsPage() {
               <h2 className="text-base font-semibold">
                 {classLabel(className)}
                 <span className="ml-2 text-sm font-normal text-slate-400">
-                  {CLASS_TEACHERS[className] ?? ""}　{items.length} 人
+                  {CLASS_TEACHERS[className] ?? ""}　
+                  {items.filter((row) => !excludedFromHeadcount.has(row.student.id)).length} 人
+                  {items.some((row) => excludedFromHeadcount.has(row.student.id))
+                    ? `（另 ${items.filter((row) => excludedFromHeadcount.has(row.student.id)).length} 人不計人數）`
+                    : ""}
                 </span>
               </h2>
             </div>
@@ -489,20 +523,26 @@ export default function StudentsPage() {
                 </TableHeader>
                 <TableBody>
                   {items.map((item) => {
+                    const dayRecord = absencesForView.find(
+                      (row) =>
+                        row.studentId === item.student.id && row.date === schoolDay
+                    );
                     const dayStatus = getDayAttendance(
-                      state.absences,
+                      absencesForView,
                       item.student.id,
                       schoolDay
                     );
                     const countedUpTo = countedAbsenceDaysOnOrBefore(
-                      state.absences.filter((row) => row.studentId === item.student.id),
+                      absencesForView.filter((row) => row.studentId === item.student.id),
                       schoolDay
                     );
                     const showCountedDays =
                       dayStatus === "absent" ||
                       dayStatus === "leave" ||
                       dayStatus === "half_absent" ||
-                      dayStatus === "early";
+                      dayStatus === "early" ||
+                      Boolean(dayRecord && recordHasEarly(dayRecord));
+                    const formA = excludedFromHeadcount.has(item.student.id);
                     return (
                     <TableRow key={item.student.id}>
                       <TableCell>
@@ -516,15 +556,13 @@ export default function StudentsPage() {
                         </Link>
                         <p className="text-xs text-slate-400">
                           {item.student.studentNo}　{item.student.nameEn}
+                          {formA ? "　不計人數（Form A）" : ""}
                         </p>
                       </TableCell>
                       <TableCell>
                         <AttendanceMark
                           value={dayStatus}
-                          record={state.absences.find(
-                            (row) =>
-                              row.studentId === item.student.id && row.date === schoolDay
-                          )}
+                          record={dayRecord?.id.startsWith("forma-carry-") ? undefined : dayRecord}
                           disabled={!isOffice}
                           onChange={(status, extras) =>
                             setDayAttendance(item.student.id, schoolDay, status, extras)

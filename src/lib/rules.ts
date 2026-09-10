@@ -43,6 +43,21 @@ export function attendanceStatusLabel(status: DayAttendance): string {
   return statusLabels[status];
 }
 
+export function recordHasLate(record: Pick<AbsenceRecord, "eclassStatus" | "alsoLate">): boolean {
+  return record.eclassStatus === "late" || record.alsoLate === true;
+}
+
+export function recordHasEarly(record: Pick<AbsenceRecord, "eclassStatus" | "alsoEarly">): boolean {
+  return record.eclassStatus === "early" || record.alsoEarly === true;
+}
+
+export function attendanceStatusLabelForRecord(
+  record: Pick<AbsenceRecord, "eclassStatus" | "alsoLate" | "alsoEarly">
+): string {
+  if (recordHasLate(record) && recordHasEarly(record)) return "遲到及早退";
+  return attendanceStatusLabel(record.eclassStatus);
+}
+
 export function classLabel(className: string): string {
   const form = Number(className[0]) as FormLevel;
   const stream = className.slice(1);
@@ -85,7 +100,11 @@ export function countedAbsenceDaysOnOrBefore(
 }
 
 export function isCountedTowardAbsence(record: AbsenceRecord): boolean {
-  return record.reviewStatus !== "approved" && record.eclassStatus !== "late";
+  if (record.reviewStatus === "approved") return false;
+  if (recordHasLate(record) && !recordHasEarly(record) && record.eclassStatus === "late") {
+    return false;
+  }
+  return true;
 }
 
 export function approvedLeaveDays(records: AbsenceRecord[]): number {
@@ -156,7 +175,7 @@ export function frequentOccurrences(records: AbsenceRecord[]): number {
 /** 有醫生證明的遲到仍會記錄，但不計入違規／警告次數 */
 export function isDoctorExemptedLate(record: AbsenceRecord): boolean {
   return (
-    record.eclassStatus === "late" &&
+    recordHasLate(record) &&
     record.documentType === "doctor" &&
     record.documentSubmitted
   );
@@ -164,7 +183,7 @@ export function isDoctorExemptedLate(record: AbsenceRecord): boolean {
 
 export function isLateViolation(record: AbsenceRecord): boolean {
   return (
-    record.eclassStatus === "late" &&
+    recordHasLate(record) &&
     record.reviewStatus !== "rejected" &&
     !isDoctorExemptedLate(record)
   );

@@ -1,9 +1,10 @@
 import {
-  attendanceStatusLabel,
+  attendanceStatusLabelForRecord,
   classLabel,
   countedAbsenceDaysOnOrBefore,
   formatNameWithCountedDays,
   isCountedTowardAbsence,
+  recordHasLate,
 } from "@/lib/rules";
 import { formatAbsenceRecordLine } from "@/lib/attendance-extras";
 import type { AbsenceRecord, Student } from "@/lib/types";
@@ -101,34 +102,38 @@ export function resolveDigestSchoolDay(
 export function buildDigest(
   students: Student[],
   absences: AbsenceRecord[],
-  schoolDay: string
+  schoolDay: string,
+  excludeFromHeadcount?: Set<string>
 ): DigestPayload {
   const dayRecords = absences.filter((item) => item.date === schoolDay);
   const classes = [...new Set(students.map((item) => item.className))].sort();
+  const excluded = excludeFromHeadcount ?? new Set<string>();
   const summaries: ClassSummary[] = classes.map((className) => {
     const classStudents = students.filter((item) => item.className === className);
+    const headcountStudents = classStudents.filter((item) => !excluded.has(item.id));
     const classRecords = dayRecords.filter((item) =>
       classStudents.some((student) => student.id === item.studentId)
     );
+    const countedRecords = classRecords.filter((item) => !excluded.has(item.studentId));
     const teacher = classStudents[0]?.homeroomTeacherName ?? "";
-    const absent = classRecords.filter(
+    const absent = countedRecords.filter(
       (item) => item.eclassStatus === "absent" || item.eclassStatus === "half_absent"
     ).length;
-    const late = classRecords.filter((item) => item.eclassStatus === "late").length;
-    const leave = classRecords.filter((item) => item.eclassStatus === "leave").length;
+    const late = countedRecords.filter((item) => recordHasLate(item)).length;
+    const leave = countedRecords.filter((item) => item.eclassStatus === "leave").length;
     return {
       className,
       classLabel: classLabel(className),
       teacher,
-      studentCount: classStudents.length,
+      studentCount: headcountStudents.length,
       absent,
       late,
       leave,
-      pending: classRecords.filter((item) => item.reviewStatus === "pending").length,
-      counted: classRecords
+      pending: countedRecords.filter((item) => item.reviewStatus === "pending").length,
+      counted: countedRecords
         .filter(isCountedTowardAbsence)
         .reduce((sum, item) => sum + item.days, 0),
-      presentImplied: Math.max(0, classStudents.length - absent - leave),
+      presentImplied: Math.max(0, headcountStudents.length - absent - leave),
     };
   });
 
@@ -151,7 +156,7 @@ export function buildDigest(
       name: displayName,
       nameEn: student.nameEn,
       teacher: student.homeroomTeacherName,
-      eclassStatus: attendanceStatusLabel(record.eclassStatus),
+      eclassStatus: attendanceStatusLabelForRecord(record),
       days: record.days,
       reason: formatAbsenceRecordLine(displayName, record),
       documentType: documentLabels[record.documentType],
