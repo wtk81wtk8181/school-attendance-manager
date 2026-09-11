@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { DailyAbsenceReport } from "@/components/daily-absence-report";
+import { DAILY_SENIOR_PRINT_COMPACT_CSS } from "@/lib/daily-report-print-html";
 import { buildDailySchoolReport, buildSampleAbsencesPerClass } from "@/lib/daily-report";
 import { hongKongToday } from "@/lib/digest";
 import { classLabel, formLabel } from "@/lib/rules";
@@ -110,6 +111,7 @@ function DailyAbsencePrintBody() {
             page-break-after: auto;
             break-after: auto;
           }
+          ${DAILY_SENIOR_PRINT_COMPACT_CSS}
         }
       `}</style>
       <div className="no-print mx-auto mb-4 flex max-w-[210mm] flex-wrap items-center justify-between gap-3">

@@ -8,6 +8,87 @@ import { STAFF_ABSENCE_ROWS } from "@/lib/staff";
 import { SCHOOL_NAME, SCHOOL_NAME_EN } from "@/lib/seed";
 import type { DailyClassBlock, DailySchoolReportPayload } from "@/lib/daily-report";
 
+/** 第 2 頁（中四至中六）收緊間距／字級，讓四行統計留在同一頁。 */
+export const DAILY_SENIOR_PRINT_COMPACT_CSS = `
+  .daily-print-shell-senior .header,
+  .daily-print-shell-senior header {
+    padding-bottom: 3px !important;
+  }
+  .daily-print-shell-senior .header-school,
+  .daily-print-shell-senior header h1 {
+    margin-top: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.15 !important;
+  }
+  .daily-print-shell-senior .header-title,
+  .daily-print-shell-senior header h2 {
+    margin-top: 1px !important;
+    font-size: 11px !important;
+  }
+  .daily-print-shell-senior .header-date,
+  .daily-print-shell-senior .header-section,
+  .daily-print-shell-senior header p {
+    margin-top: 1px !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+  }
+  .daily-print-shell-senior .header-en,
+  .daily-print-shell-senior header p:first-child {
+    margin-top: 0 !important;
+    font-size: 8px !important;
+  }
+  .daily-print-shell-senior .class-stack,
+  .daily-print-shell-senior .mt-3 {
+    margin-top: 4px !important;
+  }
+  .daily-print-shell-senior .table,
+  .daily-print-shell-senior table {
+    font-size: 8.5px !important;
+  }
+  .daily-print-shell-senior .table th,
+  .daily-print-shell-senior .table td,
+  .daily-print-shell-senior th,
+  .daily-print-shell-senior td {
+    padding: 1px 3px !important;
+  }
+  .daily-print-shell-senior .space-y,
+  .daily-print-shell-senior .daily-senior-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 3px !important;
+  }
+  .daily-print-shell-senior .daily-senior-stats > * + * {
+    margin-top: 0 !important;
+  }
+  .daily-print-shell-senior .staff-box,
+  .daily-print-shell-senior .stats-box,
+  .daily-print-shell-senior .metrics-box {
+    margin-top: 0 !important;
+  }
+  .daily-print-shell-senior .metrics-title,
+  .daily-print-shell-senior h3 {
+    padding: 1px 4px !important;
+    font-size: 9px !important;
+  }
+  .daily-print-shell-senior .metrics-table {
+    font-size: 7px !important;
+  }
+  .daily-print-shell-senior .metrics-table th,
+  .daily-print-shell-senior .metrics-table td {
+    padding: 1px 1px !important;
+  }
+  .daily-print-shell-senior .absence-cols {
+    gap: 2px;
+  }
+  .daily-print-shell-senior .absence-line,
+  .daily-print-shell-senior td p {
+    margin: 0 !important;
+    font-size: 8px !important;
+    line-height: 1.12 !important;
+  }
+`;
+
 const PRINT_CSS = `
   @page { size: A4 portrait; margin: 8mm; }
   * { box-sizing: border-box; }
@@ -136,6 +217,7 @@ const PRINT_CSS = `
     gap: 4px;
   }
   .absence-line { line-height: 1.25; }
+${DAILY_SENIOR_PRINT_COMPACT_CSS}
 `;
 
 function escapeHtml(value: string): string {
@@ -388,13 +470,13 @@ function renderSeniorPage(payload: DailySchoolReportPayload): string {
   const senior = payload.classes.slice(15, 30);
 
   return `
-    <div class="daily-print-shell">
+    <div class="daily-print-shell daily-print-shell-senior">
       <article class="daily-print-page">
         ${renderHeader(payload, "中四至中六")}
         <div class="class-stack">
           ${renderClassColumn(senior)}
         </div>
-        <div class="space-y">
+        <div class="space-y daily-senior-stats">
           ${renderFormStats(payload)}
           ${renderClassMetrics("中一至中三", payload.classes.slice(0, 15))}
           ${renderClassMetrics("中四至中六", senior, {

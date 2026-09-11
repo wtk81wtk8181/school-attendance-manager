@@ -18,7 +18,7 @@ export function DailyAbsenceReport({
       <div className="daily-print-shell">
         <DailyJuniorReportPage payload={payload} className="daily-print-page" />
       </div>
-      <div className="daily-print-shell">
+      <div className="daily-print-shell daily-print-shell-senior">
         <DailySeniorReportPage payload={payload} className="daily-print-page" />
       </div>
     </>
@@ -68,11 +68,11 @@ export function DailySeniorReportPage({
     >
       <ReportHeader payload={payload} sectionTitle="中四至中六" />
 
-      <div className="mt-3">
+      <div className="mt-3 print:mt-1">
         <ClassTable blocks={senior} />
       </div>
 
-      <div className="mt-3 space-y-2 print:mt-2 print:space-y-1">
+      <div className="daily-senior-stats mt-3 space-y-2 print:mt-1 print:space-y-0">
         <FormStatsTable payload={payload} />
         <ClassMetricsTable
           title="中一至中三"
@@ -212,7 +212,7 @@ function ClassMetricsTable({
       <h3 className="border-b border-zinc-300 bg-slate-50 px-2 py-1 text-center text-xs font-semibold">
         {title}
       </h3>
-      <table className="w-full table-fixed border-collapse text-center text-[10px]">
+      <table className="metrics-table w-full table-fixed border-collapse text-center text-[10px]">
         <thead>
           <tr className="bg-slate-100">
             <th className="w-24 whitespace-nowrap border border-zinc-300 px-1 py-1 text-left">
