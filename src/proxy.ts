@@ -7,7 +7,7 @@ const PUBLIC_PATHS = new Set(["/site-login", "/api/site-auth"]);
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (PUBLIC_PATHS.has(pathname)) {
+  if (PUBLIC_PATHS.has(pathname) || pathname === "/pe" || pathname.startsWith("/pe/")) {
     return NextResponse.next();
   }
 
