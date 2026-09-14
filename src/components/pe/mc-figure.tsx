@@ -6,6 +6,16 @@ export function McFigureView({ figure }: { figure: McFigure }) {
     return <ForearmJointsFigure />;
   }
 
+  if (figure.kind === "image") {
+    return (
+      <figure className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={figure.src} alt={figure.alt} className="mx-auto h-auto w-full max-w-lg bg-white object-contain" />
+        {figure.caption ? <figcaption className="px-3 py-2 text-xs text-slate-500">{figure.caption}</figcaption> : null}
+      </figure>
+    );
+  }
+
   if (figure.kind === "note") {
     return (
       <aside className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
