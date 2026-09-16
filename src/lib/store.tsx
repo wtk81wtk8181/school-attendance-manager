@@ -16,6 +16,7 @@ import { formAHiddenStudentsChanged } from "@/lib/hidden-students";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
 import { joinReason } from "@/lib/absence-options";
 import { isGenericAttendanceReason, normalizeAbsenceDays, reviewStatusForAttendance } from "@/lib/attendance-extras";
+import { withPreApprovedLeaveReview } from "@/lib/student-leave";
 import { createSeed, STORAGE_KEY } from "@/lib/seed";
 import {
   mergeSharedState,
@@ -1086,7 +1087,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             { alsoEarly: keepEarly && keepLate }
           );
           const nextDays = normalizeAbsenceDays(nextStatus, { alsoEarly: keepEarly });
-          const nextRecord: AbsenceRecord = existing
+          const drafted: AbsenceRecord = existing
             ? {
                 ...existing,
                 eclassStatus: nextStatus,
@@ -1135,6 +1136,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 alsoEarly: resolved.alsoEarly ? true : undefined,
                 contactedOn: nextStatus === "leave" ? date : undefined,
               };
+          const nextRecord = withPreApprovedLeaveReview(
+            drafted,
+            prev.studentLeaveRecords
+          );
 
           nextAbsences = existing
             ? prev.absences.map((item) =>
@@ -1217,25 +1222,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           );
           if (!student) return prev;
           const reviewedAt = nowIso();
-          const created: AbsenceRecord = {
-            id: `ab-office-${student.id}-${create.date}-${Date.now()}`,
-            studentId: student.id,
-            date: create.date,
-            days: normalizeAbsenceDays(create.status),
-            eclassStatus: create.status,
-            reason: input.reason.trim() || "病假",
-            calledBy: input.calledBy.trim() || undefined,
-            calledAt: input.calledAt.trim() || undefined,
-            contactMethod: input.contactMethod,
-            contactedOn: input.contactedOn?.trim() || undefined,
-            documentType: input.documentType ?? "none",
-            documentSubmitted: input.documentSubmitted === true,
-            reviewStatus: reviewStatusForAttendance(create.status),
-            reviewedBy: currentUser.id,
-            reviewedAt,
-            notes: "由預先請假紀錄建立",
-            source: "office",
-          };
+          const created: AbsenceRecord = withPreApprovedLeaveReview(
+            {
+              id: `ab-office-${student.id}-${create.date}-${Date.now()}`,
+              studentId: student.id,
+              date: create.date,
+              days: normalizeAbsenceDays(create.status),
+              eclassStatus: create.status,
+              reason: input.reason.trim() || "病假",
+              calledBy: input.calledBy.trim() || undefined,
+              calledAt: input.calledAt.trim() || undefined,
+              contactMethod: input.contactMethod,
+              contactedOn: input.contactedOn?.trim() || undefined,
+              documentType: input.documentType ?? "none",
+              documentSubmitted: input.documentSubmitted === true,
+              reviewStatus: reviewStatusForAttendance(create.status),
+              reviewedBy: currentUser.id,
+              reviewedAt,
+              notes: "由預先請假紀錄建立",
+              source: "office",
+            },
+            prev.studentLeaveRecords
+          );
           return withAudit(
             applyLongAbsenceHide(
               applyWarnings(

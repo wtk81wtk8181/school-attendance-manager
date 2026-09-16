@@ -19,6 +19,7 @@ import {
   effectiveAbsencesForDay,
   formatStudentLeaveLine,
   studentLeavesForDate,
+  withPreApprovedLeaveReview,
 } from "@/lib/student-leave";
 import {
   formatEarlyLeaveReportLine,
@@ -262,7 +263,7 @@ export function buildDailySchoolReport(
     hiddenStudentRemovals,
     clearedAttendance,
     schoolDay
-  );
+  ).map((item) => withPreApprovedLeaveReview(item, studentLeaveRecords));
   const rows = buildDailyAbsenceRows(
     displayRoster,
     absencesForDay,

@@ -32,6 +32,34 @@ export function studentLeavesForDate(
   );
 }
 
+export function coveringPreApprovedLeave(
+  records: StudentLeaveRecord[] | undefined,
+  studentId: string,
+  date: string
+): StudentLeaveRecord | undefined {
+  return studentLeavesForDate(records, date).find(
+    (item) => item.studentId === studentId && item.preApproved === true
+  );
+}
+
+export function withPreApprovedLeaveReview(
+  record: AbsenceRecord,
+  leaves: StudentLeaveRecord[] | undefined
+): AbsenceRecord {
+  if (record.reviewStatus === "rejected") return record;
+  if (record.eclassStatus === "late" && !record.alsoEarly) return record;
+  if (record.eclassStatus === "early") return record;
+  if (!coveringPreApprovedLeave(leaves, record.studentId, record.date)) {
+    return record;
+  }
+  return {
+    ...record,
+    documentType: "doctor",
+    documentSubmitted: true,
+    reviewStatus: "approved",
+  };
+}
+
 export function formatStudentLeaveLine(record: StudentLeaveRecord): string {
   const category = studentLeaveCategoryLabel(record.category);
   const activity = record.activity.trim() ? `（${record.activity.trim()}）` : "";
@@ -45,7 +73,9 @@ export function effectiveAbsencesForDay(
   students: Student[],
   schoolDay: string
 ): AbsenceRecord[] {
-  const dayAbsences = absences.filter((item) => item.date === schoolDay);
+  const dayAbsences = absences
+    .filter((item) => item.date === schoolDay)
+    .map((item) => withPreApprovedLeaveReview(item, studentLeaves));
   const covered = new Set(dayAbsences.map((item) => item.studentId));
   const synthetic: AbsenceRecord[] = [];
 
@@ -57,20 +87,25 @@ export function effectiveAbsencesForDay(
     const activity = leave.activity.trim();
     const extra = leave.reason.trim();
     const reason = extra || (activity ? `${category}（${activity}）` : category);
-    synthetic.push({
-      id: `pleave-${leave.id}-${schoolDay}`,
-      studentId: leave.studentId,
-      date: schoolDay,
-      days: 1,
-      eclassStatus: leave.status,
-      reason,
-      contactMethod: "none",
-      documentType: "none",
-      documentSubmitted: false,
-      reviewStatus: "pending",
-      notes: activity ? `預先登記：${activity}` : "預先登記請假",
-      source: "office",
-    });
+    synthetic.push(
+      withPreApprovedLeaveReview(
+        {
+          id: `pleave-${leave.id}-${schoolDay}`,
+          studentId: leave.studentId,
+          date: schoolDay,
+          days: 1,
+          eclassStatus: leave.status,
+          reason,
+          contactMethod: "none",
+          documentType: "none",
+          documentSubmitted: false,
+          reviewStatus: "pending",
+          notes: activity ? `預先登記：${activity}` : "預先登記請假",
+          source: "office",
+        },
+        studentLeaves
+      )
+    );
   }
 
   return [...dayAbsences, ...synthetic];

@@ -198,6 +198,8 @@ export interface StudentLeaveRecord {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  /** 已交醫生紙等，覆蓋期間缺席自動批准、不計缺席天數 */
+  preApproved?: boolean;
 }
 
 export interface StudentLeaveRemoval {
