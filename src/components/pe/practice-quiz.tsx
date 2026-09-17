@@ -5,17 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { McFigureView } from "@/components/pe/mc-figure";
 import {
+  EXAM_COUNT,
   minutesForCount,
-  QUIZ_COUNTS,
-  shufflePick,
-  type BodyMcQuestion,
+  pickExam,
+  pickPractice,
+  unitById,
   type McKey,
-  type QuizCount,
-} from "@/data/pe-body-mc";
-
-function parseCount(n: number): QuizCount {
-  return (QUIZ_COUNTS as readonly number[]).includes(n) ? (n as QuizCount) : 20;
-}
+  type PeMcQuestion,
+} from "@/data/pe-mc";
 
 function formatTime(seconds: number) {
   const m = Math.floor(Math.max(0, seconds) / 60);
@@ -23,12 +20,27 @@ function formatTime(seconds: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function PracticeQuiz({ n, seed }: { n: number; seed: number }) {
+export function PracticeQuiz({
+  mode,
+  unit,
+  n,
+  seed,
+}: {
+  mode: "exam" | "practice";
+  unit: number;
+  n: number;
+  seed: number;
+}) {
   const router = useRouter();
-  const count = parseCount(n);
-  const questions = useMemo(() => shufflePick(count, seed), [count, seed]);
-  const minutes = minutesForCount(count);
+  const isExam = mode === "exam";
+  const unitInfo = unitById(unit);
+  const questions = useMemo(
+    () => (isExam ? pickExam(seed) : pickPractice(unit, n, seed)),
+    [isExam, unit, n, seed]
+  );
+  const minutes = minutesForCount(isExam ? EXAM_COUNT : questions.length);
   const totalSeconds = minutes * 60;
+  const title = isExam ? "考試模式" : unitInfo?.short ?? "選擇題練習";
 
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, McKey>>({});
@@ -74,7 +86,11 @@ export function PracticeQuiz({ n, seed }: { n: number; seed: number }) {
 
   function retry() {
     const nextSeed = Math.floor(Math.random() * 1_000_000_000);
-    router.push(`/pe/practice?n=${count}&seed=${nextSeed}`);
+    if (isExam) {
+      router.push(`/pe/practice?mode=exam&seed=${nextSeed}`);
+      return;
+    }
+    router.push(`/pe/practice?unit=${unit}&n=${n}&seed=${nextSeed}`);
   }
 
   if (!current) {
@@ -95,6 +111,8 @@ export function PracticeQuiz({ n, seed }: { n: number; seed: number }) {
         answers={answers}
         minutes={minutes}
         remaining={remaining}
+        title={title}
+        showUnit={isExam}
         onRetry={retry}
       />
     );
@@ -104,9 +122,12 @@ export function PracticeQuiz({ n, seed }: { n: number; seed: number }) {
     <div>
       <div className="flex items-center justify-between gap-3 text-sm">
         <p className="font-medium text-violet-800">
-          第 {index + 1} / {questions.length} 題
+          {title} · 第 {index + 1} / {questions.length} 題
         </p>
-        <p className={`font-mono tabular-nums ${remaining <= 120 ? "font-semibold text-rose-600" : "text-slate-600"}`}>
+        <p
+          suppressHydrationWarning
+          className={`font-mono tabular-nums ${remaining <= 120 ? "font-semibold text-rose-600" : "text-slate-600"}`}
+        >
           {formatTime(remaining)}
         </p>
       </div>
@@ -118,7 +139,7 @@ export function PracticeQuiz({ n, seed }: { n: number; seed: number }) {
       </div>
       <p className="mt-2 text-xs text-slate-400">已答 {answeredCount} 題</p>
 
-      <QuestionBody question={current} />
+      <QuestionBody question={current} showUnit={isExam} />
 
       <div className="mt-5 grid gap-2">
         {current.options.map((option) => {
@@ -236,10 +257,14 @@ export function PracticeQuiz({ n, seed }: { n: number; seed: number }) {
   );
 }
 
-function QuestionBody({ question }: { question: BodyMcQuestion }) {
+function QuestionBody({ question, showUnit }: { question: PeMcQuestion; showUnit?: boolean }) {
+  const unitName = unitById(question.unit)?.short;
   return (
     <div className="mt-6">
-      <p className="text-xs font-medium tracking-wide text-violet-600">{question.source}</p>
+      <p className="text-xs font-medium tracking-wide text-violet-600">
+        {showUnit && unitName ? `${unitName} · ` : ""}
+        {question.source}
+      </p>
       <p className="mt-2 text-base leading-7 font-medium text-slate-900">{question.stem}</p>
       {question.figure ? (
         <div className="mt-4">
@@ -265,7 +290,7 @@ function ReviewGrid({
   currentIndex,
   onJump,
 }: {
-  questions: BodyMcQuestion[];
+  questions: PeMcQuestion[];
   answers: Record<string, McKey>;
   currentIndex: number;
   onJump: (index: number) => void;
@@ -304,12 +329,16 @@ function ResultView({
   answers,
   minutes,
   remaining,
+  title,
+  showUnit,
   onRetry,
 }: {
-  questions: BodyMcQuestion[];
+  questions: PeMcQuestion[];
   answers: Record<string, McKey>;
   minutes: number;
   remaining: number;
+  title: string;
+  showUnit: boolean;
   onRetry: () => void;
 }) {
   const correct = questions.filter((q) => answers[q.id] === q.answer).length;
@@ -318,10 +347,10 @@ function ResultView({
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-violet-800">練習結果</h2>
+      <h2 className="text-2xl font-semibold text-violet-800">{showUnit ? "考試結果" : "練習結果"}</h2>
       <div className="mt-2 h-1 w-16 rounded-full bg-violet-700" />
       <div className="mt-6 rounded-2xl bg-teal-500 px-6 py-6 text-white">
-        <p className="text-sm text-teal-50">人體選擇題</p>
+        <p className="text-sm text-teal-50">{title}</p>
         <p className="mt-1 text-4xl font-semibold">
           {correct} / {questions.length}
         </p>
@@ -353,7 +382,8 @@ function ResultView({
             <li key={question.id} className="rounded-2xl border border-slate-200 p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-medium text-violet-600">
-                  第 {i + 1} 題 · {question.source}
+                  第 {i + 1} 題 · {showUnit && unitById(question.unit)?.short ? `${unitById(question.unit)?.short} · ` : ""}
+                  {question.source}
                 </p>
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${

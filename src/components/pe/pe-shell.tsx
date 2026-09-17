@@ -14,7 +14,7 @@ export function PeShell({ children }: { children: ReactNode }) {
       </header>
       <main className="mx-auto max-w-3xl px-4 py-8 sm:py-10">{children}</main>
       <footer className="mx-auto max-w-3xl px-4 pb-10 text-center text-xs text-slate-400">
-        萬鈞伯裘書院 · 第二部分：人體 · 溫習用途
+        萬鈞伯裘書院 · 九單元選擇題溫習
       </footer>
     </div>
   );
