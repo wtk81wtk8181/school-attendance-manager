@@ -1,4 +1,7 @@
-import { monthRange } from "@/lib/monthly-report";
+import {
+  fromSeptemberPeriodLabel,
+  fromSeptemberRange,
+} from "@/lib/monthly-report";
 import { CLASS_TEACHERS, allClassNames } from "@/lib/roster";
 import {
   classLabel,
@@ -34,6 +37,8 @@ export interface WongClassSection {
 export interface WongReportPayload {
   yearMonth: string;
   monthLabel: string;
+  periodStart: string;
+  periodEnd: string;
   academicYear: string;
   classes: WongClassSection[];
   totals: {
@@ -61,10 +66,10 @@ function buildStudentRow(
   records: AbsenceRecord[],
   teacher: string
 ): WongStudentRow {
-  const missingRecords = records.filter(isMissingDoctorNote);
-  const missingDoctorDates = missingRecords
-    .map((item) => formatMissingDate(item.date))
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const missingRecords = records
+    .filter(isMissingDoctorNote)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const missingDoctorDates = missingRecords.map((item) => formatMissingDate(item.date));
   const missingDoctorDays = missingRecords.reduce((sum, item) => sum + item.days, 0);
   const counted = countedAbsenceDays(records);
   const lateCount = lateOccurrences(records);
@@ -91,9 +96,8 @@ export function buildWongReport(
   yearMonth: string,
   academicYear: string
 ): WongReportPayload {
-  const { start, end } = monthRange(yearMonth);
+  const { start, end } = fromSeptemberRange(yearMonth);
   const inRange = absences.filter((item) => item.date >= start && item.date <= end);
-  const month = Number(yearMonth.slice(5, 7));
 
   const classes: WongClassSection[] = allClassNames().map((className) => {
     const classStudents = students
@@ -122,7 +126,9 @@ export function buildWongReport(
 
   return {
     yearMonth,
-    monthLabel: `${month}月份`,
+    monthLabel: fromSeptemberPeriodLabel(yearMonth),
+    periodStart: start,
+    periodEnd: end,
     academicYear,
     classes: classes.filter((item) => item.rows.length > 0),
     totals: {
@@ -133,12 +139,12 @@ export function buildWongReport(
   };
 }
 
-/** 供測試或明細頁使用：當月計入缺席紀錄 */
+/** 供測試或明細頁使用：由學年九月起至該月之計入缺席紀錄 */
 export function countedAbsenceRecordsInMonth(
   records: AbsenceRecord[],
   yearMonth: string
 ): AbsenceRecord[] {
-  const { start, end } = monthRange(yearMonth);
+  const { start, end } = fromSeptemberRange(yearMonth);
   return records.filter(
     (item) => item.date >= start && item.date <= end && isCountedTowardAbsence(item)
   );

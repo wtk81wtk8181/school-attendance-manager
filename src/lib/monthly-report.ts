@@ -74,6 +74,39 @@ export function monthRange(yearMonth: string): { start: string; end: string } {
   return { start: iso(first), end: iso(last) };
 }
 
+/** 學年由九月起：該月份所屬學年的九月一日 */
+export function academicYearSeptemberStart(yearMonth: string): string {
+  const [year, month] = yearMonth.split("-").map(Number);
+  const startYear = month >= 9 ? year : year - 1;
+  return `${startYear}-09-01`;
+}
+
+/**
+ * 每月報告累積區間：由該學年九月一日至選定月份最後一日。
+ * 例如 2026-10 → 2026-09-01 至 2026-10-31。
+ */
+export function fromSeptemberRange(yearMonth: string): { start: string; end: string } {
+  const { end } = monthRange(yearMonth);
+  const start = academicYearSeptemberStart(yearMonth);
+  if (start > end) return monthRange(yearMonth);
+  return { start, end };
+}
+
+export function fromSeptemberPeriodLabel(yearMonth: string): string {
+  const { start, end } = fromSeptemberRange(yearMonth);
+  const startYear = Number(start.slice(0, 4));
+  const endYear = Number(end.slice(0, 4));
+  const startMonth = Number(start.slice(5, 7));
+  const endMonth = Number(end.slice(5, 7));
+  if (start.slice(0, 7) === yearMonth) {
+    return `${endMonth}月份`;
+  }
+  if (startYear === endYear) {
+    return `${endMonth}月份（由 ${startMonth} 月起累積）`;
+  }
+  return `${endMonth}月份（由 ${startYear} 年 ${startMonth} 月起累積）`;
+}
+
 /** 該月內的星期一至星期五日數（作為上課日推算） */
 export function weekdayCount(start: string, end: string): number {
   const [sy, sm, sd] = start.split("-").map(Number);

@@ -67,7 +67,7 @@ function wongEmailHtml(
 ) {
   return `
     <p>各位同事：</p>
-    <p>附件為 <strong>${SCHOOL_NAME}</strong> ${payload.monthLabel}之<strong>每月報告</strong>（Excel，按班列出每生中英文姓名、計入缺席日數、未有醫生紙及遲到次數；欄位附中英對照）。</p>
+    <p>附件為 <strong>${SCHOOL_NAME}</strong> ${payload.monthLabel}之<strong>每月報告</strong>（Excel，按班列出每生中英文姓名、計入缺席日數、未有醫生紙及遲到次數；欄位附中英對照）。缺席日數及所欠證明文件由學年九月起累積至本月（${payload.periodStart} 至 ${payload.periodEnd}）。</p>
     <p>全校共 ${payload.totals.studentCount} 人；有缺席／缺醫生紙／遲到紀錄 ${payload.totals.studentsWithIssues} 人；未有醫生紙 ${payload.totals.missingDoctorCount} 人（Excel 以黃色標示）。</p>
     <p>此郵件已發送至：${recipients.map((item) => `${item.name} &lt;${item.email}&gt;`).join("、")}。</p>
     <p>${MAIL_FROM_NAME}</p>

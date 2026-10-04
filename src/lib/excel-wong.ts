@@ -65,7 +65,7 @@ export async function buildWongWorkbook(payload: WongReportPayload): Promise<Buf
 
   sheet.mergeCells(`A3:${LAST_COL_LETTER}3`);
   sheet.getCell("A3").value =
-    "計入缺席日數＝無故缺席及未獲批請假；未有醫生紙以黃色標示；遲到另行統計次數。\nCounted absence days = unexcused absence and unapproved leave. Yellow = missing doctor's note. Late arrivals are counted separately.";
+    `計入缺席日數及未有醫生紙由學年九月起累積至本月（${payload.periodStart} 至 ${payload.periodEnd}）；獲批後不再計入。遲到次數同樣由九月起累計。\nCounted absence days and missing doctor's notes accumulate from September of the school year through this month (${payload.periodStart} to ${payload.periodEnd}). Approved leave is excluded. Late arrivals also accumulate from September.`;
   sheet.getCell("A3").font = { size: 10, italic: true, color: { argb: "FF5C6570" } };
   sheet.getCell("A3").alignment = { wrapText: true, vertical: "middle" };
 
@@ -133,7 +133,7 @@ export async function buildWongWorkbook(payload: WongReportPayload): Promise<Buf
 
   sheet.getRow(1).height = 24;
   sheet.getRow(2).height = 22;
-  sheet.getRow(3).height = 36;
+  sheet.getRow(3).height = 48;
 
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer);

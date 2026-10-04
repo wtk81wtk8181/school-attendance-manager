@@ -6904,6 +6904,17 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "曹思思"
   },
   {
+    "id": "s-5a-38",
+    "studentNo": "2101038",
+    "name": "葉韋嬈",
+    "nameEn": "YIP WAI IU",
+    "form": 5,
+    "className": "5A",
+    "homeroomTeacherId": "u-5a",
+    "homeroomTeacherName": "曹思思",
+    "enrolledOn": "2026-09-17"
+  },
+  {
     "id": "s-5b-01",
     "studentNo": "2102001",
     "name": "林子沙",

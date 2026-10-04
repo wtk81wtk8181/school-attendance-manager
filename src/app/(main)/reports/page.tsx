@@ -575,14 +575,14 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle className="text-base">每月報告</CardTitle>
             <CardDescription>
-              {wongReport.monthLabel}　{wongReport.classes.length} 班　有紀錄{" "}
-              {wongReport.totals.studentsWithIssues} 人　未有醫生紙{" "}
+              {wongReport.monthLabel}　{wongReport.periodStart} 至 {wongReport.periodEnd}　
+              {wongReport.classes.length} 班　有紀錄 {wongReport.totals.studentsWithIssues} 人　未有醫生紙{" "}
               {wongReport.totals.missingDoctorCount} 人（Excel 黃色標示；欄位中英對照）
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid gap-1.5">
-              <Label htmlFor="wong-report-month">月份</Label>
+              <Label htmlFor="wong-report-month">月份（由學年九月起累積）</Label>
               <Input
                 id="wong-report-month"
                 type="month"
