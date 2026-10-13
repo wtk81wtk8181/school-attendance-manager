@@ -3633,6 +3633,17 @@ export const ROSTER_STUDENTS: Student[] = [
     "homeroomTeacherName": "陳珮儀"
   },
   {
+    "id": "s-3a-36",
+    "studentNo": "2301036",
+    "name": "李華燚",
+    "nameEn": "LEE WAH YIK",
+    "form": 3,
+    "className": "3A",
+    "homeroomTeacherId": "u-3a",
+    "homeroomTeacherName": "陳珮儀",
+    "enrolledOn": "2026-10-12"
+  },
+  {
     "id": "s-3b-01",
     "studentNo": "2302001",
     "name": "陳鎮安",
@@ -4487,16 +4498,6 @@ export const ROSTER_STUDENTS: Student[] = [
     "studentNo": "2304023",
     "name": "曾俊淇",
     "nameEn": "TSANG CHUN KI",
-    "form": 3,
-    "className": "3D",
-    "homeroomTeacherId": "u-3d",
-    "homeroomTeacherName": "徐治文"
-  },
-  {
-    "id": "s-3d-24",
-    "studentNo": "2304024",
-    "name": "王楚逸夫",
-    "nameEn": "WANG EUGENE",
     "form": 3,
     "className": "3D",
     "homeroomTeacherId": "u-3d",
@@ -6838,16 +6839,6 @@ export const ROSTER_STUDENTS: Student[] = [
     "studentNo": "2101029",
     "name": "盧梓琪",
     "nameEn": "LU TSZ KI",
-    "form": 5,
-    "className": "5A",
-    "homeroomTeacherId": "u-5a",
-    "homeroomTeacherName": "曹思思"
-  },
-  {
-    "id": "s-5a-30",
-    "studentNo": "2101030",
-    "name": "魏松澤",
-    "nameEn": "WEI SONGZE",
     "form": 5,
     "className": "5A",
     "homeroomTeacherId": "u-5a",
