@@ -895,7 +895,7 @@ export const ROSTER_STUDENTS: Student[] = [
   {
     "id": "s-1c-20",
     "studentNo": "2503020",
-    "name": "潘奕霖",
+    "name": "潘凱成",
     "nameEn": "POON AIDEN",
     "form": 1,
     "className": "1C",
