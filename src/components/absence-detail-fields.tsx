@@ -15,13 +15,19 @@ import {
   ABSENCE_REASONS,
   CALLER_RELATIONS,
   CONTACT_METHODS,
+  OTHER_CONTACT_METHODS,
+  PERSONAL_REASON_OTHER,
+  PERSONAL_REASONS,
   SICK_SYMPTOM_OTHER,
   SICK_SYMPTOMS,
   inferContactMethod,
+  isOtherContactMethod,
   joinCaller,
+  joinPersonalReason,
   joinReason,
   joinSickSymptom,
   splitCaller,
+  splitPersonalReason,
   splitReason,
   splitSickSymptom,
 } from "@/lib/absence-options";
@@ -70,13 +76,15 @@ export function AbsenceDetailFields({
 }) {
   const reasonParts = splitReason(reason);
   const sickParts = splitSickSymptom(reasonParts.extra);
+  const personalParts = splitPersonalReason(reasonParts.extra);
   const callerParts = splitCaller(calledBy);
   const method = inferContactMethod(calledBy, contactMethod);
   const isPersonalLeave = eclassStatus === "leave" || reasonParts.option === "事假";
+  const otherContact = isOtherContactMethod(method);
   const stack = compact ? "space-y-1.5 min-w-40" : "grid gap-1.5";
   const showPerson = method !== "none";
-  const showTime = method === "call" || method === "app";
-  const showDate = method === "app" || isPersonalLeave;
+  const showTime = method === "call" || method === "app" || otherContact;
+  const showDate = method === "app" || otherContact || isPersonalLeave;
   const appDate = contactedOn?.trim() || (showDate ? recordDate || "" : "");
   const lateExempted = documentType === "doctor" && documentSubmitted;
 
@@ -174,6 +182,53 @@ export function AbsenceDetailFields({
             ) : null}
           </>
         ) : null}
+        {reasonParts.option === "事假" ? (
+          <>
+            <Select
+              value={personalParts.reason || null}
+              disabled={disabled}
+              onValueChange={(value) => {
+                if (!value) return;
+                emit({
+                  reason: joinReason(
+                    "事假",
+                    joinPersonalReason(
+                      value,
+                      value === personalParts.reason ? personalParts.custom : ""
+                    )
+                  ),
+                });
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="事假原因" />
+              </SelectTrigger>
+              <SelectContent>
+                {PERSONAL_REASONS.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+                <SelectItem value={PERSONAL_REASON_OTHER}>其他</SelectItem>
+              </SelectContent>
+            </Select>
+            {personalParts.reason === PERSONAL_REASON_OTHER ? (
+              <Input
+                disabled={disabled}
+                value={personalParts.custom}
+                placeholder="請填寫其他事假原因"
+                onChange={(event) =>
+                  emit({
+                    reason: joinReason(
+                      "事假",
+                      joinPersonalReason(PERSONAL_REASON_OTHER, event.target.value)
+                    ),
+                  })
+                }
+              />
+            ) : null}
+          </>
+        ) : null}
         {reasonParts.option === "其他" ? (
           <Input
             disabled={disabled}
@@ -242,11 +297,17 @@ export function AbsenceDetailFields({
             </SelectContent>
           </Select>
           <Select
-            value={method}
+            value={otherContact ? "other" : method}
             disabled={disabled}
             onValueChange={(value) => {
               if (!value) return;
-              const nextMethod = value as ContactMethod;
+              const nextMethod = (
+                value === "other" ? "parent_letter" : value
+              ) as ContactMethod;
+              const keepDate =
+                nextMethod === "app" ||
+                isOtherContactMethod(nextMethod) ||
+                isPersonalLeave;
               emit({
                 contactMethod: nextMethod,
                 calledBy:
@@ -257,10 +318,7 @@ export function AbsenceDetailFields({
                         callerParts.name
                       ),
                 calledAt: nextMethod === "none" ? "" : calledAt,
-                contactedOn:
-                  nextMethod === "app" || isPersonalLeave
-                    ? contactedOn?.trim() || recordDate || ""
-                    : "",
+                contactedOn: keepDate ? contactedOn?.trim() || recordDate || "" : "",
               });
             }}
           >
@@ -273,9 +331,31 @@ export function AbsenceDetailFields({
                   {item.label}
                 </SelectItem>
               ))}
+              <SelectItem value="other">其他</SelectItem>
             </SelectContent>
           </Select>
         </div>
+        {otherContact ? (
+          <Select
+            value={method}
+            disabled={disabled}
+            onValueChange={(value) => {
+              if (!value || !isOtherContactMethod(value)) return;
+              emit({ contactMethod: value });
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="其他聯絡方式" />
+            </SelectTrigger>
+            <SelectContent>
+              {OTHER_CONTACT_METHODS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
         {showPerson && callerParts.relation === "其他" ? (
           <Input
             disabled={disabled}
@@ -306,11 +386,15 @@ export function AbsenceDetailFields({
           <p className="text-[11px] text-muted-foreground">
             {method === "app"
               ? "APP申請日期／時間"
-              : isPersonalLeave && method === "call"
-                ? "請假申請日期／致電時間"
-                : isPersonalLeave
-                  ? "請假申請日期"
-                  : "致電時間"}
+              : method === "parent_letter"
+                ? "家長信日期／時間"
+                : method === "appointment_slip"
+                  ? "預約便條日期／時間"
+                  : isPersonalLeave && method === "call"
+                    ? "請假申請日期／致電時間"
+                    : isPersonalLeave
+                      ? "請假申請日期"
+                      : "致電時間"}
           </p>
         ) : null}
         {showDate ? (

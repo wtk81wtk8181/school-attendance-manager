@@ -21,14 +21,37 @@ export const SICK_SYMPTOMS = [
   "吐瀉",
   "嘔吐",
   "咳嗽",
+  "頭痛或頭暈",
+  "喉嚨痛",
+  "情緒問題",
+  "留院觀察或治療",
+  "胃痛",
+  "腸胃炎",
+  "皮膚敏感",
+  "經期不適",
+  "眼睛不適",
 ] as const;
 
 export const SICK_SYMPTOM_OTHER = "其他";
+
+export const PERSONAL_REASONS = ["校外比賽", "帛事", "處理身分證或護照"] as const;
+
+export const PERSONAL_REASON_OTHER = "其他";
 
 export const CONTACT_METHODS = [
   { value: "none", label: "尚未聯絡" },
   { value: "call", label: "致電" },
   { value: "app", label: "APP申請" },
+] as const;
+
+export const OTHER_CONTACT_METHODS = [
+  { value: "parent_letter", label: "家長信" },
+  { value: "appointment_slip", label: "預約便條" },
+] as const;
+
+export const CONTACT_METHOD_VALUES = [
+  ...CONTACT_METHODS.map((item) => item.value),
+  ...OTHER_CONTACT_METHODS.map((item) => item.value),
 ] as const;
 
 export type ContactMethodOption = (typeof CONTACT_METHODS)[number]["value"];
@@ -51,6 +74,9 @@ export function splitReason(reason: string): { option: string; extra: string } {
   const sick = trimmed.match(/^病假[（(](.+)[）)]$/);
   if (sick) return { option: "病假", extra: sick[1].trim() };
   if (trimmed === "病假") return { option: "病假", extra: "" };
+  const personal = trimmed.match(/^事假[（(](.+)[）)]$/);
+  if (personal) return { option: "事假", extra: personal[1].trim() };
+  if (trimmed === "事假") return { option: "事假", extra: "" };
   if ((ABSENCE_REASONS as readonly string[]).includes(trimmed) && trimmed !== "其他") {
     return { option: trimmed, extra: "" };
   }
@@ -77,14 +103,43 @@ export function joinSickSymptom(symptom: string, custom: string): string {
   return symptom;
 }
 
+export function splitPersonalReason(extra: string): { reason: string; custom: string } {
+  const detail = extra.trim();
+  if ((PERSONAL_REASONS as readonly string[]).includes(detail)) {
+    return { reason: detail, custom: "" };
+  }
+  const other = detail.match(/^其他(?:[：:](.*))?$/);
+  if (other) return { reason: PERSONAL_REASON_OTHER, custom: (other[1] ?? "").trim() };
+  if (!detail) return { reason: "", custom: "" };
+  return { reason: PERSONAL_REASON_OTHER, custom: detail };
+}
+
+export function joinPersonalReason(reason: string, custom: string): string {
+  if (!reason) return "";
+  if (reason === PERSONAL_REASON_OTHER) {
+    const detail = custom.trim();
+    return detail ? `其他：${detail}` : PERSONAL_REASON_OTHER;
+  }
+  return reason;
+}
+
 export function joinReason(option: string, extra: string): string {
   const detail = extra.trim();
   if (option === "病假") {
     const symptom = detail || SICK_SYMPTOMS[0];
     return `病假（${symptom}）`;
   }
+  if (option === "事假") {
+    return detail ? `事假（${detail}）` : "事假";
+  }
   if (option === "其他") return detail || "其他";
   return option;
+}
+
+export function isOtherContactMethod(
+  method?: string
+): method is (typeof OTHER_CONTACT_METHODS)[number]["value"] {
+  return method === "parent_letter" || method === "appointment_slip";
 }
 
 export function splitCaller(calledBy: string): { relation: string; name: string } {
@@ -109,7 +164,12 @@ export function inferContactMethod(
   calledBy?: string,
   contactMethod?: ContactMethod
 ): ContactMethod {
-  if (contactMethod === "app" || contactMethod === "call" || contactMethod === "none") {
+  if (
+    contactMethod === "app" ||
+    contactMethod === "call" ||
+    contactMethod === "none" ||
+    isOtherContactMethod(contactMethod)
+  ) {
     return contactMethod;
   }
   const caller = calledBy?.trim();
@@ -134,6 +194,14 @@ export function formatContactSuffix(
     if (caller) return `（APP申請：${caller}）`;
     if (when) return `（APP申請 ${when}）`;
     return "（APP申請）";
+  }
+  if (method === "parent_letter" || method === "appointment_slip") {
+    const label = method === "parent_letter" ? "家長信" : "預約便條";
+    const when = [dateLabel, time].filter(Boolean).join(" ");
+    if (caller && when) return `（${label}：${caller} ${when}）`;
+    if (caller) return `（${label}：${caller}）`;
+    if (when) return `（${label} ${when}）`;
+    return `（${label}）`;
   }
   let suffix = "";
   if (method === "call") {

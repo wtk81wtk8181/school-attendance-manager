@@ -8,7 +8,12 @@ export type EclassStatus = "present" | "absent" | "late" | "leave" | "half_absen
 
 export type DayAttendance = Exclude<EclassStatus, never>;
 
-export type ContactMethod = "none" | "call" | "app";
+export type ContactMethod =
+  | "none"
+  | "call"
+  | "app"
+  | "parent_letter"
+  | "appointment_slip";
 
 export type AbsenceSource = "eclass" | "office";
 
@@ -64,7 +69,7 @@ export interface AbsenceRecord {
   reason: string;
   calledBy?: string;
   calledAt?: string;
-  /** 致電或 APP 申請；未填則依 calledBy 推斷 */
+  /** 致電、APP 申請、家長信或預約便條；未填則依 calledBy 推斷 */
   contactMethod?: ContactMethod;
   /** APP 申請或事假申請日期 YYYY-MM-DD */
   contactedOn?: string;

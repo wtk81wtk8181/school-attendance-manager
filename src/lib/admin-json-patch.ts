@@ -1,3 +1,4 @@
+import { CONTACT_METHOD_VALUES } from "@/lib/absence-options";
 import {
   ABSENCE_ADMIN_COLUMNS,
   ABSENCE_ECLASS_STATUSES,
@@ -231,7 +232,9 @@ export function validateAdminSectionRows(
         }
       }
       if (row.contactMethod !== undefined && row.contactMethod !== null && row.contactMethod !== "") {
-        if (!["none", "call", "app"].includes(String(row.contactMethod))) {
+        if (
+          !(CONTACT_METHOD_VALUES as readonly string[]).includes(String(row.contactMethod))
+        ) {
           return `${rowLabel}的 contactMethod 無效。`;
         }
       }
