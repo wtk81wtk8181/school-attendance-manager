@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentBadge, ReviewBadge } from "@/components/status-badges";
 import { ReviewDialog } from "@/components/review-dialog";
 import {
@@ -31,11 +32,17 @@ export function AbsenceTable({
   showStudent = false,
   emptyTitle = "沒有缺席紀錄",
   emptyDescription = "所選範圍內沒有缺席或請假資料。",
+  selectable = false,
+  selectedIds = [],
+  onSelectedIdsChange,
 }: {
   records: AbsenceRecord[];
   showStudent?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectedIdsChange?: (ids: string[]) => void;
 }) {
   const { state, currentUser } = useStore();
   const [editing, setEditing] = useState<AbsenceRecord | null>(null);
@@ -70,12 +77,37 @@ export function AbsenceTable({
   }
 
   const editingStudent = editing ? studentMap.get(editing.studentId) ?? null : null;
+  const selectedSet = new Set(selectedIds);
+  const allSelected =
+    selectable &&
+    sortedRecords.length > 0 &&
+    sortedRecords.every((record) => selectedSet.has(record.id));
+
+  function changeSelection(ids: string[]) {
+    onSelectedIdsChange?.([...new Set(ids)]);
+  }
 
   return (
     <>
       <Table>
         <TableHeader>
           <TableRow>
+            {selectable ? (
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={allSelected}
+                  aria-label={allSelected ? "取消全選" : "全選目前清單"}
+                  onCheckedChange={(checked) => {
+                    if (checked === true) {
+                      changeSelection(sortedRecords.map((record) => record.id));
+                    } else {
+                      const visible = new Set(sortedRecords.map((record) => record.id));
+                      changeSelection(selectedIds.filter((id) => !visible.has(id)));
+                    }
+                  }}
+                />
+              </TableHead>
+            ) : null}
             <TableHead>
               <button
                 type="button"
@@ -115,6 +147,21 @@ export function AbsenceTable({
             const counted = isCountedTowardAbsence(record);
             return (
               <TableRow key={record.id}>
+                {selectable ? (
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedSet.has(record.id)}
+                      aria-label={`選擇 ${student?.name ?? formatShortDate(record.date)}`}
+                      onCheckedChange={(checked) => {
+                        if (checked === true) {
+                          changeSelection([...selectedIds, record.id]);
+                        } else {
+                          changeSelection(selectedIds.filter((id) => id !== record.id));
+                        }
+                      }}
+                    />
+                  </TableCell>
+                ) : null}
                 <TableCell className="whitespace-nowrap">
                   {formatShortDate(record.date)}
                 </TableCell>

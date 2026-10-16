@@ -1,11 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Lock, Search } from "lucide-react";
 import { AbsenceTable } from "@/components/absence-table";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader, PageShell, PageSkeleton } from "@/components/page-shell";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -17,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { studentMatchesQuery } from "@/lib/student-leave";
-import { classLabel, filterClassNames, formLabel, listClasses, recordHasEarly, recordHasLate } from "@/lib/rules";
+import { canApproveAbsenceDocument, classLabel, filterClassNames, formLabel, listClasses, recordHasEarly, recordHasLate } from "@/lib/rules";
 import { useStore } from "@/lib/store";
 import type { DocumentType, EclassStatus, FormLevel, ReviewStatus } from "@/lib/types";
 
@@ -38,7 +47,7 @@ const DOCUMENT_OPTIONS: Array<{ value: DocumentType | "all"; label: string }> = 
 ];
 
 export default function ReviewsPage() {
-  const { currentUser, state, visibleStudents, ready } = useStore();
+  const { currentUser, state, visibleStudents, ready, reviewAbsences } = useStore();
   const [tab, setTab] = useState<string>("pending");
   const [query, setQuery] = useState("");
   const [form, setForm] = useState("all");
@@ -47,6 +56,9 @@ export default function ReviewsPage() {
   const [to, setTo] = useState("");
   const [eclassStatus, setEclassStatus] = useState<EclassStatus | "all">("all");
   const [documentType, setDocumentType] = useState<DocumentType | "all">("all");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [batchDocument, setBatchDocument] = useState<"keep" | "doctor" | "parent">("keep");
+  const [confirmAction, setConfirmAction] = useState<"approved" | "rejected" | null>(null);
 
   const studentMap = useMemo(() => {
     const map = new Map(visibleStudents.map((item) => [item.id, item]));
@@ -96,6 +108,70 @@ export default function ReviewsPage() {
     documentType,
   ]);
 
+  const pendingRecords = useMemo(
+    () => records.filter((item) => item.reviewStatus === "pending"),
+    [records]
+  );
+  const selectedRecords = useMemo(
+    () => pendingRecords.filter((item) => selectedIds.includes(item.id)),
+    [pendingRecords, selectedIds]
+  );
+  const batchPreview = useMemo(() => {
+    if (!confirmAction) return { apply: [] as typeof selectedRecords, skip: [] as typeof selectedRecords };
+    if (confirmAction === "rejected" || batchDocument !== "keep") {
+      return { apply: selectedRecords, skip: [] as typeof selectedRecords };
+    }
+    return {
+      apply: selectedRecords.filter(canApproveAbsenceDocument),
+      skip: selectedRecords.filter((item) => !canApproveAbsenceDocument(item)),
+    };
+  }, [confirmAction, batchDocument, selectedRecords]);
+
+  useEffect(() => {
+    const allowed = new Set(pendingRecords.map((item) => item.id));
+    setSelectedIds((current) => {
+      const next = current.filter((id) => allowed.has(id));
+      return next.length === current.length ? current : next;
+    });
+  }, [pendingRecords]);
+
+  function openBatch(action: "approved" | "rejected") {
+    if (selectedRecords.length === 0) return;
+    if (action === "approved" && batchDocument === "keep") {
+      const eligible = selectedRecords.filter(canApproveAbsenceDocument);
+      if (eligible.length === 0) {
+        setConfirmAction("approved");
+        return;
+      }
+    }
+    setConfirmAction(action);
+  }
+
+  function applyBatch() {
+    if (!confirmAction || batchPreview.apply.length === 0) {
+      setConfirmAction(null);
+      return;
+    }
+    const result = reviewAbsences(
+      selectedRecords.map((item) => item.id),
+      {
+        reviewStatus: confirmAction,
+        documentType:
+          confirmAction === "approved" && batchDocument !== "keep" ? batchDocument : undefined,
+      }
+    );
+    if (result.updated > 0) {
+      if (confirmAction === "approved" && batchDocument === "keep") {
+        setSelectedIds(
+          selectedRecords.filter((item) => !canApproveAbsenceDocument(item)).map((item) => item.id)
+        );
+      } else {
+        setSelectedIds([]);
+      }
+    }
+    setConfirmAction(null);
+  }
+
   if (!ready) return <PageSkeleton tiles={3} lines={6} />;
 
   if (currentUser?.role !== "office") {
@@ -117,7 +193,7 @@ export default function ReviewsPage() {
     <PageShell>
       <PageHeader
         title="缺席文件審核"
-        description="核對缺席原因與醫生紙／家長信。批准後該日不計入出席率及缺席上限。"
+        description="核對缺席原因與醫生紙／家長信。待審核可以勾選多筆一次審批；批准後該日不計入出席率及缺席上限。"
       />
 
       <Card className="shadow-none">
@@ -275,9 +351,69 @@ export default function ReviewsPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="pending" className="mt-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+          {pendingRecords.length > 0 ? (
+            <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
+              <div className="grid gap-1.5">
+                <Label>連續審批</Label>
+                <p className="max-w-xl text-xs text-slate-500">
+                  勾選多筆後一次完成，不用逐筆打開審核。選擇「沿用各筆紀錄」時，只會批准已提交醫生證明或家長信的紀錄。
+                </p>
+                <Select
+                  value={batchDocument}
+                  onValueChange={(value) =>
+                    setBatchDocument((value as "keep" | "doctor" | "parent") ?? "keep")
+                  }
+                >
+                <SelectTrigger className="w-full sm:w-64">
+                  <span>
+                    {batchDocument === "doctor"
+                      ? "一律已交醫生證明"
+                      : batchDocument === "parent"
+                        ? "一律已交家長信"
+                        : "沿用各筆紀錄"}
+                  </span>
+                </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="keep">沿用各筆紀錄</SelectItem>
+                    <SelectItem value="doctor">一律已交醫生證明</SelectItem>
+                    <SelectItem value="parent">一律已交家長信</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    setSelectedIds(
+                      selectedIds.length === pendingRecords.length
+                        ? []
+                        : pendingRecords.map((item) => item.id)
+                    )
+                  }
+                >
+                  {selectedIds.length === pendingRecords.length && pendingRecords.length > 0
+                    ? "取消全選"
+                    : "全選目前清單"}
+                </Button>
+                <Button disabled={selectedRecords.length === 0} onClick={() => openBatch("approved")}>
+                  一次批准{selectedRecords.length > 0 ? `（${selectedRecords.length}）` : ""}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={selectedRecords.length === 0}
+                  onClick={() => openBatch("rejected")}
+                >
+                  一次不批准{selectedRecords.length > 0 ? `（${selectedRecords.length}）` : ""}
+                </Button>
+              </div>
+            </div>
+          ) : null}
           <AbsenceTable
-            records={byStatus("pending")}
+            records={pendingRecords}
             showStudent
+            selectable
+            selectedIds={selectedIds}
+            onSelectedIdsChange={setSelectedIds}
             emptyTitle="沒有待審核紀錄"
             emptyDescription="所有缺席紀錄均已完成審核。校務處新增的缺席會出現在這裡。"
           />
@@ -299,6 +435,47 @@ export default function ReviewsPage() {
           />
         </TabsContent>
       </Tabs>
+
+      <Dialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAction === "rejected" ? "確定一次不批准？" : "確定一次批准？"}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmAction === "rejected"
+                ? `將一次不批准 ${selectedRecords.length} 筆。這些紀錄會繼續計入缺席。`
+                : batchDocument === "doctor"
+                  ? `將把已選 ${selectedRecords.length} 筆標為已提交醫生證明，並一次批准。獲批後不計入出席率及缺席上限。`
+                  : batchDocument === "parent"
+                    ? `將把已選 ${selectedRecords.length} 筆標為已提交家長信，並一次批准。獲批後不計入出席率及缺席上限。`
+                    : batchPreview.apply.length === 0
+                      ? "已選紀錄都未提交醫生證明或家長信，不能一次批准。可改選「一律已交醫生證明」或「一律已交家長信」。"
+                      : `將一次批准 ${batchPreview.apply.length} 筆。獲批後不計入出席率及缺席上限。${
+                          batchPreview.skip.length > 0
+                            ? `另有 ${batchPreview.skip.length} 筆未交文件，會略過。`
+                            : ""
+                        }`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmAction(null)}>
+              取消
+            </Button>
+            <Button
+              onClick={applyBatch}
+              disabled={confirmAction === null || batchPreview.apply.length === 0}
+            >
+              {confirmAction === "rejected" ? "確定不批准" : "確定批准"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }

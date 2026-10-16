@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lateOccurrences, neededWarningTypes, recordHasEarly, recordHasLate, attendanceStatusLabelForRecord } from "@/lib/rules";
+import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lateOccurrences, neededWarningTypes, recordHasEarly, recordHasLate, attendanceStatusLabelForRecord, canApproveAbsenceDocument } from "@/lib/rules";
 import { studentsHomeroomTeachersChanged } from "@/lib/roster";
 import { formAHiddenStudentsChanged } from "@/lib/hidden-students";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
@@ -134,6 +134,13 @@ interface StoreValue {
   logout: () => void;
   selectClass: (className: string | null) => void;
   reviewAbsence: (id: string, input: ReviewInput) => void;
+  reviewAbsences: (
+    ids: string[],
+    input: {
+      reviewStatus: Exclude<ReviewStatus, "pending">;
+      documentType?: Exclude<DocumentType, "none">;
+    }
+  ) => { updated: number; skipped: number };
   setDayAttendance: (
     studentId: string,
     date: string,
@@ -1339,6 +1346,91 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [currentUser]
   );
 
+  const reviewAbsences = useCallback(
+    (
+      ids: string[],
+      input: {
+        reviewStatus: Exclude<ReviewStatus, "pending">;
+        documentType?: Exclude<DocumentType, "none">;
+      }
+    ) => {
+      if (!currentUser || currentUser.role !== "office") {
+        toast.error("只有校務處職員可以審核缺席紀錄。");
+        return { updated: 0, skipped: 0 };
+      }
+      const unique = [...new Set(ids)];
+      if (unique.length === 0) {
+        toast.error("請先勾選要審批的紀錄。");
+        return { updated: 0, skipped: 0 };
+      }
+
+      const counts = { updated: 0, skipped: 0 };
+      patch((prev) => {
+        counts.updated = 0;
+        counts.skipped = 0;
+        const idSet = new Set(unique);
+        const touchedStudents = new Set<string>();
+        const reviewedAt = nowIso();
+        const nextAbsences = prev.absences.map((item) => {
+          if (!idSet.has(item.id)) return item;
+          const documentType = input.documentType ?? item.documentType;
+          const documentSubmitted = input.documentType ? true : item.documentSubmitted;
+          const next = {
+            ...item,
+            documentType,
+            documentSubmitted,
+          };
+          if (input.reviewStatus === "approved" && !canApproveAbsenceDocument(next)) {
+            counts.skipped += 1;
+            return item;
+          }
+          counts.updated += 1;
+          touchedStudents.add(item.studentId);
+          return {
+            ...next,
+            reviewStatus: input.reviewStatus,
+            reviewedBy: currentUser.id,
+            reviewedAt,
+          };
+        });
+        if (counts.updated === 0) return prev;
+        let nextState: AppState = { ...prev, absences: nextAbsences };
+        for (const studentId of touchedStudents) {
+          const student = prev.students.find((item) => item.id === studentId);
+          if (!student) continue;
+          nextState = applyWarnings(nextState, student, "校務處");
+        }
+        const decision = input.reviewStatus === "approved" ? "批准" : "不批准";
+        const documentLabel =
+          input.documentType === "doctor"
+            ? "，一律已交醫生證明"
+            : input.documentType === "parent"
+              ? "，一律已交家長信"
+              : "";
+        return withAudit(
+          nextState,
+          "連續審批缺席紀錄",
+          `${decision} ${counts.updated} 筆${documentLabel}${
+            counts.skipped > 0 ? `，略過 ${counts.skipped} 筆（未交醫生證明或家長信）` : ""
+          }`
+        );
+      });
+
+      if (counts.updated === 0) {
+        toast.error("沒有可審批的紀錄。批准前必須已提交醫生證明或家長信。");
+        return counts;
+      }
+      const decision = input.reviewStatus === "approved" ? "批准" : "不批准";
+      toast.success(
+        counts.skipped > 0
+          ? `已${decision} ${counts.updated} 筆，略過 ${counts.skipped} 筆。`
+          : `已${decision} ${counts.updated} 筆。`
+      );
+      return counts;
+    },
+    [currentUser]
+  );
+
   const followUpWarning = useCallback(
     (id: string, input: FollowUpInput) => {
       if (!currentUser || currentUser.role !== "office") {
@@ -2345,6 +2437,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       logout,
       selectClass,
       reviewAbsence,
+      reviewAbsences,
       setDayAttendance,
       updateAbsenceDetails,
       followUpWarning,
@@ -2388,6 +2481,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       logout,
       selectClass,
       reviewAbsence,
+      reviewAbsences,
       setDayAttendance,
       updateAbsenceDetails,
       followUpWarning,

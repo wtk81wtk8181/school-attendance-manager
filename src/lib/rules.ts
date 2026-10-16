@@ -121,6 +121,14 @@ export function isCountedTowardAbsence(record: AbsenceRecord): boolean {
   return true;
 }
 
+/** 批准前必須已提交醫生證明或家長信。 */
+export function canApproveAbsenceDocument(record: AbsenceRecord): boolean {
+  return (
+    record.documentSubmitted &&
+    (record.documentType === "doctor" || record.documentType === "parent")
+  );
+}
+
 export function approvedLeaveDays(records: AbsenceRecord[]): number {
   return records
     .filter(
