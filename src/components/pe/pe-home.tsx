@@ -11,6 +11,7 @@ import {
   quizCountsForBank,
   type PeUnit,
 } from "@/data/pe-mc";
+import { SQ_COUNTS, sqBankSize } from "@/data/pe-sq";
 
 export function PeHome() {
   const [counts, setCounts] = useState<Record<number, number>>(() => {
@@ -21,6 +22,8 @@ export function PeHome() {
     }
     return initial;
   });
+  const [sqUnit, setSqUnit] = useState(0);
+  const [sqCount, setSqCount] = useState<number>(SQ_COUNTS[0]);
 
   return (
     <div>
@@ -61,6 +64,59 @@ export function PeHome() {
           />
         ))}
       </div>
+
+      <h3 className="mt-10 text-lg font-semibold text-violet-800">短答題考核</h3>
+      <p className="mt-1 text-sm text-slate-500">
+        2021–2025 文憑試短答題，每題按指令詞限時：指出 2:00、描述／解釋 3:00、討論 3:30。
+        用紙筆作答，限時後顯示參考答案覆檢。
+      </p>
+
+      <section className="mt-4 overflow-hidden rounded-2xl bg-teal-700 text-white shadow-sm">
+        <div className="px-6 py-6 sm:px-8">
+          <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
+            <div>
+              <p className="text-sm font-medium text-white/90">選擇單元</p>
+              <select
+                value={sqUnit}
+                onChange={(e) => setSqUnit(Number(e.target.value))}
+                className="mt-2 rounded-lg border-0 bg-white px-3 py-2 text-sm font-medium text-slate-800"
+              >
+                <option value={0}>混合全部單元（{sqBankSize(0)} 題）</option>
+                {PE_UNITS.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.part}　{u.short}（{sqBankSize(u.id)} 題）
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white/90">題數</p>
+              <div className="mt-2 flex gap-2">
+                {SQ_COUNTS.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setSqCount(n)}
+                    className={
+                      sqCount === n
+                        ? "rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-slate-800"
+                        : "rounded-full bg-white/15 px-4 py-1.5 text-xs font-medium text-white hover:bg-white/25"
+                    }
+                  >
+                    {n} 題
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <Link
+            href={`/pe/sq?unit=${sqUnit}&n=${sqCount}`}
+            className="mt-5 inline-flex rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-100"
+          >
+            開始短答考核（{sqCount} 題）
+          </Link>
+        </div>
+      </section>
 
       <p className="mt-8 text-center">
         <Link href="/" className="text-xs text-slate-400 hover:text-slate-600">
