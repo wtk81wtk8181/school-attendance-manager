@@ -35,7 +35,7 @@ export const CLASS_TEACHERS: Record<string, string> = {
   "5E": "劉麗芳、黃守宏",
   "6A": "黃天異",
   "6B": "陳秋雲",
-  "6C": "廖淑君、羅祉臻",
+  "6C": "廖淑君、袁德璋",
   "6D": "李日東",
   "6E": "鄭敬宏、Mirza",
 };

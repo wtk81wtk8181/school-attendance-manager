@@ -8937,7 +8937,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-02",
@@ -8947,7 +8947,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-03",
@@ -8957,7 +8957,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-04",
@@ -8967,7 +8967,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-05",
@@ -8977,7 +8977,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-06",
@@ -8987,7 +8987,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-07",
@@ -8997,7 +8997,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-08",
@@ -9007,7 +9007,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-09",
@@ -9017,7 +9017,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-10",
@@ -9027,7 +9027,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-11",
@@ -9037,7 +9037,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-12",
@@ -9047,7 +9047,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-13",
@@ -9057,7 +9057,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-14",
@@ -9067,7 +9067,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-15",
@@ -9077,7 +9077,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-16",
@@ -9087,7 +9087,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-17",
@@ -9097,7 +9097,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-18",
@@ -9107,7 +9107,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-19",
@@ -9117,7 +9117,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-20",
@@ -9127,7 +9127,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-21",
@@ -9137,7 +9137,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-22",
@@ -9147,7 +9147,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-23",
@@ -9157,7 +9157,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-24",
@@ -9167,7 +9167,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-25",
@@ -9177,7 +9177,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-26",
@@ -9187,7 +9187,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-27",
@@ -9197,7 +9197,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-28",
@@ -9207,7 +9207,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-29",
@@ -9217,7 +9217,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-30",
@@ -9227,7 +9227,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-31",
@@ -9237,7 +9237,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-32",
@@ -9247,7 +9247,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-33",
@@ -9257,7 +9257,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-34",
@@ -9267,7 +9267,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-35",
@@ -9277,7 +9277,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6c-36",
@@ -9287,7 +9287,7 @@ export const ROSTER_STUDENTS: Student[] = [
     "form": 6,
     "className": "6C",
     "homeroomTeacherId": "u-6c",
-    "homeroomTeacherName": "廖淑君、羅祉臻"
+    "homeroomTeacherName": "廖淑君、袁德璋"
   },
   {
     "id": "s-6d-01",
