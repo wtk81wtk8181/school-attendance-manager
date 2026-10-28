@@ -2,7 +2,7 @@ import { createSeed, OPERATIONAL_DATA_VERSION } from "@/lib/seed";
 import { normalizeAbsenceRecord } from "@/lib/attendance-extras";
 import { syncHomeroomTeachers } from "@/lib/roster";
 import { syncFormAHiddenStudents } from "@/lib/hidden-students";
-import { migrateLegacyWarnings } from "@/lib/rules";
+import { migrateLegacyWarnings, reconcileWarningRecords } from "@/lib/rules";
 import { applyOfficialStaffRoster } from "@/lib/staff";
 import type {
   AbsenceRecord,
@@ -121,7 +121,13 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     replaceRoster ? seed.students : (shared.students ?? seed.students)
   );
 
-  const warnings = migrateLegacyWarnings(operational.warnings, operational.absences);
+  const migratedWarnings = migrateLegacyWarnings(operational.warnings, operational.absences);
+  const reconciled = reconcileWarningRecords(
+    migratedWarnings,
+    operational.absences,
+    students,
+    operational.notifications
+  );
 
   return {
     ...seed,
@@ -132,7 +138,8 @@ export function mergeSharedState(shared: Partial<AppState>): AppState {
     currentUserId: null,
     selectedClassName: null,
     students,
-    warnings,
+    warnings: reconciled.warnings,
+    notifications: reconciled.notifications,
     digestRecipients: shared.digestRecipients ?? seed.digestRecipients,
     staffMembers: staffApplied.members,
     staffRemovals: mergeStaffRemovals(shared.staffRemovals, staffApplied.extraRemovals),
@@ -667,6 +674,12 @@ export function mergeSharedStates(
       : base.students
   );
   const absences = mergeAbsences(base.absences, next.absences, clearedAttendance);
+  const reconciledWarnings = reconcileWarningRecords(
+    migrateLegacyWarnings(mergeWarnings(base.warnings, next.warnings), absences),
+    absences,
+    students,
+    mergeNotifications(base.notifications, next.notifications)
+  );
   const hiddenMerged = mergeHiddenStudents(
     base.hiddenStudents,
     next.hiddenStudents,
@@ -678,11 +691,8 @@ export function mergeSharedStates(
     academicYear: seed.academicYear,
     students,
     absences,
-    warnings: migrateLegacyWarnings(
-      mergeWarnings(base.warnings, next.warnings),
-      absences
-    ),
-    notifications: mergeNotifications(base.notifications, next.notifications),
+    warnings: reconciledWarnings.warnings,
+    notifications: reconciledWarnings.notifications,
     digestLogs: mergeDigestLogs(base.digestLogs, next.digestLogs),
     digestRecipients: mergeAllDigestRecipients(
       base.digestRecipients,

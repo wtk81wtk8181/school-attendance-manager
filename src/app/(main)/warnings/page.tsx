@@ -131,7 +131,12 @@ function WarningLetterCard({
         <div className="flex flex-wrap items-center gap-2">
           <WarningTypeBadge type={letter.type} />
           <span className="text-xs text-slate-600">
-            {formatWarningTrigger(letter.type, letter.triggerDays, letter.limitDays)}
+            {formatWarningTrigger(
+              letter.type,
+              letter.triggerDays,
+              letter.limitDays,
+              letter.lateCount ?? 0
+            )}
           </span>
         </div>
 
@@ -205,7 +210,8 @@ function WarningLetterTable({
                   {formatWarningTrigger(
                     letter.type,
                     letter.triggerDays,
-                    letter.limitDays
+                    letter.limitDays,
+                    letter.lateCount ?? 0
                   )}
                 </TableCell>
                 <TableCell>
@@ -264,7 +270,7 @@ export default function WarningsPage() {
         title="警告信"
         description={
           <>
-            缺席與遲到分開發出獨立警告信。缺席類包括達預警線、超過上限及缺席逾 3 次；遲到類為遲到逾 3 次。
+            每位學生只保留一份警告信，列出最新缺席日數及遲到次數。已交醫生紙並獲豁免後，若未再達預警線，系統會自動移除該警告信。
             {currentUser?.role === "homeroom" ? (
               <span className="text-slate-400"> 班主任可預覽及列印，但不能登記跟進。</span>
             ) : null}

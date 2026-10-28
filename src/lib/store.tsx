@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { classLabel, countedAbsenceDays, FREQUENT_LIMIT, absenceOccurrences, lateOccurrences, neededWarningTypes, recordHasEarly, recordHasLate, attendanceStatusLabelForRecord, canApproveAbsenceDocument } from "@/lib/rules";
+import { classLabel, countedAbsenceDays, absenceOccurrences, lateOccurrences, primaryWarningType, reconcileWarningRecords, warningLimitFor, recordHasEarly, recordHasLate, attendanceStatusLabelForRecord, canApproveAbsenceDocument } from "@/lib/rules";
 import { studentsHomeroomTeachersChanged } from "@/lib/roster";
 import { formAHiddenStudentsChanged } from "@/lib/hidden-students";
 import { hongKongToday, hongKongHHMM } from "@/lib/digest";
@@ -634,6 +634,12 @@ async function hydrateFromStorage() {
           currentUserId: session.currentUserId,
           selectedClassName: session.selectedClassName,
         };
+        const warningsChanged = warningRecordsChanged(
+          data.state.warnings,
+          merged.warnings
+        );
+        const notificationsChanged =
+          (data.state.notifications ?? []).length !== merged.notifications.length;
         if (
           studentsHomeroomTeachersChanged(data.state.students ?? [], merged.students) ||
           formAHiddenStudentsChanged(data.state.hiddenStudents, merged.hiddenStudents)
@@ -641,8 +647,13 @@ async function hydrateFromStorage() {
           dirtySections.add("students");
           dirtySections.add("hiddenStudents");
           dirty = true;
-          persistShared(memory);
         }
+        if (warningsChanged || notificationsChanged) {
+          dirtySections.add("warnings");
+          dirtySections.add("notifications");
+          dirty = true;
+        }
+        if (dirty) persistShared(memory);
       }
       clearStaleLocalCache();
     } else {
@@ -772,92 +783,92 @@ function withAudit(state: AppState, action: string, detail: string): AppState {
   };
 }
 
+function warningRecordsChanged(
+  before: WarningLetter[] | undefined,
+  after: WarningLetter[]
+): boolean {
+  const key = (letter: WarningLetter) =>
+    [
+      letter.id,
+      letter.studentId,
+      letter.type,
+      letter.triggerDays,
+      letter.lateCount ?? "",
+      letter.limitDays,
+      letter.status,
+    ].join(":");
+  const left = (before ?? [])
+    .map(key)
+    .sort()
+    .join("|");
+  const right = after
+    .map(key)
+    .sort()
+    .join("|");
+  return left !== right;
+}
+
 function applyWarnings(
   state: AppState,
   student: Student,
   actorName: string
 ): AppState {
+  const hadLetter = state.warnings.some((item) => item.studentId === student.id);
   const records = state.absences.filter((item) => item.studentId === student.id);
   const counted = countedAbsenceDays(records);
   const absenceCount = absenceOccurrences(records);
   const lateCount = lateOccurrences(records);
-  const needed = neededWarningTypes(counted, student.form, absenceCount, lateCount);
-  const existing = new Set(
-    state.warnings
-      .filter((item) => item.studentId === student.id)
-      .map((item) => item.type)
+  const type = primaryWarningType(counted, student.form, absenceCount, lateCount);
+  const warnings =
+    !hadLetter && type
+      ? [
+          {
+            id: `warn-${student.id}`,
+            studentId: student.id,
+            type,
+            issuedAt: nowIso(),
+            triggerDays: counted,
+            lateCount,
+            limitDays: warningLimitFor(type, student.form),
+            status: "issued" as const,
+          },
+          ...state.warnings,
+        ]
+      : state.warnings;
+  const reconciled = reconcileWarningRecords(
+    warnings,
+    state.absences,
+    state.students,
+    state.notifications
   );
+  const letter = reconciled.warnings.find((item) => item.studentId === student.id);
+  let notifications = reconciled.notifications;
 
-  const fresh: WarningLetter[] = [];
-  const notes = [...state.notifications];
-
-  for (const type of needed) {
-    if (existing.has(type)) continue;
-    const id = `warn-${student.id}-${type}-${Date.now()}`;
-    const triggerDays =
-      type === "frequent_late"
-        ? lateCount
-        : type === "frequent_absence"
-          ? absenceCount
-          : counted;
-    const limitDays =
-      type === "frequent_late" || type === "frequent_absence"
-        ? FREQUENT_LIMIT
-        : student.form === 6
-          ? 4.5
-          : 9;
-    const letter: WarningLetter = {
-      id,
-      studentId: student.id,
-      type,
-      issuedAt: nowIso(),
-      triggerDays,
-      limitDays,
-      status: "issued",
-    };
-    fresh.push(letter);
-    const title =
-      type === "over_limit"
-        ? `缺席已達／超過上限：${student.name}（${classLabel(student.className)}）`
-        : type === "frequent_late"
-          ? `遲到超過 ${FREQUENT_LIMIT} 次：${student.name}（${classLabel(student.className)}）`
-          : type === "frequent_absence"
-            ? `缺席超過 ${FREQUENT_LIMIT} 次：${student.name}（${classLabel(student.className)}）`
-            : `缺席預警：${student.name}（${classLabel(student.className)}）`;
-    const body =
-      type === "over_limit"
-        ? `計入缺席 ${counted} 天，已自動發出警告信，請${actorName}跟進。`
-        : type === "frequent_late"
-          ? `本學年遲到 ${lateCount} 次（超過 ${FREQUENT_LIMIT} 次上限），已自動發出遲到警告信並電郵通知指定收件人。`
-          : type === "frequent_absence"
-            ? `本學年缺席 ${absenceCount} 次（超過 ${FREQUENT_LIMIT} 次上限），已自動發出缺席警告信並電郵通知指定收件人。`
-            : `計入缺席已達 ${counted} 天（上限一半），已發出警告信。`;
-    notes.unshift({
-      id: `nt-${id}`,
-      createdAt: nowIso(),
-      title,
-      body,
-      kind: "warning",
-      studentId: student.id,
-      warningId: id,
-      read: false,
-    });
-  }
-
-  if (fresh.length > 0) {
-    void notifyWarningsByEmail(state, student, fresh, {
+  if (!hadLetter && letter) {
+    notifications = [
+      {
+        id: `nt-${letter.id}`,
+        createdAt: nowIso(),
+        title: `缺席／遲到警告：${student.name}（${classLabel(student.className)}）`,
+        body: `現時缺席 ${counted} 天、遲到 ${lateCount} 次，已發出警告信，請${actorName}跟進。`,
+        kind: "warning",
+        studentId: student.id,
+        warningId: letter.id,
+        read: false,
+      },
+      ...notifications,
+    ];
+    void notifyWarningsByEmail(state, student, [letter], {
       counted,
       absenceCount,
       lateCount,
     });
   }
 
-  if (fresh.length === 0) return { ...state, notifications: notes };
-
   return {
     ...state,
-    warnings: [...fresh, ...state.warnings],
-    notifications: notes,
+    warnings: reconciled.warnings,
+    notifications,
   };
 }
 

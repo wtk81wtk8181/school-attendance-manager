@@ -96,7 +96,10 @@ export interface WarningLetter {
   studentId: string;
   type: WarningType;
   issuedAt: string;
+  /** 最新計入缺席日數；同一學生只保留一封，日數會隨豁免或新增而更新 */
   triggerDays: number;
+  /** 同一封信一併列出的最新遲到次數 */
+  lateCount?: number;
   limitDays: number;
   status: WarningStatus;
   followedUpBy?: string;

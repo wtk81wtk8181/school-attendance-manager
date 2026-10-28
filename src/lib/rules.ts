@@ -3,6 +3,7 @@ import type {
   AbsenceRecord,
   DayAttendance,
   FormLevel,
+  NotificationItem,
   Student,
   StudentStats,
   WarningLetter,
@@ -228,11 +229,89 @@ export function isOccurrenceWarning(type: WarningType): boolean {
 export function formatWarningTrigger(
   type: WarningType,
   triggerDays: number,
-  limitDays: number
+  limitDays: number,
+  lateCount = 0
 ): string {
-  if (type === "frequent_late") return `${formatDays(triggerDays)} 次（遲到）`;
-  if (type === "frequent_absence") return `${formatDays(triggerDays)} 次（缺席）`;
-  return `${formatDays(triggerDays)} / ${formatDays(limitDays)} 天`;
+  if (type === "frequent_late" && triggerDays <= 0) {
+    return `${formatDays(lateCount)} 次遲到`;
+  }
+  return `${formatDays(triggerDays)} 天缺席、${formatDays(lateCount)} 次遲到`;
+}
+
+/** 以最新缺席日數決定這封信的類型；未達任何預警線則不用出信。 */
+export function primaryWarningType(
+  counted: number,
+  form: FormLevel,
+  absenceCount: number,
+  lateCount: number
+): WarningType | null {
+  if (counted >= getAbsenceLimit(form)) return "over_limit";
+  if (counted >= getWarningThreshold(form)) return "half_limit";
+  if (absenceCount > FREQUENT_LIMIT) return "frequent_absence";
+  if (lateCount > FREQUENT_LIMIT) return "frequent_late";
+  return null;
+}
+
+export function warningLimitFor(type: WarningType, form: FormLevel): number {
+  if (type === "frequent_absence" || type === "frequent_late" || type === "frequent") {
+    return FREQUENT_LIMIT;
+  }
+  return getAbsenceLimit(form);
+}
+
+function pickCanonicalWarning(letters: WarningLetter[]): WarningLetter {
+  return [...letters].sort((a, b) => {
+    const followed = Number(Boolean(b.followedUpAt)) - Number(Boolean(a.followedUpAt));
+    if (followed !== 0) return followed;
+    return a.issuedAt.localeCompare(b.issuedAt);
+  })[0];
+}
+
+/**
+ * 每位學生只保留一封警告信，數字改為最新缺席日數及遲到次數。
+ * 醫生紙或已批核請假令缺席不再計入後，若未達預警線，該生的警告信會移除。
+ */
+export function reconcileWarningRecords(
+  warnings: WarningLetter[],
+  absences: AbsenceRecord[],
+  students: Student[],
+  notifications: NotificationItem[]
+): { warnings: WarningLetter[]; notifications: NotificationItem[] } {
+  const studentById = new Map(students.map((student) => [student.id, student]));
+  const grouped = new Map<string, WarningLetter[]>();
+  for (const letter of warnings) {
+    const list = grouped.get(letter.studentId) ?? [];
+    list.push(letter);
+    grouped.set(letter.studentId, list);
+  }
+
+  const keptIds = new Set<string>();
+  const nextWarnings: WarningLetter[] = [];
+  for (const [studentId, letters] of grouped) {
+    const student = studentById.get(studentId);
+    if (!student) continue;
+    const records = absences.filter((item) => item.studentId === studentId);
+    const counted = countedAbsenceDays(records);
+    const absenceCount = absenceOccurrences(records);
+    const lateCount = lateOccurrences(records);
+    const type = primaryWarningType(counted, student.form, absenceCount, lateCount);
+    if (!type) continue;
+    const kept = pickCanonicalWarning(letters);
+    keptIds.add(kept.id);
+    nextWarnings.push({
+      ...kept,
+      type,
+      triggerDays: counted,
+      lateCount,
+      limitDays: warningLimitFor(type, student.form),
+    });
+  }
+
+  nextWarnings.sort((a, b) => b.issuedAt.localeCompare(a.issuedAt));
+  const nextNotifications = notifications.filter(
+    (item) => !item.warningId || keptIds.has(item.warningId)
+  );
+  return { warnings: nextWarnings, notifications: nextNotifications };
 }
 
 /** 將舊版合併「frequent」警告信拆成缺席／遲到獨立信件 */

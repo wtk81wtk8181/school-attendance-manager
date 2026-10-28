@@ -143,12 +143,44 @@
     min-height: auto;
     padding: 0;
     box-shadow: none !important;
+    break-after: page;
+    page-break-after: always;
   }
 
   .letter-sheet-en {
     break-before: page;
     page-break-before: always;
     margin-top: 0;
+    font-size: 12px;
+    line-height: 1.42;
+  }
+
+  .letter-sheet-en h1 {
+    font-size: 1.55rem;
+    letter-spacing: 0.18em;
+  }
+
+  .letter-sheet-en h2 {
+    margin-top: 0.5rem;
+    font-size: 1.05rem;
+  }
+
+  .letter-sheet-en p,
+  .letter-sheet-en .leading-8 {
+    margin-top: 0.45rem;
+    line-height: 1.45 !important;
+  }
+
+  .letter-sheet-en .mt-4,
+  .letter-sheet-en .mt-6,
+  .letter-sheet-en .mt-8,
+  .letter-sheet-en .mt-10 {
+    margin-top: 0.55rem;
+  }
+
+  .letter-sheet-en .letter-ack-slip {
+    margin-top: 0.7rem;
+    padding-top: 0.55rem;
   }
 
   .daily-school-sheet {

@@ -11,23 +11,15 @@ import type {
   AbsenceRecord,
   Student,
   WarningLetter as WarningLetterRecord,
-  WarningType,
 } from "@/lib/types";
 
 type LetterLocale = "zh" | "en";
-type LetterFocus = "absence_days" | "absence_count" | "late_count";
 
 interface LetterStats {
   countedDays: number;
   absenceCount: number;
   lateCount: number;
   approvedLeaveDays: number;
-}
-
-function letterFocus(type: WarningType): LetterFocus {
-  if (type === "frequent_late") return "late_count";
-  if (type === "frequent_absence" || type === "frequent") return "absence_count";
-  return "absence_days";
 }
 
 function buildLetterStats(records: AbsenceRecord[]): LetterStats {
@@ -39,58 +31,28 @@ function buildLetterStats(records: AbsenceRecord[]): LetterStats {
   };
 }
 
-function issuedMonthDay(iso: string) {
-  const date = new Date(iso.includes("T") ? iso : `${iso}T12:00:00`);
-  return { month: date.getMonth() + 1, day: date.getDate() };
+function issueSummaryZh(stats: LetterStats): string {
+  return `${stats.countedDays} 日缺席及 ${stats.lateCount} 次遲到`;
 }
 
-function issueSummaryZh(stats: LetterStats, focus: LetterFocus): string {
-  if (focus === "late_count") return `${stats.lateCount} 次遲到`;
-  if (focus === "absence_count") return `${stats.absenceCount} 次缺席`;
-  const parts: string[] = [];
-  if (stats.countedDays > 0) parts.push(`${stats.countedDays} 日缺席`);
-  if (stats.lateCount > 0) parts.push(`${stats.lateCount} 次遲到`);
-  return parts.join("及") || "0 日缺席";
-}
-
-function issueSummaryEn(stats: LetterStats, focus: LetterFocus): string {
-  if (focus === "late_count") return `${stats.lateCount} late arrival(s)`;
-  if (focus === "absence_count") return `${stats.absenceCount} absence(s)`;
-  const parts: string[] = [];
-  if (stats.countedDays > 0) parts.push(`${stats.countedDays} day(s) of absence`);
-  if (stats.lateCount > 0) parts.push(`${stats.lateCount} late arrival(s)`);
-  return parts.join(" and ") || "0 day(s) of absence";
+function issueSummaryEn(stats: LetterStats): string {
+  return `${stats.countedDays} day(s) of absence and ${stats.lateCount} late arrival(s)`;
 }
 
 function resolveLetterDisplay(letter: WarningLetterRecord, stats: LetterStats) {
-  const focus = letterFocus(letter.type);
-  const trigger = letter.triggerDays;
-
-  const countedDays = Math.max(
-    stats.countedDays,
-    focus === "absence_days" || focus === "absence_count" || letter.type === "over_limit"
-      ? trigger
-      : 0
-  );
-  const absenceCount = Math.max(
-    stats.absenceCount,
-    focus === "absence_count" ? trigger : 0
-  );
-  const lateCount = Math.max(stats.lateCount, focus === "late_count" ? trigger : 0);
-
   const displayStats: LetterStats = {
-    countedDays,
-    absenceCount,
-    lateCount,
+    countedDays: stats.countedDays,
+    absenceCount: stats.absenceCount,
+    lateCount: stats.lateCount,
     approvedLeaveDays: stats.approvedLeaveDays,
   };
 
   return {
-    focus,
     displayStats,
-    summaryZh: issueSummaryZh(displayStats, focus),
-    summaryEn: issueSummaryEn(displayStats, focus),
-    slipDays: Math.max(countedDays, trigger),
+    summaryZh: issueSummaryZh(displayStats),
+    summaryEn: issueSummaryEn(displayStats),
+    slipDays: stats.countedDays,
+    slipLates: stats.lateCount,
   };
 }
 
@@ -223,23 +185,17 @@ function ChineseLetter({
   academicYear: string;
   stats: LetterStats;
 }) {
-  const { month, day } = issuedMonthDay(letter.issuedAt);
-  const { focus, displayStats, summaryZh: summary, slipDays } = resolveLetterDisplay(
+  const { displayStats, summaryZh: summary, slipDays, slipLates } = resolveLetterDisplay(
     letter,
     stats
   );
   const isOver = letter.type === "over_limit";
-  const isLate = focus === "late_count";
 
-  const notes = isLate
-    ? [
-        `獲批准病假（醫生證明或家長信）截止 ${month} 月 ${day} 日共有 ${displayStats.approvedLeaveDays} 日，不影響出席率。`,
-        "經常遲到會影響守時紀錄及出席評核。",
-      ]
-    : [
-        `獲批准病假（醫生證明或家長信）截止 ${month} 月 ${day} 日共有 ${displayStats.approvedLeaveDays} 日，不計入缺席上限，亦不影響出席率。`,
-        "未批准請假或無故缺席會計入缺席日數，並拉低出席率。",
-      ];
+  const notes = [
+    `獲批准病假（已交醫生證明或家長信）現時共有 ${displayStats.approvedLeaveDays} 日，不計入缺席上限，亦不影響出席率。`,
+    "未批准請假或無故缺席會計入缺席日數，並拉低出席率。",
+    "遲到次數與缺席日數同列於本通知。經常遲到會影響守時紀錄及出席評核。",
+  ];
 
   return (
     <article className="letter-sheet mx-auto bg-white text-zinc-900">
@@ -256,8 +212,8 @@ function ChineseLetter({
         <strong>{classLabel(student.className)}</strong>
         ，學號
         <strong>{student.studentNo}</strong>
-        ，於 <strong>{academicYear}</strong> 學年共有 <strong>{summary}</strong>
-        ，現特此通知。（截止 <strong>{month}</strong> 月 <strong>{day}</strong> 日）
+        ，於 <strong>{academicYear}</strong> 學年現時共有 <strong>{summary}</strong>
+        ，現特此通知。
       </p>
 
       <div className="mt-4 rounded border border-zinc-200 bg-zinc-50 p-4 text-sm leading-7">
@@ -283,9 +239,7 @@ function ChineseLetter({
       </p>
 
       <p className="mt-4 leading-8">
-        {isLate
-          ? "若果遲到過多，則會影響貴子弟升班。"
-          : "若果未批准或無故缺席過多，則會影響貴子弟升班。"}
+        若果未批准或缺席日數過多，或遲到次數過多，則會影響貴子弟升班。
       </p>
 
       <p className="mt-8">此致</p>
@@ -308,11 +262,12 @@ function ChineseLetter({
       <section className="letter-ack-slip mt-10 border-t border-dashed border-zinc-400 pt-6">
         <p className="text-sm font-medium text-zinc-700">回條（請家長簽署後交回學校）</p>
         <p className="mt-4 leading-8">
-          本人已知悉截止 <strong>{month}</strong> 月 <strong>{day}</strong> 日，敝子弟
+          本人已知悉敝子弟
           <strong>
             {classLabel(student.className)}班{student.name}
           </strong>
-          已缺席共 <strong>{slipDays}</strong> 天，亦明白有機會影響其升班。
+          已缺席共 <strong>{slipDays}</strong> 天、遲到共 <strong>{slipLates}</strong>{" "}
+          次，亦明白有機會影響其升班。
         </p>
         <div className="mt-8 flex justify-end text-sm">
           <p>
@@ -336,23 +291,17 @@ function EnglishLetter({
   academicYear: string;
   stats: LetterStats;
 }) {
-  const { month, day } = issuedMonthDay(letter.issuedAt);
-  const { focus, displayStats, summaryEn: summary, slipDays } = resolveLetterDisplay(
+  const { displayStats, summaryEn: summary, slipDays, slipLates } = resolveLetterDisplay(
     letter,
     stats
   );
   const isOver = letter.type === "over_limit";
-  const isLate = focus === "late_count";
 
-  const notes = isLate
-    ? [
-        `Approved sick leave (medical certificate or parent letter) as at ${month}/${day}: ${displayStats.approvedLeaveDays} day(s), which does not affect the attendance rate.`,
-        "Frequent lateness may affect punctuality records and attendance assessment.",
-      ]
-    : [
-        `Approved sick leave (medical certificate or parent letter) as at ${month}/${day}: ${displayStats.approvedLeaveDays} day(s), which is not counted towards the absence limit and does not affect the attendance rate.`,
-        "Unapproved leave or unexplained absence is counted towards absence days and will lower the attendance rate.",
-      ];
+  const notes = [
+    `Approved sick leave (a submitted doctor's note or parent's letter) currently totals ${displayStats.approvedLeaveDays} day(s). It is not counted towards the absence limit and does not affect the attendance rate.`,
+    "Unapproved leave or unexplained absence is counted towards absence days and will lower the attendance rate.",
+    "Late arrivals are listed together with absence days in this notice. Frequent lateness may affect punctuality records and attendance assessment.",
+  ];
 
   return (
     <article className="letter-sheet letter-sheet-en mx-auto bg-white text-zinc-900">
@@ -370,9 +319,8 @@ function EnglishLetter({
         <strong> {classLabel(student.className)}</strong>
         , student number
         <strong> {student.studentNo}</strong>
-        , has recorded <strong>{summary}</strong> in the <strong>{academicYear}</strong>{" "}
-        academic year. This notice is hereby issued. (As of <strong>{month}</strong>/
-        <strong>{day}</strong>)
+        , currently has <strong>{summary}</strong> in the <strong>{academicYear}</strong>{" "}
+        academic year. This notice is hereby issued.
       </p>
 
       <div className="mt-4 rounded border border-zinc-200 bg-zinc-50 p-4 text-sm leading-7">
@@ -398,9 +346,8 @@ function EnglishLetter({
       </p>
 
       <p className="mt-4 leading-8">
-        {isLate
-          ? "If lateness becomes excessive, your child may not be promoted to the next form."
-          : "If unapproved or unexplained absence becomes excessive, your child may not be promoted to the next form."}
+        If unapproved absence or lateness becomes excessive, your child may not be promoted
+        to the next form.
       </p>
 
       <p className="mt-8">Yours faithfully,</p>
@@ -427,14 +374,14 @@ function EnglishLetter({
           Acknowledgment slip (please sign and return to school)
         </p>
         <p className="mt-4 leading-8">
-          I acknowledge that as of <strong>{month}</strong>/<strong>{day}</strong>, my child
-          in class
+          I acknowledge that my child in class
           <strong>
             {" "}
             {classLabel(student.className)} {student.nameEn}
           </strong>{" "}
-          has been absent for a total of <strong>{slipDays}</strong> day(s), and I also
-          understand that this may affect promotion to the next form.
+          has currently been absent for <strong>{slipDays}</strong> day(s) and late{" "}
+          <strong>{slipLates}</strong> time(s), and I also understand that this may affect
+          promotion to the next form.
         </p>
         <div className="mt-8 flex justify-end text-sm">
           <p>
