@@ -114,8 +114,24 @@ export function countedAbsenceDaysOnOrBefore(
   return countedAbsenceDays(list.filter((item) => item.date <= date));
 }
 
+/**
+ * 缺席或早退已獲真正豁免。
+ * 同日兼有遲到時，遲到會自動標成已批准，這不會豁免早退的 0.5 日。
+ */
+export function isAbsenceDayWaived(record: AbsenceRecord): boolean {
+  if (record.reviewStatus !== "approved") return false;
+  if (
+    record.eclassStatus === "late" &&
+    recordHasEarly(record) &&
+    !canApproveAbsenceDocument(record)
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export function isCountedTowardAbsence(record: AbsenceRecord): boolean {
-  if (record.reviewStatus === "approved") return false;
+  if (isAbsenceDayWaived(record)) return false;
   if (recordHasLate(record) && !recordHasEarly(record) && record.eclassStatus === "late") {
     return false;
   }

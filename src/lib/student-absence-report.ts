@@ -1,5 +1,11 @@
 import { absencesIncludingFormACarry } from "@/lib/hidden-students";
-import { isDoctorExemptedLate, formLabel, recordHasEarly, recordHasLate } from "@/lib/rules";
+import {
+  formLabel,
+  isAbsenceDayWaived,
+  isDoctorExemptedLate,
+  recordHasEarly,
+  recordHasLate,
+} from "@/lib/rules";
 import { SCHOOL_NAME } from "@/lib/seed";
 import {
   studentLeaveCategoryLabel,
@@ -153,7 +159,7 @@ function displayNotes(record: AbsenceRecord): string {
 }
 
 function absenceExempt(record: AbsenceRecord): boolean {
-  return record.reviewStatus === "approved";
+  return isAbsenceDayWaived(record);
 }
 
 function lateExempt(record: AbsenceRecord): boolean {
@@ -197,7 +203,9 @@ export function expandAbsenceRecord(record: AbsenceRecord): StudentAbsenceReport
 
   if (recordHasLate(record)) {
     const reason =
-      record.eclassStatus === "late" ? displayReason(record.reason, "遲到") : "遲到";
+      record.eclassStatus === "late" && !recordHasEarly(record)
+        ? displayReason(record.reason, "遲到")
+        : "遲到";
     pushRow(rows, record, "上午", "遲到", lateExempt(record), reason);
   }
 
@@ -211,11 +219,13 @@ export function expandAbsenceRecord(record: AbsenceRecord): StudentAbsenceReport
   }
 
   if (recordHasEarly(record)) {
+    const earlySession = sessionFromClock(record.earlyAt, "下午");
+    pushRow(rows, record, earlySession, "早退", lessonExempt, lessonReason);
     pushRow(
       rows,
       record,
-      sessionFromClock(record.earlyAt, "下午"),
-      "早退",
+      earlySession === "上午" ? "下午" : earlySession,
+      "缺課",
       lessonExempt,
       lessonReason
     );
