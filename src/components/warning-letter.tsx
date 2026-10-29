@@ -5,8 +5,8 @@ import {
   classLabel,
   countedAbsenceDays,
   lateOccurrences,
+  needsDocumentChase,
 } from "@/lib/rules";
-import { formatDate, formatShortDate } from "@/lib/format";
 import type {
   AbsenceRecord,
   Student,
@@ -15,11 +15,18 @@ import type {
 
 type LetterLocale = "zh" | "en";
 
+/** 本批警告信的截止日期（信內不再寫發出日期） */
+const CUTOFF_ISO = "2026-10-29";
+const CUTOFF_ZH = "2026 年 10 月 29 日";
+const CUTOFF_EN = "29 October 2026";
+
 interface LetterStats {
   countedDays: number;
   absenceCount: number;
   lateCount: number;
   approvedLeaveDays: number;
+  /** 尚未繳交醫生紙或家長信的日期（Y-m-d） */
+  outstandingDates: string[];
 }
 
 function buildLetterStats(records: AbsenceRecord[]): LetterStats {
@@ -28,41 +35,44 @@ function buildLetterStats(records: AbsenceRecord[]): LetterStats {
     absenceCount: absenceOccurrences(records),
     lateCount: lateOccurrences(records),
     approvedLeaveDays: approvedLeaveDays(records),
+    outstandingDates: [...new Set(records.filter(needsDocumentChase).map((item) => item.date))].sort(),
   };
+}
+
+function formatFigure(value: number): string {
+  return value % 1 === 0 ? String(Math.round(value)) : value.toFixed(1);
 }
 
 function issueSummaryZh(stats: LetterStats): string {
-  return `${stats.countedDays} 日缺席及 ${stats.lateCount} 次遲到`;
+  return `${formatFigure(stats.countedDays)} 日缺席及 ${stats.lateCount} 次遲到`;
 }
 
 function issueSummaryEn(stats: LetterStats): string {
-  return `${stats.countedDays} day(s) of absence and ${stats.lateCount} late arrival(s)`;
+  return `${formatFigure(stats.countedDays)} day(s) of absence and ${stats.lateCount} late arrival(s)`;
 }
 
-function resolveLetterDisplay(letter: WarningLetterRecord, stats: LetterStats) {
-  const displayStats: LetterStats = {
-    countedDays: stats.countedDays,
-    absenceCount: stats.absenceCount,
-    lateCount: stats.lateCount,
-    approvedLeaveDays: stats.approvedLeaveDays,
-  };
-
-  return {
-    displayStats,
-    summaryZh: issueSummaryZh(displayStats),
-    summaryEn: issueSummaryEn(displayStats),
-    slipDays: stats.countedDays,
-    slipLates: stats.lateCount,
-  };
+function formatDmy(iso: string): string {
+  const [year, month, day] = iso.split("-");
+  return `${Number(day)}/${Number(month)}/${year}`;
 }
 
-function LetterHeaderZh({
-  academicYear,
-  issuedAt,
-}: {
-  academicYear: string;
-  issuedAt: string;
-}) {
+function outstandingZh(stats: LetterStats): string {
+  if (stats.outstandingDates.length === 0) {
+    return "現時已繳交所有相關證明文件。";
+  }
+  const dates = stats.outstandingDates.map(formatDmy).join("、");
+  return `尚未繳交醫生紙或家長信的日期：${dates}。`;
+}
+
+function outstandingEn(stats: LetterStats): string {
+  if (stats.outstandingDates.length === 0) {
+    return "All supporting documents have now been submitted.";
+  }
+  const dates = stats.outstandingDates.map(formatDmy).join(", ");
+  return `Date(s) without a doctor's note or parent's letter: ${dates}.`;
+}
+
+function LetterHeaderZh({ academicYear }: { academicYear: string }) {
   return (
     <header className="border-b border-zinc-300 pb-4">
       <p className="text-center text-xs tracking-[0.25em] text-zinc-600">
@@ -79,18 +89,12 @@ function LetterHeaderZh({
         學生缺席／遲到通知書
       </h2>
       <p className="mt-1 text-center text-xs text-zinc-500">中文版本</p>
-      <p className="mt-4 text-right text-sm">日期：{formatDate(issuedAt)}</p>
+      <p className="mt-4 text-right text-sm">截至 {CUTOFF_ZH}</p>
     </header>
   );
 }
 
-function LetterHeaderEn({
-  academicYear,
-  issuedAt,
-}: {
-  academicYear: string;
-  issuedAt: string;
-}) {
+function LetterHeaderEn({ academicYear }: { academicYear: string }) {
   return (
     <header className="border-b border-zinc-300 pb-4">
       <p className="text-center text-xs tracking-[0.25em] text-zinc-600">
@@ -107,7 +111,7 @@ function LetterHeaderEn({
         Student Absence / Lateness Notice
       </h2>
       <p className="mt-1 text-center text-xs text-zinc-500">English version</p>
-      <p className="mt-4 text-right text-sm">Date: {formatDate(issuedAt)}</p>
+      <p className="mt-4 text-right text-sm">As at {CUTOFF_EN}</p>
     </header>
   );
 }
@@ -123,7 +127,8 @@ export function WarningLetterBundle({
   academicYear: string;
   absences: AbsenceRecord[];
 }) {
-  const stats = buildLetterStats(absences);
+  const inScope = absences.filter((item) => item.date <= CUTOFF_ISO);
+  const stats = buildLetterStats(inScope);
   return (
     <div className="space-y-8 print:space-y-0">
       <WarningLetter
@@ -185,21 +190,19 @@ function ChineseLetter({
   academicYear: string;
   stats: LetterStats;
 }) {
-  const { displayStats, summaryZh: summary, slipDays, slipLates } = resolveLetterDisplay(
-    letter,
-    stats
-  );
+  const summary = issueSummaryZh(stats);
   const isOver = letter.type === "over_limit";
 
   const notes = [
-    `獲批准病假（已交醫生證明或家長信）現時共有 ${displayStats.approvedLeaveDays} 日，不計入缺席上限，亦不影響出席率。`,
+    outstandingZh(stats),
+    `獲批准病假（已交醫生證明或家長信）現時共有 ${formatFigure(stats.approvedLeaveDays)} 日，不計入缺席上限，亦不影響出席率。`,
     "未批准請假或無故缺席會計入缺席日數，並拉低出席率。",
     "遲到次數與缺席日數同列於本通知。經常遲到會影響守時紀錄及出席評核。",
   ];
 
   return (
     <article className="letter-sheet mx-auto bg-white text-zinc-900">
-      <LetterHeaderZh academicYear={academicYear} issuedAt={letter.issuedAt} />
+      <LetterHeaderZh academicYear={academicYear} />
 
       <p className="mt-6">貴家長：</p>
 
@@ -212,8 +215,8 @@ function ChineseLetter({
         <strong>{classLabel(student.className)}</strong>
         ，學號
         <strong>{student.studentNo}</strong>
-        ，於 <strong>{academicYear}</strong> 學年現時共有 <strong>{summary}</strong>
-        ，現特此通知。
+        ，截至 <strong>{CUTOFF_ZH}</strong>，於 <strong>{academicYear}</strong>{" "}
+        學年共有 <strong>{summary}</strong>，現特此通知。
       </p>
 
       <div className="mt-4 rounded border border-zinc-200 bg-zinc-50 p-4 text-sm leading-7">
@@ -226,7 +229,7 @@ function ChineseLetter({
       </div>
 
       <p className="mt-4 leading-8">
-        貴子弟至今共有 <strong>{summary}</strong>
+        貴子弟截至 <strong>{CUTOFF_ZH}</strong> 共有 <strong>{summary}</strong>
         。請家長盡快向校務處補交相關證明文件，並與班主任
         <strong>{student.homeroomTeacherName}</strong>
         老師聯絡，共同跟進出勤情況。
@@ -253,9 +256,6 @@ function ChineseLetter({
         <div className="text-right">
           <p>{SCHOOL_NAME}學生發展部</p>
           <p className="mt-1 text-sm">此警告信由學生發展部發出</p>
-          <p className="mt-1 text-sm text-zinc-600">
-            發出日期：{formatShortDate(letter.issuedAt)}
-          </p>
         </div>
       </div>
 
@@ -266,8 +266,8 @@ function ChineseLetter({
           <strong>
             {classLabel(student.className)}班{student.name}
           </strong>
-          已缺席共 <strong>{slipDays}</strong> 天、遲到共 <strong>{slipLates}</strong>{" "}
-          次，亦明白有機會影響其升班。
+          截至 {CUTOFF_ZH} 已缺席共 <strong>{formatFigure(stats.countedDays)}</strong>{" "}
+          天、遲到共 <strong>{stats.lateCount}</strong> 次，亦明白有機會影響其升班。
         </p>
         <div className="mt-8 flex justify-end text-sm">
           <p>
@@ -291,21 +291,19 @@ function EnglishLetter({
   academicYear: string;
   stats: LetterStats;
 }) {
-  const { displayStats, summaryEn: summary, slipDays, slipLates } = resolveLetterDisplay(
-    letter,
-    stats
-  );
+  const summary = issueSummaryEn(stats);
   const isOver = letter.type === "over_limit";
 
   const notes = [
-    `Approved sick leave (a submitted doctor's note or parent's letter) currently totals ${displayStats.approvedLeaveDays} day(s). It is not counted towards the absence limit and does not affect the attendance rate.`,
+    outstandingEn(stats),
+    `Approved sick leave (a submitted doctor's note or parent's letter) currently totals ${formatFigure(stats.approvedLeaveDays)} day(s). It is not counted towards the absence limit and does not affect the attendance rate.`,
     "Unapproved leave or unexplained absence is counted towards absence days and will lower the attendance rate.",
     "Late arrivals are listed together with absence days in this notice. Frequent lateness may affect punctuality records and attendance assessment.",
   ];
 
   return (
     <article className="letter-sheet letter-sheet-en mx-auto bg-white text-zinc-900">
-      <LetterHeaderEn academicYear={academicYear} issuedAt={letter.issuedAt} />
+      <LetterHeaderEn academicYear={academicYear} />
 
       <p className="mt-6">Dear Parent / Guardian,</p>
 
@@ -319,8 +317,8 @@ function EnglishLetter({
         <strong> {classLabel(student.className)}</strong>
         , student number
         <strong> {student.studentNo}</strong>
-        , currently has <strong>{summary}</strong> in the <strong>{academicYear}</strong>{" "}
-        academic year. This notice is hereby issued.
+        , as at <strong>{CUTOFF_EN}</strong>, has <strong>{summary}</strong> in the{" "}
+        <strong>{academicYear}</strong> academic year. This notice is hereby issued.
       </p>
 
       <div className="mt-4 rounded border border-zinc-200 bg-zinc-50 p-4 text-sm leading-7">
@@ -333,9 +331,9 @@ function EnglishLetter({
       </div>
 
       <p className="mt-4 leading-8">
-        Your child has accumulated <strong>{summary}</strong> to date. Please submit
-        supporting documents to the School Office as soon as possible, and contact the
-        class teacher, <strong>{student.homeroomTeacherName}</strong>, to follow up on
+        Your child has accumulated <strong>{summary}</strong> as at {CUTOFF_EN}. Please
+        submit supporting documents to the School Office as soon as possible, and contact
+        the class teacher, <strong>{student.homeroomTeacherName}</strong>, to follow up on
         attendance together.
       </p>
 
@@ -363,9 +361,6 @@ function EnglishLetter({
           <p className="mt-1 text-sm">
             This warning letter is issued by the Student Development Department.
           </p>
-          <p className="mt-1 text-sm text-zinc-600">
-            Date of issue: {formatShortDate(letter.issuedAt)}
-          </p>
         </div>
       </div>
 
@@ -379,9 +374,9 @@ function EnglishLetter({
             {" "}
             {classLabel(student.className)} {student.nameEn}
           </strong>{" "}
-          has currently been absent for <strong>{slipDays}</strong> day(s) and late{" "}
-          <strong>{slipLates}</strong> time(s), and I also understand that this may affect
-          promotion to the next form.
+          has been absent for <strong>{formatFigure(stats.countedDays)}</strong> day(s) and
+          late <strong>{stats.lateCount}</strong> time(s) as at {CUTOFF_EN}, and I also
+          understand that this may affect promotion to the next form.
         </p>
         <div className="mt-8 flex justify-end text-sm">
           <p>
