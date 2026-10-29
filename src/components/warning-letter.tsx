@@ -248,11 +248,7 @@ function ChineseLetter({
       <p className="mt-8">此致</p>
       <p>家長／監護人</p>
 
-      <div className="mt-10 flex items-end justify-between gap-6">
-        <label className="flex items-center gap-2 text-sm text-zinc-600">
-          <span className="inline-block size-4 border border-zinc-400" aria-hidden />
-          已發
-        </label>
+      <div className="mt-10 flex items-end justify-end gap-6">
         <div className="text-right">
           <p>{SCHOOL_NAME}學生發展部</p>
           <p className="mt-1 text-sm">此警告信由學生發展部發出</p>
@@ -351,11 +347,7 @@ function EnglishLetter({
       <p className="mt-8">Yours faithfully,</p>
       <p>Parent / Guardian</p>
 
-      <div className="mt-10 flex items-end justify-between gap-6">
-        <label className="flex items-center gap-2 text-sm text-zinc-600">
-          <span className="inline-block size-4 border border-zinc-400" aria-hidden />
-          Issued
-        </label>
+      <div className="mt-10 flex items-end justify-end gap-6">
         <div className="text-right">
           <p>{SCHOOL_NAME_EN} Student Development Department</p>
           <p className="mt-1 text-sm">
